@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+dist-ssr/
+*.local
+tsconfig.tsbuildinfo
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Capacitor native build artifacts
+ios/App/App/build/
+ios/App/App/public/
+ios/App/build/
+ios/App/Pods/
+ios/App/output/
+android/.gradle/
+android/app/build/
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/public/
+
+# Internal agent / tooling config (no app code)
+.agents/
+.claude/
+skills-lock.json
+
+# Keep these tracked:
+!ios/App/App/capacitor.config.json
+!ios/App/App/Info.plist
+!ios/App/App/AppDelegate.swift
+!ios/App/App/Assets.xcassets/**
+!ios/App/App/Base.lproj/**
+!capacitor.config.ts
