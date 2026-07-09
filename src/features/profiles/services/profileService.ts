@@ -24,7 +24,7 @@ export async function getCurrentProfile() {
 
   const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).single();
 
-  if (error) throw error;
+  if (error) throw new Error(error.message);
 
   return data;
 }
@@ -50,7 +50,7 @@ export async function updateMyProfile(changes: { full_name?: string; avatar_url?
   if (!user) throw new Error("Necesitas iniciar sesion.");
 
   const { error } = await supabase.from("profiles").update(changes).eq("id", user.id);
-  if (error) throw error;
+  if (error) throw new Error(error.message);
 }
 
 /** Empleados visibles para el rol actual (RH/admin: todos; jefe: su equipo). */
@@ -58,7 +58,7 @@ export async function listEmployees() {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("*, manager:profiles!profiles_manager_id_fkey(id, full_name)")
+    .select("*, manager:profiles(id, full_name)")
     .order("full_name", { ascending: true });
 
   if (error) throw error;
@@ -98,9 +98,52 @@ export async function listMyTeam() {
   return (data ?? []) as Profile[];
 }
 
+/** Empleados que comparten mi mismo manager (excluyéndome). Si no tengo
+ *  manager, devuelve lista vacía. Útil para el dashboard empleado "compañeros". */
+export async function listMyPeers() {
+  const supabase = getSupabaseClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError) throw userError;
+  if (!user) return [] as Profile[];
+
+  const { data: me, error: meErr } = await supabase
+    .from("profiles")
+    .select("manager_id")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (meErr) throw meErr;
+  if (!me?.manager_id) return [] as Profile[];
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("manager_id", me.manager_id)
+    .neq("id", user.id)
+    .order("full_name", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Profile[];
+}
+
+/** Perfil de un miembro de mi equipo. RLS deja ver si manager_id=auth.uid(). */
+export async function getTeamMemberProfile(id: string): Promise<Profile | null> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", id).maybeSingle();
+  if (error) throw error;
+  return data as Profile | null;
+}
+
 export async function updateProfileAssignment(
   id: string,
-  changes: { role?: UserRole; manager_id?: string | null; job_title?: string | null; full_name?: string },
+  changes: {
+    annual_vacation_days?: number | null;
+    role?: UserRole;
+    manager_id?: string | null;
+    job_title?: string | null;
+    full_name?: string;
+  },
 ) {
   const supabase = getSupabaseClient();
   const { error } = await supabase.from("profiles").update(changes).eq("id", id);
@@ -109,6 +152,7 @@ export async function updateProfileAssignment(
 
 /** Invita un usuario nuevo (RH/admin). Crea auth user + perfil y envía correo. */
 export async function inviteUser(input: {
+  annual_vacation_days?: number | null;
   email: string;
   full_name: string;
   role: UserRole;
@@ -126,4 +170,18 @@ export async function inviteUser(input: {
     throw new Error(message);
   }
   return data as { ok: true; user_id: string; email: string };
+}
+
+/** Elimina un empleado (RH/admin). Pide el nombre completo como confirmación. */
+export async function deleteEmployee(input: { confirmation: string; user_id: string }) {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.functions.invoke("admin-delete-user", {
+    body: input,
+  });
+
+  if (error) {
+    const message = (data as { error?: string } | null)?.error ?? error.message;
+    throw new Error(message);
+  }
+  return data as { ok: true; user_id: string };
 }

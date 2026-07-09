@@ -14,9 +14,12 @@ export type ScheduleType = "full_day" | "time_range";
 export type ApprovalDecision = "approved" | "rejected";
 
 export type Profile = {
+  annual_vacation_days: number | null;
   avatar_url: string | null;
+  birth_date: string | null;
   created_at: string;
   full_name: string;
+  hire_date: string | null;
   id: string;
   job_title: string | null;
   manager_id: string | null;
@@ -77,8 +80,11 @@ export type Database = {
       profiles: {
         Row: Profile;
         Insert: {
+          annual_vacation_days?: number | null;
           avatar_url?: string | null;
+          birth_date?: string | null;
           full_name: string;
+          hire_date?: string | null;
           id: string;
           job_title?: string | null;
           manager_id?: string | null;

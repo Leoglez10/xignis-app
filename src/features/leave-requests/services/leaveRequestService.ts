@@ -8,6 +8,7 @@ import type {
   UserRole,
 } from "../../../lib/database.types";
 import { getSupabaseClient } from "../../../lib/supabase";
+import { diffDaysInclusive } from "../../../lib/date";
 import { getCurrentProfile } from "../../profiles/services/profileService";
 
 export { leaveTypeLabel } from "../config";
@@ -52,6 +53,39 @@ async function getCurrentUserId() {
   if (!user) throw new Error("Necesitas iniciar sesion.");
 
   return user.id;
+}
+
+export type VacationBalance = {
+  available: number;
+  quota: number;
+  taken: number;
+  year: number;
+};
+
+/** Saldo de vacaciones del usuario actual:
+ *  cuota = profile.annual_vacation_days
+ *  tomado = suma de días de vacaciones APROBADAS (full_day) en el año natural actual.
+ *  No descuenta pendientes (puede revertirse). */
+export async function getMyVacationBalance(): Promise<VacationBalance> {
+  const supabase = getSupabaseClient();
+  const [profile, requests] = await Promise.all([
+    getCurrentProfile(),
+    listMyLeaveRequests(),
+  ]);
+  const year = new Date().getFullYear();
+  const yearStart = `${year}-01-01`;
+  const yearEnd = `${year}-12-31`;
+  const taken = (requests ?? [])
+    .filter(
+      (r) =>
+        r.leave_type === "vacation" &&
+        r.status === "approved" &&
+        r.start_date <= yearEnd &&
+        r.end_date >= yearStart,
+    )
+    .reduce((sum, r) => sum + diffDaysInclusive(r.start_date, r.end_date), 0);
+  const quota = profile?.annual_vacation_days ?? 0;
+  return { available: Math.max(0, quota - taken), quota, taken, year };
 }
 
 export async function listMyLeaveRequests() {
@@ -127,6 +161,23 @@ export async function cancelLeaveRequest(id: string) {
   if (error) throw error;
 }
 
+/** Ausencias aprobadas de IDs específicos que solapen HOY.
+ *  Usado por el dashboard empleado para "compañeros ausentes hoy". */
+export async function listAbsencesForEmployeesToday(employeeIds: string[]) {
+  if (employeeIds.length === 0) return [] as LeaveRequestWithEmployee[];
+  const supabase = getSupabaseClient();
+  const today = new Date().toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from("leave_requests")
+    .select("*, employee:profiles!leave_requests_employee_id_fkey(full_name, job_title)")
+    .eq("status", "approved")
+    .in("employee_id", employeeIds)
+    .lte("start_date", today)
+    .gte("end_date", today);
+  if (error) throw error;
+  return (data ?? []) as LeaveRequestWithEmployee[];
+}
+
 export async function listManagerLeaveRequests() {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
@@ -151,6 +202,54 @@ export async function listTeamUpcomingAbsences() {
 
   if (error) throw error;
   return (data ?? []) as LeaveRequestWithEmployee[];
+}
+
+/** Ausencias aprobadas que solapan un rango [startISO, endISO] inclusive.
+ *  RLS scopea al equipo del manager: trae pasado, presente y futuro según el rango. */
+export async function listTeamAbsencesInRange(startISO: string, endISO: string) {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("leave_requests")
+    .select("*, employee:profiles!leave_requests_employee_id_fkey(full_name, job_title)")
+    .eq("status", "approved")
+    .lte("start_date", endISO)
+    .gte("end_date", startISO)
+    .order("start_date", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []) as LeaveRequestWithEmployee[];
+}
+
+/** Tiempo promedio de aprobación (en horas) del manager actual sobre
+ *  solicitudes cerradas en los últimos `daysBack` días. null si no hay datos. */
+export async function getManagerApprovalSlaHours(daysBack = 30) {
+  const supabase = getSupabaseClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError) throw userError;
+  if (!user) return null;
+
+  const since = new Date();
+  since.setDate(since.getDate() - daysBack);
+  const sinceIso = since.toISOString();
+
+  const { data, error } = await supabase
+    .from("leave_requests")
+    .select("created_at, reviewed_at, reviewed_by, status")
+    .in("status", ["approved_by_manager", "rejected_by_manager"])
+    .eq("reviewed_by", user.id)
+    .gte("reviewed_at", sinceIso);
+  if (error) throw error;
+  const rows = data ?? [];
+  if (rows.length === 0) return { avgHours: null, count: 0 };
+  const totalMs = rows.reduce((sum, r) => {
+    if (!r.reviewed_at) return sum;
+    return sum + (new Date(r.reviewed_at).getTime() - new Date(r.created_at).getTime());
+  }, 0);
+  const avgHours = totalMs / rows.length / 3_600_000;
+  return { avgHours, count: rows.length };
 }
 
 export async function listHrLeaveRequests() {
@@ -204,4 +303,29 @@ export async function reviewLeaveRequest(input: {
   });
 
   if (approvalError) throw approvalError;
+}
+
+/** Aplica una decision a varias solicitudes en paralelo. Devuelve el conteo de éxitos
+ *  y la lista de errores por id. No aborta el lote si una falla. */
+export async function bulkReviewLeaveRequests(input: {
+  comment?: string;
+  decision: ApprovalDecision;
+  ids: string[];
+  reviewerRole: Extract<UserRole, "admin" | "hr_admin" | "manager">;
+}) {
+  const results = await Promise.allSettled(
+    input.ids.map((id) =>
+      reviewLeaveRequest({ comment: input.comment, decision: input.decision, id, reviewerRole: input.reviewerRole }),
+    ),
+  );
+  const errors: Array<{ id: string; message: string }> = [];
+  let ok = 0;
+  results.forEach((r, idx) => {
+    if (r.status === "fulfilled") {
+      ok += 1;
+    } else {
+      errors.push({ id: input.ids[idx], message: r.reason instanceof Error ? r.reason.message : "Error" });
+    }
+  });
+  return { ok, errors };
 }

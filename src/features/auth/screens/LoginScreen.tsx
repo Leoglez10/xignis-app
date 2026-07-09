@@ -74,8 +74,8 @@ export function LoginScreen() {
   return (
     <main className="mobile-screen" id="main-content" tabIndex={-1}>
       <section className="flex min-h-dvh flex-col items-center justify-center px-6 pb-8 pt-[calc(2.25rem+env(safe-area-inset-top))] lg:px-10">
-        <div className="flex min-h-[calc(100dvh-4rem)] w-full max-w-[440px] flex-col lg:min-h-0 lg:rounded-[24px] lg:bg-white lg:p-6 lg:shadow-xl lg:shadow-slate-200/70 lg:ring-1 lg:ring-slate-200">
-          <img src="/logo-dos.png" alt="Xignis" className="mb-10 w-56 self-center" />
+        <div className="flex w-full max-w-[440px] flex-col lg:rounded-[24px] lg:bg-white lg:p-6 lg:shadow-xl lg:shadow-slate-200/70 lg:ring-1 lg:ring-slate-200">
+          <img src="/logo-dos.png" alt="Xignis" className="mb-6 w-48 self-center lg:mb-10 lg:w-56" />
 
         <div aria-label="Tipo de acceso" className="mb-6 grid grid-cols-3 gap-1 rounded-full bg-[var(--color-surface)] p-1" role="group">
           {roleOptions.map((option) => {
@@ -100,7 +100,7 @@ export function LoginScreen() {
           })}
         </div>
 
-        <form className="flex flex-1 flex-col" noValidate onSubmit={handleSubmit(onSubmit)}>
+        <form className="flex flex-col" noValidate onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
             {!isConfigured ? (
               <p className="rounded-2xl bg-orange-50 p-4 text-sm font-semibold leading-6 text-orange-900" role="status">
@@ -141,21 +141,11 @@ export function LoginScreen() {
             ) : null}
           </div>
 
-          <div className="mt-auto space-y-4 pt-10">
+          <div className="space-y-4 pt-6">
             <Button className="w-full" disabled={!isConfigured || isSubmitting} type="submit">
               <Lock aria-hidden="true" className="size-4" />
               {isSubmitting ? "Entrando..." : "Entrar"}
             </Button>
-            <button
-              className="press w-full py-2 text-sm font-bold text-[var(--color-text)]"
-              type="button"
-              onClick={() => navigate("/signup")}
-            >
-              Crear cuenta nueva
-            </button>
-            <p className="px-4 text-center text-xs leading-5 text-[var(--color-muted)]">
-              RH puede entrar desde computadora con la misma cuenta.
-            </p>
           </div>
         </form>
         </div>

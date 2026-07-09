@@ -1,14 +1,14 @@
 import { AlertTriangle, CalendarDays, CheckCircle2, UserCircle, Users } from "lucide-react";
-import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { formatDateRangeEs, eachDayIso, overlapsToday, startsWithinDays, todayIso } from "../../../lib/date";
 import { roleLabel } from "../../profiles/services/profileService";
 import { NotificationBell } from "../../notifications/NotificationBell";
 import { useAuth } from "../../session/AuthContext";
 import {
+  getManagerApprovalSlaHours,
   listManagerLeaveRequests,
   listTeamUpcomingAbsences,
-  reviewLeaveRequest,
   type LeaveRequestWithEmployee,
 } from "../../leave-requests/services/leaveRequestService";
 import { listMyTeam } from "../../profiles/services/profileService";
@@ -16,30 +16,47 @@ import type { Profile } from "../../../lib/database.types";
 import { STATS_CONFIG, UPCOMING_WINDOW_DAYS } from "../dashboard.config";
 import { useDashboardPrefs } from "../useDashboardPrefs";
 import { AgendaItem } from "../components/AgendaItem";
+import { AgingBadge } from "../components/AgingBadge";
+import { BirthdayStrip } from "../components/BirthdayStrip";
+import { BulkActionsBar } from "../components/BulkActionsBar";
+import { CoverageHeatmap } from "../components/CoverageHeatmap";
+import { ManagerBottomNav } from "../components/ManagerBottomNav";
 import { DashboardSkeleton } from "../components/DashboardSkeleton";
 import { PendingRequestCard } from "../components/PendingRequestCard";
 import { RefreshBoundary } from "../components/RefreshBoundary";
+import { SlaCard } from "../components/SlaCard";
 import { StatCard } from "../components/StatCard";
 import { TeamMemberRow } from "../components/TeamMemberRow";
+import { TopRequesters } from "../components/TopRequesters";
+
+type SlaInfo = { avgHours: number | null; count: number };
 
 type DashboardState = {
   absences: LeaveRequestWithEmployee[];
   error: string | null;
   isLoading: boolean;
   pending: LeaveRequestWithEmployee[];
+  sla: SlaInfo | null;
   team: Profile[];
 };
 
 type DashboardAction =
   | { type: "loading" }
-  | { type: "loaded"; pending: LeaveRequestWithEmployee[]; absences: LeaveRequestWithEmployee[]; team: Profile[] }
-  | { type: "error"; message: string };
+  | {
+      absences: LeaveRequestWithEmployee[];
+      pending: LeaveRequestWithEmployee[];
+      sla: SlaInfo | null;
+      team: Profile[];
+      type: "loaded";
+    }
+  | { message: string; type: "error" };
 
 const INITIAL_STATE: DashboardState = {
   absences: [],
   error: null,
   isLoading: true,
   pending: [],
+  sla: null,
   team: [],
 };
 
@@ -53,6 +70,7 @@ function reducer(state: DashboardState, action: DashboardAction): DashboardState
         error: null,
         isLoading: false,
         pending: action.pending,
+        sla: action.sla,
         team: action.team,
       };
     case "error":
@@ -68,6 +86,7 @@ export function ManagerDashboardScreen() {
   const { prefs } = useDashboardPrefs();
 
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const isMounted = useRef(true);
   const mountedOnce = useRef(false);
   const todayRef = useRef(todayIso());
@@ -82,13 +101,14 @@ export function ManagerDashboardScreen() {
   const loadAll = useCallback(async () => {
     dispatch({ type: "loading" });
     try {
-      const [pending, upcoming, members] = await Promise.all([
+      const [pending, upcoming, members, sla] = await Promise.all([
         listManagerLeaveRequests(),
         listTeamUpcomingAbsences(),
         listMyTeam().catch(() => [] as Profile[]),
+        getManagerApprovalSlaHours(30).catch(() => null),
       ]);
       if (!isMounted.current) return;
-      dispatch({ absences: upcoming, pending, team: members, type: "loaded" });
+      dispatch({ absences: upcoming, pending, sla, team: members, type: "loaded" });
     } catch (loadError) {
       if (!isMounted.current) return;
       dispatch({ message: loadError instanceof Error ? loadError.message : "No se pudieron cargar los datos.", type: "error" });
@@ -99,7 +119,7 @@ export function ManagerDashboardScreen() {
     void loadAll();
   }, [loadAll]);
 
-  const { absences, error, isLoading, pending, team } = state;
+  const { absences, error, isLoading, pending, sla, team } = state;
 
   const absentEmployeeIds = useMemo(
     () => new Set(absences.filter((a) => overlapsToday(a.start_date, a.end_date)).map((a) => a.employee_id)),
@@ -130,19 +150,13 @@ export function ManagerDashboardScreen() {
     return { count: peakCount, date: peakDate };
   }, [absences]);
 
-  const handleReview = useCallback(async (id: string, decision: "approved" | "rejected") => {
-    try {
-      await reviewLeaveRequest({ decision, id, reviewerRole: "manager" });
-      await loadAll();
-    } catch (reviewError) {
-      if (!isMounted.current) return;
-      dispatch({ message: reviewError instanceof Error ? reviewError.message : "No se pudo actualizar la solicitud.", type: "error" });
-    }
-  }, [loadAll]);
+  const agedCount = useMemo(() => {
+    const cutoff = Date.now() - 48 * 3_600_000;
+    return pending.filter((p) => new Date(p.created_at).getTime() < cutoff).length;
+  }, [pending]);
 
   const managerFirstName = profile?.full_name.split(" ")[0] ?? "Jefe";
   const roleBadge = profile ? roleLabel[profile.role] : "Jefe";
-  const actionId = useMemo(() => pending.length === 1 ? pending[0]?.id ?? null : null, [pending]);
 
   const statsState = useMemo(
     () => ({
@@ -161,10 +175,21 @@ export function ManagerDashboardScreen() {
     return true;
   };
 
+  const toggleSelect = useCallback((id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => setSelected(new Set()), []);
+
   return (
     <main className="min-h-dvh bg-slate-100 text-[var(--color-text)]" id="main-content" tabIndex={-1}>
       <RefreshBoundary onRefresh={loadAll}>
-        <section className="grid min-h-dvh gap-5 p-4 pt-[calc(1rem+env(safe-area-inset-top))] md:p-6 lg:grid-cols-[1fr_var(--aside-width)]">
+        <section className="grid min-h-dvh gap-5 p-4 pb-24 pt-[calc(1rem+env(safe-area-inset-top))] md:p-6 md:pb-24 lg:grid-cols-[1fr_var(--aside-width)]">
           <div className="min-w-0 bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px] md:p-6">
             <header className="animate-fade-up mb-6 flex flex-col gap-4">
               <div className="flex items-start justify-between gap-3">
@@ -172,7 +197,11 @@ export function ManagerDashboardScreen() {
                   <p className="text-sm font-black text-[var(--color-muted)]">{roleBadge}</p>
                   <h1 className="mt-1 text-2xl font-black md:text-3xl">{managerFirstName}</h1>
                   <p className="mt-1 text-sm text-[var(--color-muted)]">
-                    {isLoading ? "Cargando…" : `${pending.length} solicitudes pendientes`}
+                    {isLoading
+                      ? "Cargando…"
+                      : agedCount > 0
+                        ? `${pending.length} pendientes · ${agedCount} con más de 48 h`
+                        : `${pending.length} solicitudes pendientes`}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
@@ -202,7 +231,7 @@ export function ManagerDashboardScreen() {
             ) : (
               <>
                 <section
-                  className="animate-fade-up stagger mb-5 grid gap-3 md:grid-cols-3"
+                  className="animate-fade-up stagger mb-5 grid grid-cols-2 gap-3 md:grid-cols-4"
                   aria-label="Resumen del equipo"
                 >
                   {STATS_CONFIG.map((s) => (
@@ -213,7 +242,20 @@ export function ManagerDashboardScreen() {
                       value={s.compute(statsState)}
                     />
                   ))}
+                  {sla ? <SlaCard avgHours={sla.avgHours} count={sla.count} /> : null}
                 </section>
+
+                {agedCount > 0 ? (
+                  <div className="animate-fade-up mb-5 flex gap-3 rounded-2xl bg-rose-50 p-4 text-rose-900 ring-1 ring-rose-200">
+                    <AlertTriangle aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-black">{agedCount} solicitud{agedCount === 1 ? "" : "es"} con más de 48 h</p>
+                      <p className="mt-0.5 text-xs text-rose-800/80">
+                        Revisa las más antiguas para mantener el SLA de tu equipo.
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
 
                 {overlapAlert ? (
                   <div className="animate-fade-up mb-5 flex gap-3 rounded-2xl bg-amber-50 p-4 text-amber-900 ring-1 ring-amber-200">
@@ -240,28 +282,47 @@ export function ManagerDashboardScreen() {
                     </span>
                   </div>
 
-                  <div className="stagger space-y-3">
+                  <ul className="stagger space-y-3">
                     {pending.length === 0 ? (
-                      <div className="flex flex-col items-center gap-2 rounded-[20px] bg-[var(--card-bg)] p-8 text-center ring-1 ring-[var(--card-border)]">
+                      <li className="flex flex-col items-center gap-2 rounded-[20px] bg-[var(--card-bg)] p-8 text-center ring-1 ring-[var(--card-border)]">
                         <CheckCircle2 aria-hidden="true" className="size-8 text-emerald-500" />
                         <p className="text-sm font-semibold text-[var(--color-muted)]">
                           No hay solicitudes pendientes para tu equipo.
                         </p>
-                      </div>
+                      </li>
                     ) : null}
                     {pending.map((request) => (
-                      <PendingRequestCard
-                        actionId={actionId}
-                        key={request.id}
-                        mount={markMountOnce()}
-                        onReview={handleReview}
-                        request={request}
-                      />
+                      <li className="relative" key={request.id}>
+                        <PendingRequestCard
+                          mount={markMountOnce()}
+                          onClick={() => navigate(`/manager/requests/${request.id}`)}
+                          onToggleSelect={toggleSelect}
+                          request={request}
+                          selected={selected.has(request.id)}
+                        />
+                        <span className="absolute right-16 top-4">
+                          <AgingBadge request={request} />
+                        </span>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
+                </section>
+
+                <section className="mt-5 flex flex-col gap-5" aria-label="Widgets de equipo">
+                  <TopRequesters members={team} requests={absences} />
                 </section>
               </>
             )}
+            {!isLoading ? (
+              <BulkActionsBar
+                ids={Array.from(selected)}
+                onComplete={() => {
+                  clearSelection();
+                  void loadAll();
+                }}
+                reviewerRole="manager"
+              />
+            ) : null}
           </div>
 
           {!isLoading && prefs.showAgenda ? (
@@ -272,7 +333,7 @@ export function ManagerDashboardScreen() {
               >
                 <button
                   className="press mb-4 flex w-full items-start justify-between gap-4 text-left"
-                  onClick={() => navigate("/manager/team")}
+                  onClick={() => navigate("/manager/calendar")}
                   type="button"
                 >
                   <div>
@@ -291,10 +352,17 @@ export function ManagerDashboardScreen() {
                     </li>
                   ) : null}
                   {absences.map((absence) => (
-                    <AgendaItem absence={absence} key={absence.id} mount={false} />
+                    <AgendaItem
+                      absence={absence}
+                      key={absence.id}
+                      mount={false}
+                      onClick={() => absence.employee_id && navigate(`/manager/member/${absence.employee_id}`)}
+                    />
                   ))}
                 </ul>
               </section>
+
+              <CoverageHeatmap absences={absences} members={team} />
 
               {prefs.showTeamWidget ? (
                 <section
@@ -324,15 +392,19 @@ export function ManagerDashboardScreen() {
                         key={member.id}
                         member={member}
                         mount={false}
+                        onClick={() => navigate(`/manager/member/${member.id}`)}
                       />
                     ))}
                   </ul>
                 </section>
               ) : null}
+
+              <BirthdayStrip members={team} />
             </aside>
           ) : null}
         </section>
       </RefreshBoundary>
+      <ManagerBottomNav />
     </main>
   );
 }

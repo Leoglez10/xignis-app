@@ -33,6 +33,27 @@ export function startsWithinDays(start: string, days: number, now: Date = new Da
   return startMs >= t && startMs <= t + days * 86_400_000;
 }
 
+/** Primer día del mes como ISO YYYY-MM-DD. */
+export function startOfMonthISO(year: number, monthIndex: number): string {
+  return `${year}-${pad2(monthIndex + 1)}-01`;
+}
+
+/** Último día del mes como ISO YYYY-MM-DD (sin Date allocation). */
+export function endOfMonthISO(year: number, monthIndex: number): string {
+  const dim = monthIndex === 1 && isLeap(year) ? 29 : MONTH_DAYS[monthIndex];
+  return `${year}-${pad2(monthIndex + 1)}-${pad2(dim)}`;
+}
+
+/** Index del lunes=0..domingo=6 de un día ISO dado (lun-dom, ISO estándar). */
+export function weekdayISO(iso: string): number {
+  const d = toDate(iso);
+  return (d.getUTCDay() + 6) % 7; // getUTCDay() es dom=0..sab=6 → convertir a lun=0..dom=6
+}
+
+function pad2(n: number) {
+  return String(n).padStart(2, "0");
+}
+
 const MONTH_DAYS: ReadonlyArray<number> = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
 function isLeap(y: number) {
@@ -41,6 +62,22 @@ function isLeap(y: number) {
 
 function daysInMonth(y: number, m: number) {
   return m === 1 && isLeap(y) ? 29 : MONTH_DAYS[m];
+}
+
+/** Días naturales entre dos ISO (inclusive). Cero si start > end. */
+export function diffDaysInclusive(startISO: string, endISO: string): number {
+  if (startISO > endISO) return 0;
+  const start = new Date(`${startISO}T00:00:00`).getTime();
+  const end = new Date(`${endISO}T00:00:00`).getTime();
+  return Math.max(0, Math.round((end - start) / 86_400_000) + 1);
+}
+
+/** Diferencia en días entre hoy y un ISO futuro (>=0 si hoy es igual o posterior).
+ *  Negativo si el ISO ya pasó. */
+export function daysFromToday(iso: string, now: Date = new Date()): number {
+  const today = startOfDay(todayIso(now));
+  const target = startOfDay(iso);
+  return Math.round((target - today) / 86_400_000);
 }
 
 /** Genera cada día entre start y end (inclusive) como YYYY-MM-DD, sin alocation de Date. */
@@ -52,7 +89,7 @@ export function eachDayIso(start: string, end: string): string[] {
   const endY = Number(end.slice(0, 4));
   const endM = Number(end.slice(5, 7)) - 1;
   const endD = Number(end.slice(8, 10));
-  const key = () => `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  const key = () => `${y}-${pad2(m + 1)}-${pad2(d)}`;
   let guard = 0;
   while ((y < endY || (y === endY && m < endM) || (y === endY && m === endM && d <= endD)) && guard < 400) {
     out.push(key());

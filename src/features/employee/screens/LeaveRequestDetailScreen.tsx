@@ -2,7 +2,8 @@ import { ChevronLeft, Clock, FileText, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../../components/ui/Button";
-import type { LeaveRequest } from "../../../lib/database.types";
+import type { LeaveRequest, LeaveStatus } from "../../../lib/database.types";
+import { statusTone } from "../../leave-requests/config";
 import {
   cancelLeaveRequest,
   formatDateRange,
@@ -10,6 +11,99 @@ import {
   leaveTypeLabel,
   statusLabel,
 } from "../../leave-requests/services/leaveRequestService";
+
+const statusDetail: Record<
+  LeaveStatus,
+  {
+    cardTone: string;
+    folioTone: string;
+    intro: string;
+    nextTone: string;
+    nextIconTone: string;
+    nextTitleTone: string;
+    nextTextTone: string;
+    nextTitle: string;
+    nextText: string;
+  }
+> = {
+  approved: {
+    cardTone: "bg-emerald-50",
+    folioTone: "text-emerald-800/80",
+    intro: "Tu solicitud fue aprobada. El permiso ya quedo confirmado.",
+    nextTone: "bg-emerald-50",
+    nextIconTone: "text-emerald-700",
+    nextTitleTone: "text-emerald-900",
+    nextTextTone: "text-emerald-800",
+    nextTitle: "Proceso completo",
+    nextText: "Ya no necesitas hacer nada mas para esta solicitud.",
+  },
+  approved_by_manager: {
+    cardTone: "bg-indigo-50",
+    folioTone: "text-indigo-800/80",
+    intro: "Tu jefe ya aprobo la solicitud. Falta validacion final de RH.",
+    nextTone: "bg-indigo-50",
+    nextIconTone: "text-indigo-700",
+    nextTitleTone: "text-indigo-900",
+    nextTextTone: "text-indigo-800",
+    nextTitle: "Pendiente RH",
+    nextText: "RH revisara la aprobacion y te avisaremos cuando quede confirmada o rechazada.",
+  },
+  cancelled: {
+    cardTone: "bg-slate-100",
+    folioTone: "text-slate-700/80",
+    intro: "Cancelaste esta solicitud. Ya no seguira el flujo de aprobacion.",
+    nextTone: "bg-slate-100",
+    nextIconTone: "text-slate-600",
+    nextTitleTone: "text-slate-900",
+    nextTextTone: "text-slate-700",
+    nextTitle: "Sin acciones",
+    nextText: "Puedes crear una nueva solicitud si necesitas otro permiso.",
+  },
+  pending_hr: {
+    cardTone: "bg-amber-50",
+    folioTone: "text-amber-800/80",
+    intro: "Tu solicitud esta en revision por RH.",
+    nextTone: "bg-amber-50",
+    nextIconTone: "text-amber-700",
+    nextTitleTone: "text-amber-900",
+    nextTextTone: "text-amber-800",
+    nextTitle: "Pendiente RH",
+    nextText: "Te avisaremos cuando RH apruebe o rechace la solicitud.",
+  },
+  pending_manager: {
+    cardTone: "bg-orange-50",
+    folioTone: "text-orange-800/80",
+    intro: "Tu solicitud esta pendiente de revision por tu jefe.",
+    nextTone: "bg-orange-50",
+    nextIconTone: "text-orange-700",
+    nextTitleTone: "text-orange-900",
+    nextTextTone: "text-orange-800",
+    nextTitle: "Pendiente jefe",
+    nextText: "Cuando tu jefe responda, la solicitud pasara a RH si fue aprobada.",
+  },
+  rejected: {
+    cardTone: "bg-red-50",
+    folioTone: "text-red-800/80",
+    intro: "RH rechazo esta solicitud.",
+    nextTone: "bg-red-50",
+    nextIconTone: "text-red-700",
+    nextTitleTone: "text-red-900",
+    nextTextTone: "text-red-800",
+    nextTitle: "Solicitud rechazada",
+    nextText: "Si tienes dudas, revisa el motivo con RH.",
+  },
+  rejected_by_manager: {
+    cardTone: "bg-red-50",
+    folioTone: "text-red-800/80",
+    intro: "Tu jefe rechazo esta solicitud.",
+    nextTone: "bg-red-50",
+    nextIconTone: "text-red-700",
+    nextTitleTone: "text-red-900",
+    nextTextTone: "text-red-800",
+    nextTitle: "Solicitud rechazada",
+    nextText: "Si necesitas corregir algo, crea una nueva solicitud.",
+  },
+};
 
 export function LeaveRequestDetailScreen() {
   const navigate = useNavigate();
@@ -58,6 +152,7 @@ export function LeaveRequestDetailScreen() {
         ["Enviada", new Date(request.created_at).toLocaleString()],
       ]
     : [];
+  const detail = request ? statusDetail[request.status] : null;
 
   return (
     <main className="mobile-screen" id="main-content" tabIndex={-1}>
@@ -86,16 +181,14 @@ export function LeaveRequestDetailScreen() {
           </p>
         ) : null}
 
-        {request ? (
-          <section className="rounded-[24px] bg-orange-50 p-5">
-            <span className="inline-flex rounded-full bg-orange-200 px-3 py-1 text-xs font-black text-orange-800">
+        {request && detail ? (
+          <section className={`rounded-[24px] p-5 ${detail.cardTone}`}>
+            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${statusTone[request.status]}`}>
               {statusLabel[request.status]}
             </span>
             <h2 className="mt-4 text-3xl font-black text-[var(--color-text)]">{leaveTypeLabel[request.leave_type]}</h2>
-            <p className="mt-3 text-sm leading-6 text-orange-800">
-              Tu solicitud esta en seguimiento segun el flujo de aprobacion configurado.
-            </p>
-            <p className="mt-4 text-xs font-semibold text-orange-800/80">Folio: {request.id}</p>
+            <p className={`mt-3 text-sm leading-6 ${detail.nextTextTone}`}>{detail.intro}</p>
+            <p className={`mt-4 text-xs font-semibold ${detail.folioTone}`}>Folio: {request.id}</p>
           </section>
         ) : null}
 
@@ -121,17 +214,17 @@ export function LeaveRequestDetailScreen() {
           <p className="text-sm leading-6 text-[var(--color-muted)]">{request?.pending_tasks || "Sin actividades capturadas."}</p>
         </section>
 
-        <section className="mt-3 rounded-2xl bg-emerald-50 p-4" aria-labelledby="next-step-title">
-          <div className="mb-2 flex items-center gap-2">
-            <Clock aria-hidden="true" className="size-4 text-emerald-700" />
-            <h2 className="text-sm font-black text-emerald-900" id="next-step-title">
-              Siguiente paso
-            </h2>
-          </div>
-          <p className="text-sm leading-6 text-emerald-800">
-            Te avisaremos cuando el estado cambie a aprobada o rechazada.
-          </p>
-        </section>
+        {detail ? (
+          <section className={`mt-3 rounded-2xl p-4 ${detail.nextTone}`} aria-labelledby="next-step-title">
+            <div className="mb-2 flex items-center gap-2">
+              <Clock aria-hidden="true" className={`size-4 ${detail.nextIconTone}`} />
+              <h2 className={`text-sm font-black ${detail.nextTitleTone}`} id="next-step-title">
+                {detail.nextTitle}
+              </h2>
+            </div>
+            <p className={`text-sm leading-6 ${detail.nextTextTone}`}>{detail.nextText}</p>
+          </section>
+        ) : null}
 
         <div className="mt-auto pt-8">
           <Button

@@ -57,12 +57,14 @@ export function SetPasswordScreen() {
         <p className="mt-2 text-sm text-[var(--color-muted)]">Define tu password para entrar a Xignis.</p>
 
         {linkInvalid ? (
-          <div className="mt-6 rounded-2xl bg-orange-50 p-4 text-sm leading-6 text-orange-900" role="alert">
-            El enlace no es válido o expiró. Solicita uno nuevo desde{" "}
-            <Link className="font-bold underline" to="/login">
-              iniciar sesión
+          <div className="mt-6 space-y-3 rounded-2xl bg-orange-50 p-4 text-sm leading-6 text-orange-900" role="alert">
+            <p>El enlace no es válido o expiró.</p>
+            <Link
+              className="press inline-flex w-full items-center justify-center rounded-full bg-white px-4 py-3 font-black text-orange-900 ring-1 ring-orange-200"
+              to="/forgot-password"
+            >
+              Solicitar nuevo enlace
             </Link>
-            .
           </div>
         ) : (
           <form className="mt-7 space-y-4" noValidate onSubmit={handleSubmit(onSubmit)}>

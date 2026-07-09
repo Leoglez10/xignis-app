@@ -12,12 +12,14 @@ const EmployeesScreen = lazy(() => import("../features/admin/screens/EmployeesSc
 const ForgotPasswordScreen = lazy(() => import("../features/auth/screens/ForgotPasswordScreen").then((m) => ({ default: m.ForgotPasswordScreen })));
 const LoginScreen = lazy(() => import("../features/auth/screens/LoginScreen").then((m) => ({ default: m.LoginScreen })));
 const SetPasswordScreen = lazy(() => import("../features/auth/screens/SetPasswordScreen").then((m) => ({ default: m.SetPasswordScreen })));
-const SignupScreen = lazy(() => import("../features/auth/screens/SignupScreen").then((m) => ({ default: m.SignupScreen })));
 const DashboardEmployeeScreen = lazy(() => import("../features/employee/screens/DashboardEmployeeScreen").then((m) => ({ default: m.DashboardEmployeeScreen })));
+const EmployeeRequestsListScreen = lazy(() => import("../features/employee/screens/EmployeeRequestsListScreen").then((m) => ({ default: m.EmployeeRequestsListScreen })));
 const LeaveRequestDetailScreen = lazy(() => import("../features/employee/screens/LeaveRequestDetailScreen").then((m) => ({ default: m.LeaveRequestDetailScreen })));
 const LeaveRequestScreen = lazy(() => import("../features/employee/screens/LeaveRequestScreen").then((m) => ({ default: m.LeaveRequestScreen })));
 const ManagerDashboardScreen = lazy(() => import("../features/manager/screens/ManagerDashboardScreen").then((m) => ({ default: m.ManagerDashboardScreen })));
 const ManagerRequestDetailScreen = lazy(() => import("../features/manager/screens/ManagerRequestDetailScreen").then((m) => ({ default: m.ManagerRequestDetailScreen })));
+const ManagerCalendarScreen = lazy(() => import("../features/manager/screens/ManagerCalendarScreen").then((m) => ({ default: m.ManagerCalendarScreen })));
+const ManagerMemberDetailScreen = lazy(() => import("../features/manager/screens/ManagerMemberDetailScreen").then((m) => ({ default: m.ManagerMemberDetailScreen })));
 const ManagerTeamScreen = lazy(() => import("../features/manager/screens/ManagerTeamScreen").then((m) => ({ default: m.ManagerTeamScreen })));
 const AdminRequestDetailScreen = lazy(() => import("../features/admin/screens/AdminRequestDetailScreen").then((m) => ({ default: m.AdminRequestDetailScreen })));
 const ProfileScreen = lazy(() => import("../features/profiles/screens/ProfileScreen").then((m) => ({ default: m.ProfileScreen })));
@@ -34,7 +36,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<LoginScreen />} />
-          <Route path="/signup" element={<SignupScreen />} />
+          <Route path="/signup" element={<Navigate to="/login" replace />} />
           <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
           <Route path="/set-password" element={<SetPasswordScreen />} />
           <Route
@@ -62,6 +64,14 @@ export function App() {
             }
           />
           <Route
+            path="/employee/requests"
+            element={
+              <RequireAuth allowedRoles={["employee"]}>
+                <EmployeeRequestsListScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
             path="/employee/requests/:requestId"
             element={
               <RequireAuth allowedRoles={["employee"]}>
@@ -82,6 +92,22 @@ export function App() {
             element={
               <RequireAuth allowedRoles={["manager"]}>
                 <ManagerTeamScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/manager/calendar"
+            element={
+              <RequireAuth allowedRoles={["manager"]}>
+                <ManagerCalendarScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/manager/member/:memberId"
+            element={
+              <RequireAuth allowedRoles={["manager"]}>
+                <ManagerMemberDetailScreen />
               </RequireAuth>
             }
           />

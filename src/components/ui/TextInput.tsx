@@ -17,7 +17,7 @@ export function TextInput({ error, id, label, required, ...props }: TextInputPro
       <input
         aria-describedby={error ? errorId : undefined}
         aria-invalid={Boolean(error)}
-        className="h-13 w-full min-w-0 appearance-none rounded-2xl bg-[var(--color-surface)] px-4 text-base text-[var(--color-text)] outline-none ring-1 ring-transparent transition placeholder:text-[var(--color-muted)] focus:ring-2 focus:ring-[var(--color-focus)]"
+        className="h-13 w-full min-w-0 appearance-none rounded-2xl bg-[var(--color-surface)] px-4 text-base text-[var(--color-text)] outline-none ring-1 ring-inset ring-transparent transition placeholder:text-[var(--color-muted)] focus:ring-2 focus:ring-[var(--color-focus)]"
         id={inputId}
         required={required}
         {...props}

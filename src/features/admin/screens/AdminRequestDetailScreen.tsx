@@ -2,7 +2,8 @@ import { ChevronLeft, CheckCircle2, Clock, FileText, XCircle } from "lucide-reac
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../../components/ui/Button";
-import { leaveTypeConfig } from "../../leave-requests/config";
+import type { LeaveStatus } from "../../../lib/database.types";
+import { leaveTypeConfig, statusTone } from "../../leave-requests/config";
 import {
   formatDateRange,
   getLeaveRequestWithEmployee,
@@ -11,14 +12,70 @@ import {
   type LeaveRequestWithEmployee,
 } from "../../leave-requests/services/leaveRequestService";
 
-const statusTone: Record<string, string> = {
-  pending_manager: "bg-orange-100 text-orange-800",
-  pending_hr: "bg-amber-100 text-amber-800",
-  approved_by_manager: "bg-indigo-100 text-indigo-800",
-  approved: "bg-emerald-100 text-emerald-800",
-  rejected: "bg-red-100 text-red-800",
-  rejected_by_manager: "bg-red-100 text-red-800",
-  cancelled: "bg-slate-200 text-slate-700",
+const statusDetail: Record<LeaveStatus, { card: string; folio: string; panel: string; icon: string; title: string; text: string; body: string }> = {
+  approved: {
+    card: "bg-emerald-50",
+    folio: "text-emerald-800/80",
+    panel: "bg-emerald-50",
+    icon: "text-emerald-700",
+    title: "text-emerald-900",
+    text: "text-emerald-800",
+    body: "Permiso confirmado. El empleado ya puede verlo como aprobado.",
+  },
+  approved_by_manager: {
+    card: "bg-indigo-50",
+    folio: "text-indigo-800/80",
+    panel: "bg-indigo-50",
+    icon: "text-indigo-700",
+    title: "text-indigo-900",
+    text: "text-indigo-800",
+    body: "El jefe ya aprobó. RH debe confirmar o rechazar la solicitud.",
+  },
+  cancelled: {
+    card: "bg-slate-100",
+    folio: "text-slate-700/80",
+    panel: "bg-slate-100",
+    icon: "text-slate-600",
+    title: "text-slate-900",
+    text: "text-slate-700",
+    body: "El empleado canceló esta solicitud. No requiere acción.",
+  },
+  pending_hr: {
+    card: "bg-amber-50",
+    folio: "text-amber-800/80",
+    panel: "bg-amber-50",
+    icon: "text-amber-700",
+    title: "text-amber-900",
+    text: "text-amber-800",
+    body: "RH tiene la decisión final pendiente.",
+  },
+  pending_manager: {
+    card: "bg-orange-50",
+    folio: "text-orange-800/80",
+    panel: "bg-orange-50",
+    icon: "text-orange-700",
+    title: "text-orange-900",
+    text: "text-orange-800",
+    body: "Esta solicitud todavía espera revisión del jefe directo.",
+  },
+  rejected: {
+    card: "bg-red-50",
+    folio: "text-red-800/80",
+    panel: "bg-red-50",
+    icon: "text-red-700",
+    title: "text-red-900",
+    text: "text-red-800",
+    body: "RH rechazó esta solicitud. El flujo quedó cerrado.",
+  },
+  rejected_by_manager: {
+    card: "bg-red-50",
+    folio: "text-red-800/80",
+    panel: "bg-red-50",
+    icon: "text-red-700",
+    title: "text-red-900",
+    text: "text-red-800",
+    body: "El jefe rechazó esta solicitud. No pasa a validación RH.",
+  },
 };
 
 export function AdminRequestDetailScreen() {
@@ -72,6 +129,7 @@ export function AdminRequestDetailScreen() {
     : [];
 
   const canReview = request && (request.status === "pending_hr" || request.status === "approved_by_manager");
+  const detail = request ? statusDetail[request.status] : null;
 
   return (
     <main className="mobile-screen" id="main-content" tabIndex={-1}>
@@ -102,7 +160,7 @@ export function AdminRequestDetailScreen() {
 
         {request ? (
           <>
-            <section className="rounded-[24px] bg-orange-50 p-5">
+            <section className={`rounded-[24px] p-5 ${detail?.card ?? "bg-amber-50"}`}>
               <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${statusTone[request.status] ?? statusTone.pending_hr}`}>
                 {statusLabel[request.status]}
               </span>
@@ -115,7 +173,7 @@ export function AdminRequestDetailScreen() {
               {request.employee?.job_title ? (
                 <p className="mt-1 text-xs text-[var(--color-muted)]">{request.employee.job_title}</p>
               ) : null}
-              <p className="mt-3 text-xs font-semibold text-orange-800/80">Folio: {request.id}</p>
+              <p className={`mt-3 text-xs font-semibold ${detail?.folio ?? "text-amber-800/80"}`}>Folio: {request.id}</p>
             </section>
 
             <section className="mt-5 space-y-3" aria-labelledby="request-summary-title">
@@ -148,14 +206,12 @@ export function AdminRequestDetailScreen() {
                   />
                 </label>
 
-                <section className="mt-3 rounded-2xl bg-emerald-50 p-4" aria-labelledby="next-step-title">
+                <section className={`mt-3 rounded-2xl p-4 ${detail?.panel ?? "bg-amber-50"}`} aria-labelledby="next-step-title">
                   <div className="mb-2 flex items-center gap-2">
-                    <Clock aria-hidden="true" className="size-4 text-emerald-700" />
-                    <h2 className="text-sm font-black text-emerald-900" id="next-step-title">Decisión final</h2>
+                    <Clock aria-hidden="true" className={`size-4 ${detail?.icon ?? "text-amber-700"}`} />
+                    <h2 className={`text-sm font-black ${detail?.title ?? "text-amber-900"}`} id="next-step-title">Decisión final</h2>
                   </div>
-                  <p className="text-sm leading-6 text-emerald-800">
-                    Tu aprobación confirma el permiso y notifica al empleado. Tu rechazo no se puede deshacer.
-                  </p>
+                  <p className={`text-sm leading-6 ${detail?.text ?? "text-amber-800"}`}>{detail?.body}</p>
                 </section>
 
                 <div className="mt-auto grid gap-3 pt-8 sm:grid-cols-2">

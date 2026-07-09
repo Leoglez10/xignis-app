@@ -1,4 +1,4 @@
-import type { LeaveType } from "../../lib/database.types";
+import type { LeaveStatus, LeaveType } from "../../lib/database.types";
 
 type LeaveTypeEntry = {
   avatarTone: string;
@@ -32,3 +32,13 @@ export const leaveTypeConfig: Record<LeaveType, LeaveTypeEntry> = {
 export const leaveTypeLabel = Object.fromEntries(
   (Object.entries(leaveTypeConfig) as [LeaveType, LeaveTypeEntry][]).map(([k, v]) => [k, v.label]),
 ) as Record<LeaveType, string>;
+
+export const statusTone: Record<LeaveStatus, string> = {
+  pending_manager: "bg-orange-100 text-orange-800",
+  approved_by_manager: "bg-indigo-100 text-indigo-800",
+  rejected_by_manager: "bg-red-100 text-red-800",
+  pending_hr: "bg-amber-100 text-amber-800",
+  approved: "bg-emerald-100 text-emerald-800",
+  rejected: "bg-red-100 text-red-800",
+  cancelled: "bg-slate-200 text-slate-700",
+};

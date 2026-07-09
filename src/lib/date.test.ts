@@ -1,5 +1,7 @@
 import { expect, test } from "vitest";
 import {
+  daysFromToday,
+  diffDaysInclusive,
   eachDayIso,
   formatDateRangeEs,
   formatDateEs,
@@ -42,4 +44,18 @@ test("eachDayIso (string arithmetic, no Date)", () => {
     "2024-02-29",
     "2024-03-01",
   ]);
+});
+
+test("diffDaysInclusive", () => {
+  expect(diffDaysInclusive("2026-07-10", "2026-07-10")).toBe(1);
+  expect(diffDaysInclusive("2026-07-10", "2026-07-12")).toBe(3);
+  expect(diffDaysInclusive("2026-07-12", "2026-07-10")).toBe(0);
+  expect(diffDaysInclusive("2026-02-28", "2026-03-01")).toBe(2);
+});
+
+test("daysFromToday", () => {
+  const NOW = new Date("2026-07-06T12:00:00Z");
+  expect(daysFromToday("2026-07-06", NOW)).toBe(0);
+  expect(daysFromToday("2026-07-10", NOW)).toBe(4);
+  expect(daysFromToday("2026-07-01", NOW)).toBe(-5);
 });

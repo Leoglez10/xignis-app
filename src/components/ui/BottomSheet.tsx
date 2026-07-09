@@ -21,7 +21,7 @@ export function BottomSheet({ children, isOpen, onClose, title }: BottomSheetPro
     >
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-50 bg-slate-950/35" />
-        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[90dvh] flex-col rounded-t-[28px] bg-white px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 shadow-2xl outline-none sm:mb-4 sm:max-w-md sm:rounded-[28px]">
+        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[90dvh] w-full max-w-full flex-col overflow-hidden rounded-t-[28px] bg-white px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 shadow-2xl outline-none sm:mb-4 sm:max-w-md sm:rounded-[28px]">
           <Drawer.Handle className="mx-auto mb-4 mt-1 h-1.5 w-11 shrink-0 rounded-full bg-slate-300" />
           <div className="mb-5 flex items-center justify-between">
             <Drawer.Title className="text-xl font-bold text-[var(--color-text)]">{title}</Drawer.Title>
@@ -34,7 +34,7 @@ export function BottomSheet({ children, isOpen, onClose, title }: BottomSheetPro
               <X aria-hidden="true" className="size-5" />
             </button>
           </div>
-          <div className="overflow-y-auto">{children}</div>
+          <div className="min-w-0 overflow-x-hidden overflow-y-auto">{children}</div>
         </Drawer.Content>
       </Drawer.Portal>
     </Drawer.Root>
