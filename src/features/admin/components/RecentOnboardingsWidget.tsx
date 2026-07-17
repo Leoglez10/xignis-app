@@ -1,3 +1,4 @@
+import { initials } from "../../../lib/avatar";
 import { UserPlus } from "lucide-react";
 import { roleLabel } from "../../profiles/services/profileService";
 import type { RecentOnboarding } from "../services/dashboardService";
@@ -5,10 +6,6 @@ import type { RecentOnboarding } from "../services/dashboardService";
 type RecentOnboardingsWidgetProps = {
   items: RecentOnboarding[];
 };
-
-function initials(name: string) {
-  return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "?";
-}
 
 export function RecentOnboardingsWidget({ items }: RecentOnboardingsWidgetProps) {
   if (items.length === 0) return null;

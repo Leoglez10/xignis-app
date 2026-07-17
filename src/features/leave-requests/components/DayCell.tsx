@@ -1,6 +1,7 @@
+import { initials } from "../../../lib/avatar";
 import { memo } from "react";
-import { leaveTypeConfig } from "../../leave-requests/config";
-import type { LeaveRequestWithEmployee } from "../../leave-requests/services/leaveRequestService";
+import { leaveTypeConfig } from "../config";
+import type { LeaveRequestWithEmployee } from "../services/leaveRequestService";
 
 type DayCellProps = {
   absences: LeaveRequestWithEmployee[];
@@ -10,10 +11,6 @@ type DayCellProps = {
   isToday: boolean;
   onClick: (day: string) => void;
 };
-
-function initials(name: string) {
-  return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "X";
-}
 
 const MAX_AVATARS = 3;
 

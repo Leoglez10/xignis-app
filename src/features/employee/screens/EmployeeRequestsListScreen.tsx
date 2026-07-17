@@ -1,5 +1,6 @@
 import { ChevronLeft, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { leaveTypeConfig, statusTone } from "../../leave-requests/config";
 import {
@@ -9,6 +10,8 @@ import {
   statusLabel,
 } from "../../leave-requests/services/leaveRequestService";
 import type { LeaveRequest, LeaveStatus } from "../../../lib/database.types";
+import { subscribeToLeaveRequests } from "../../leave-requests/services/leaveRequestProgressService";
+import { Button } from "../../../components/ui/Button";
 
 type StatusFilter = "all" | LeaveStatus;
 
@@ -24,25 +27,20 @@ const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
 
 export function EmployeeRequestsListScreen() {
   const navigate = useNavigate();
-  const [requests, setRequests] = useState<LeaveRequest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await listMyLeaveRequests();
-        setRequests(data);
-        setError(null);
-      } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : "No se pudieron cargar tus solicitudes.");
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, []);
+  const requestsQuery = useInfiniteQuery<LeaveRequest[]>({
+    initialPageParam: 0,
+    queryKey: ["leave-requests", "mine", "infinite"],
+    queryFn: ({ pageParam }) => listMyLeaveRequests({ limit: 30, offset: pageParam as number }),
+    getNextPageParam: (lastPage, pages) => lastPage.length === 30 ? pages.length * 30 : undefined,
+  });
+  useEffect(() => subscribeToLeaveRequests({}, () => { void queryClient.invalidateQueries({ queryKey: ["leave-requests", "mine"] }); }), [queryClient]);
+  const requests = requestsQuery.data?.pages.flat() ?? [];
+  const isLoading = requestsQuery.isLoading;
+  const error = requestsQuery.error instanceof Error ? requestsQuery.error.message : null;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -55,7 +53,7 @@ export function EmployeeRequestsListScreen() {
 
   return (
     <main className="mobile-screen" id="main-content" tabIndex={-1}>
-      <section className="flex min-h-dvh flex-col px-5 pb-7 pt-[calc(1rem+env(safe-area-inset-top))] lg:px-8">
+      <section className="flex min-h-dvh flex-col px-5 pb-28 pt-[calc(1rem+env(safe-area-inset-top))] lg:px-8">
         <header className="animate-fade-up mb-5 flex items-center gap-3">
           <button
             aria-label="Volver"
@@ -66,7 +64,7 @@ export function EmployeeRequestsListScreen() {
             <ChevronLeft aria-hidden="true" className="size-5" />
           </button>
           <div className="min-w-0">
-            <h1 className="truncate text-2xl font-black">Mis solicitudes</h1>
+            <h2 className="truncate text-2xl font-black">Mis solicitudes</h2>
             <p className="text-sm text-[var(--color-muted)]">
               {isLoading ? "Cargando…" : `${filtered.length} resultado${filtered.length === 1 ? "" : "s"}`}
             </p>
@@ -144,6 +142,7 @@ export function EmployeeRequestsListScreen() {
             })
           )}
         </ul>
+        {requestsQuery.hasNextPage ? <Button className="mt-4 w-full" loading={requestsQuery.isFetchingNextPage} variant="secondary" onClick={() => void requestsQuery.fetchNextPage()}>Ver más solicitudes</Button> : null}
       </section>
     </main>
   );

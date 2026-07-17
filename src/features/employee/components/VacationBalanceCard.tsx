@@ -36,6 +36,7 @@ export function VacationBalanceCard({ balance }: VacationBalanceCardProps) {
       <p className="mt-2 text-xs text-[var(--color-muted)]">
         {balance.taken} tomados en {balance.year}
       </p>
+      {balance.pending > 0 ? <p className="mt-1 text-xs font-bold text-amber-800">{balance.pending} {balance.pending === 1 ? "día pendiente" : "días pendientes"} de aprobación</p> : null}
     </article>
   );
 }

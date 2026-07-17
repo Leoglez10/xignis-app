@@ -1,3 +1,4 @@
+import { initials } from "../../../lib/avatar";
 import { TrendingUp } from "lucide-react";
 import type { LeaveRequestWithEmployee } from "../../leave-requests/services/leaveRequestService";
 import type { Profile } from "../../../lib/database.types";
@@ -7,10 +8,6 @@ type TopRequestersProps = {
   requests: LeaveRequestWithEmployee[];
   months?: number;
 };
-
-function initials(name: string) {
-  return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "?";
-}
 
 export function TopRequesters({ members, requests, months = 6 }: TopRequestersProps) {
   if (members.length === 0) return null;

@@ -1,3 +1,4 @@
+import { initials } from "../../../lib/avatar";
 import { ChevronRight } from "lucide-react";
 import { memo } from "react";
 import { formatDateRangeEs } from "../../../lib/date";
@@ -15,10 +16,6 @@ type PendingRequestCardProps = {
   request: LeaveRequestWithEmployee;
   selected?: boolean;
 };
-
-function initials(name: string) {
-  return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "X";
-}
 
 export const PendingRequestCard = memo(function PendingRequestCard({
   mount = false,

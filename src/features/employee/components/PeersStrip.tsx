@@ -1,3 +1,4 @@
+import { initials } from "../../../lib/avatar";
 import { CalendarOff } from "lucide-react";
 import type { Profile } from "../../../lib/database.types";
 import type { LeaveRequest } from "../../../lib/database.types";
@@ -6,16 +7,6 @@ type PeersStripProps = {
   peers: Profile[];
   absences: LeaveRequest[];
 };
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join("")
-    .toUpperCase() || "?";
-}
 
 export function PeersStrip({ peers, absences }: PeersStripProps) {
   if (peers.length === 0) return null;

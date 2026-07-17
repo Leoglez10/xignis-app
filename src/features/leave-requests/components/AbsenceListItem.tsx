@@ -1,15 +1,12 @@
+import { initials } from "../../../lib/avatar";
 import { memo } from "react";
 import { formatDateRangeEs } from "../../../lib/date";
-import { leaveTypeConfig } from "../../leave-requests/config";
-import { leaveTypeLabel, type LeaveRequestWithEmployee } from "../../leave-requests/services/leaveRequestService";
+import { leaveTypeConfig } from "../config";
+import { leaveTypeLabel, type LeaveRequestWithEmployee } from "../services/leaveRequestService";
 
 type AbsenceListItemProps = {
   absence: LeaveRequestWithEmployee;
 };
-
-function initials(name: string) {
-  return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "X";
-}
 
 export const AbsenceListItem = memo(function AbsenceListItem({ absence }: AbsenceListItemProps) {
   const config = leaveTypeConfig[absence.leave_type];

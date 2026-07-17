@@ -1,33 +1,32 @@
-import { ArrowLeft, Check, Lock, LogOut } from "lucide-react";
+import { ArrowLeft, Check, History, Lock, LogOut, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { Avatar } from "../../../components/ui/Avatar";
+import { ProfileSheet } from "../components/ProfileSheet";
+import { useProfileSheet } from "../hooks/useProfileSheet";
 import { Button } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/TextInput";
+import { EmploymentTimeline } from "../components/EmploymentTimeline";
 import { logout, routeForRole } from "../../auth/services/authService";
 import { useAuth } from "../../session/AuthContext";
-import { getCurrentEmail, roleLabel, updateMyProfile } from "../services/profileService";
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
+import { getCurrentEmail, listEmploymentEvents, roleLabel, updateMyProfile } from "../services/profileService";
+import type { EmploymentEvent } from "../../../lib/database.types";
+import { useConfirm } from "../../../components/ui/ConfirmDialog";
 
 export function ProfileScreen() {
   const navigate = useNavigate();
   const { profile, refreshProfile } = useAuth();
-  const [email, setEmail] = useState<string | null>(null);
   const [fullName, setFullName] = useState(profile?.full_name ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
-
-  useEffect(() => {
-    getCurrentEmail().then(setEmail).catch(() => setEmail(null));
-  }, []);
+  const confirm = useConfirm();
+  const emailQuery = useQuery<string | null>({ queryKey: ["profile-email", profile?.id], queryFn: getCurrentEmail });
+  const eventsQuery = useQuery<EmploymentEvent[]>({ enabled: Boolean(profile), queryKey: ["employment-events", profile?.id], queryFn: () => listEmploymentEvents(profile!.id) });
+  const email = emailQuery.data ?? null;
+  const events = eventsQuery.data ?? [];
+  const sheetQuery = useProfileSheet(profile?.id);
 
   useEffect(() => {
     if (profile) setFullName(profile.full_name);
@@ -61,6 +60,8 @@ export function ProfileScreen() {
   }
 
   async function handleLogout() {
+    const accepted = await confirm({ confirmLabel: "Cerrar sesión", description: "Tendrás que identificarte nuevamente para entrar.", title: "¿Cerrar sesión?" });
+    if (!accepted) return;
     await logout();
     navigate("/login");
   }
@@ -89,20 +90,29 @@ export function ProfileScreen() {
 
         <section className="animate-fade-up rounded-[28px] bg-white p-6 ring-1 ring-slate-200">
           <div className="flex items-center gap-4">
-            <div
-              aria-hidden="true"
-              className="grid size-16 place-items-center rounded-3xl bg-[var(--color-primary)] text-2xl font-black text-[var(--color-primary-contrast)]"
-            >
-              {initials(profile.full_name) || "?"}
-            </div>
+            <Avatar
+              className="bg-[var(--color-primary)] text-2xl text-[var(--color-primary-contrast)]"
+              name={profile.full_name}
+              shape="rounded-3xl"
+              size="size-16"
+              src={profile.avatar_url}
+            />
             <div className="min-w-0">
-              <h1 className="truncate text-2xl font-black">{profile.full_name}</h1>
+              <h2 className="truncate text-2xl font-black">{profile.full_name}</h2>
               <span className="mt-1 inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-[var(--color-muted)]">
                 {roleLabel[profile.role]}
               </span>
             </div>
           </div>
         </section>
+
+        <button className="press mt-4 flex min-h-14 w-full items-center gap-3 rounded-[22px] bg-white px-5 text-left font-black ring-1 ring-slate-200" type="button" onClick={() => navigate("/settings")}><Settings aria-hidden="true" className="size-5" />Configuración</button>
+
+        {sheetQuery.data?.sheet ? (
+          <div className="mt-4">
+            <ProfileSheet defs={sheetQuery.data.defs} email={email} sheet={sheetQuery.data.sheet} />
+          </div>
+        ) : null}
 
         <section className="animate-fade-up stagger mt-4 space-y-4 rounded-[28px] bg-white p-6 ring-1 ring-slate-200">
           <TextInput
@@ -150,6 +160,16 @@ export function ProfileScreen() {
             {isSaving ? "Guardando." : savedAt && !dirty ? "Guardado" : "Guardar cambios"}
           </Button>
         </section>
+
+        {events.length > 0 ? (
+          <section className="animate-fade-up mt-4 space-y-4 rounded-[28px] bg-white p-6 ring-1 ring-slate-200">
+            <div className="mb-1 flex items-center gap-2">
+              <History aria-hidden="true" className="size-5 text-[var(--color-muted)]" />
+              <h2 className="text-lg font-black">Historial laboral</h2>
+            </div>
+            <EmploymentTimeline events={events} />
+          </section>
+        ) : null}
       </div>
     </main>
   );

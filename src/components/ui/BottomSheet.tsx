@@ -21,8 +21,8 @@ export function BottomSheet({ children, isOpen, onClose, title }: BottomSheetPro
     >
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-50 bg-slate-950/35" />
-        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[90dvh] w-full max-w-full flex-col overflow-hidden rounded-t-[28px] bg-white px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 shadow-2xl outline-none sm:mb-4 sm:max-w-md sm:rounded-[28px]">
-          <Drawer.Handle className="mx-auto mb-4 mt-1 h-1.5 w-11 shrink-0 rounded-full bg-slate-300" />
+        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[90dvh] w-full max-w-full flex-col overflow-hidden rounded-t-[28px] bg-[var(--card-bg)] px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:mb-4 sm:max-w-md sm:rounded-[28px] lg:bottom-auto lg:inset-y-0 lg:my-auto lg:h-fit lg:max-h-[85dvh] lg:max-w-lg lg:rounded-[28px] lg:pb-5">
+          <Drawer.Handle className="mx-auto mb-4 mt-1 h-1.5 w-11 shrink-0 rounded-full bg-slate-300 lg:hidden" />
           <div className="mb-5 flex items-center justify-between">
             <Drawer.Title className="text-xl font-bold text-[var(--color-text)]">{title}</Drawer.Title>
             <button

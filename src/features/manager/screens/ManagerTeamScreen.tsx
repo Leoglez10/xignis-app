@@ -1,52 +1,32 @@
-import { ArrowLeft, ChevronRight, ExternalLink, Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { initials } from "../../../lib/avatar";
+import { ArrowLeft, ChevronRight, Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { BottomSheet } from "../../../components/ui/BottomSheet";
 import { todayIso } from "../../../lib/date";
-import type { LeaveRequest, Profile } from "../../../lib/database.types";
-import {
-  formatDateRange,
-  leaveTypeLabel,
-  listEmployeeLeaveRequests,
-  listTeamAbsencesInRange,
-  statusLabel,
-} from "../../leave-requests/services/leaveRequestService";
+import { listTeamAbsencesInRange } from "../../leave-requests/services/leaveRequestService";
 import { listMyTeam } from "../../profiles/services/profileService";
-import { statusTone } from "../../leave-requests/config";
-import { ManagerBottomNav } from "../components/ManagerBottomNav";
-
-function initials(name: string) {
-  return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "X";
-}
+import { ManagerShell } from "../components/managerNav";
 
 type StatusFilter = "all" | "absent" | "available";
 type SortKey = "name" | "dept";
 
 export function ManagerTeamScreen() {
   const navigate = useNavigate();
-  const [team, setTeam] = useState<Profile[]>([]);
-  const [absentIds, setAbsentIds] = useState<Set<string>>(new Set());
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selected, setSelected] = useState<Profile | null>(null);
-  const [history, setHistory] = useState<LeaveRequest[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-
   const [query, setQuery] = useState("");
   const [dept, setDept] = useState("all");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [sort, setSort] = useState<SortKey>("name");
 
-  useEffect(() => {
+  const teamQuery = useQuery({ queryKey: ["team", "manager", todayIso()], queryFn: async () => {
     const today = todayIso();
-    Promise.all([listMyTeam(), listTeamAbsencesInRange(today, today)])
-      .then(([members, absences]) => {
-        setTeam(members);
-        setAbsentIds(new Set(absences.map((a) => a.employee_id).filter(Boolean) as string[]));
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : "No se pudo cargar el equipo."))
-      .finally(() => setIsLoading(false));
-  }, []);
+    const [members, absences] = await Promise.all([listMyTeam(), listTeamAbsencesInRange(today, today)]);
+    return { absentIds: new Set(absences.map((a) => a.employee_id).filter(Boolean) as string[]), members };
+  } });
+  const team = teamQuery.data?.members ?? [];
+  const absentIds = teamQuery.data?.absentIds ?? new Set<string>();
+  const error = teamQuery.error instanceof Error ? teamQuery.error.message : null;
+  const isLoading = teamQuery.isLoading;
 
   const departments = useMemo(
     () => [...new Set(team.map((m) => m.job_title).filter((t): t is string => Boolean(t)))].sort(),
@@ -68,23 +48,11 @@ export function ManagerTeamScreen() {
       );
   }, [team, query, dept, status, sort, absentIds]);
 
-  async function openMember(member: Profile) {
-    setSelected(member);
-    setHistoryLoading(true);
-    try {
-      setHistory(await listEmployeeLeaveRequests(member.id));
-    } catch {
-      setHistory([]);
-    } finally {
-      setHistoryLoading(false);
-    }
-  }
-
   const selectCls =
     "min-w-0 flex-1 rounded-full border-0 bg-white px-3 py-2 text-xs font-black text-[var(--color-text)] ring-1 ring-slate-200";
 
   return (
-    <main className="min-h-dvh bg-slate-50 text-[var(--color-text)]" id="main-content" tabIndex={-1}>
+    <ManagerShell>
       <div className="mx-auto w-full max-w-3xl px-4 pb-24 pt-[calc(1.25rem+env(safe-area-inset-top))] md:px-8">
         <header className="animate-fade-up mb-5 flex items-center gap-3">
           <button
@@ -97,7 +65,7 @@ export function ManagerTeamScreen() {
           </button>
           <div>
             <p className="text-sm font-black text-[var(--color-muted)]">Jefe</p>
-            <h1 className="text-2xl font-black md:text-3xl">Mi equipo</h1>
+            <h2 className="text-2xl font-black md:text-3xl">Mi equipo</h2>
           </div>
         </header>
 
@@ -158,7 +126,7 @@ export function ManagerTeamScreen() {
                   <button
                     className="press flex w-full items-center gap-4 rounded-[20px] bg-white p-4 text-left shadow-sm ring-1 ring-slate-200"
                     type="button"
-                    onClick={() => openMember(member)}
+                    onClick={() => navigate(`/manager/member/${member.id}`)}
                   >
                     {member.avatar_url ? (
                       <img
@@ -192,48 +160,6 @@ export function ManagerTeamScreen() {
           </ul>
         )}
       </div>
-
-      <BottomSheet
-        isOpen={Boolean(selected)}
-        title={selected ? selected.full_name : "Historial"}
-        onClose={() => setSelected(null)}
-      >
-        {historyLoading ? (
-          <p className="py-6 text-center text-sm font-semibold text-[var(--color-muted)]">Cargando historial…</p>
-        ) : (
-          <ul className="stagger space-y-2">
-            {history.length === 0 ? (
-              <li className="rounded-2xl bg-[var(--color-surface)] p-5 text-center text-sm font-semibold text-[var(--color-muted)]">
-                Sin solicitudes registradas.
-              </li>
-            ) : null}
-            {history.slice(0, 4).map((req) => (
-              <li className="rounded-2xl bg-[var(--color-surface)] p-4" key={req.id}>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-black">{leaveTypeLabel[req.leave_type]}</span>
-                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-black ${statusTone[req.status]}`}>
-                    {statusLabel[req.status]}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-[var(--color-muted)]">{formatDateRange(req)}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {selected ? (
-          <button
-            className="press mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-3 text-sm font-black text-white"
-            type="button"
-            onClick={() => selected && navigate(`/manager/member/${selected.id}`)}
-          >
-            <ExternalLink aria-hidden="true" className="size-4" />
-            Ver historial completo
-          </button>
-        ) : null}
-      </BottomSheet>
-
-      <ManagerBottomNav />
-    </main>
+    </ManagerShell>
   );
 }

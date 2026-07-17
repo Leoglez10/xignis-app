@@ -1,6 +1,8 @@
 import { Check, X } from "lucide-react";
 import { useState } from "react";
 import { bulkReviewLeaveRequests } from "../../leave-requests/services/leaveRequestService";
+import { useConfirm } from "../../../components/ui/ConfirmDialog";
+import { useToast } from "../../../components/ui/Toast";
 
 type BulkActionsBarProps = {
   ids: string[];
@@ -11,15 +13,20 @@ type BulkActionsBarProps = {
 export function BulkActionsBar({ ids, onComplete, reviewerRole }: BulkActionsBarProps) {
   const [busy, setBusy] = useState<"approve" | "reject" | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const confirm = useConfirm();
+  const toast = useToast();
 
   if (ids.length === 0) return null;
 
   async function handle(decision: "approved" | "rejected") {
+    const accepted = await confirm({ confirmLabel: decision === "approved" ? "Aprobar todas" : "Rechazar todas", description: `Se procesarán ${ids.length} solicitudes seleccionadas.`, destructive: decision === "rejected", title: "Confirmar acción en lote" });
+    if (!accepted) return;
     setBusy(decision === "approved" ? "approve" : "reject");
     setFeedback(null);
     try {
       const res = await bulkReviewLeaveRequests({ decision, ids, reviewerRole });
       setFeedback(`${res.ok} procesadas${res.errors.length > 0 ? ` · ${res.errors.length} con error` : ""}`);
+      toast({ message: `${res.ok} solicitudes procesadas${res.errors.length ? `; ${res.errors.length} con error.` : "."}`, tone: res.errors.length ? "error" : "success" });
       onComplete();
     } catch (e) {
       setFeedback(e instanceof Error ? e.message : "Error al procesar el lote.");

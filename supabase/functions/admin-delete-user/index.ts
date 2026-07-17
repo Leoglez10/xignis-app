@@ -7,8 +7,16 @@ const cors = {
 };
 
 const PROTECTED_EMAILS = new Set<string>([
-  // Bloquea borrar cuentas del sistema si fuera necesario.
-  // Ajusta desde el dashboard de Supabase si quieres añadir más.
+  // Bloquea dar de baja cuentas del sistema si fuera necesario.
+]);
+
+const SEPARATION_TYPES = new Set([
+  "voluntary",
+  "involuntary",
+  "end_contract",
+  "relocation",
+  "retirement",
+  "other",
 ]);
 
 function json(body: unknown, status = 200) {
@@ -18,6 +26,9 @@ function json(body: unknown, status = 200) {
   });
 }
 
+// Baja de empleado = SOFT DELETE: conserva perfil, solicitudes y notificaciones
+// para historial; marca employment_status='terminated' y banea el auth user
+// para que no pueda volver a entrar.
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -36,7 +47,7 @@ Deno.serve(async (req) => {
   const { data: callerProfile } = await admin
     .from("profiles").select("role").eq("id", userData.user.id).single();
   if (!callerProfile || !["hr_admin", "admin"].includes(callerProfile.role)) {
-    return json({ error: "Solo RH o admin pueden eliminar empleados." }, 403);
+    return json({ error: "Solo RH o admin pueden dar de baja empleados." }, 403);
   }
 
   let payload: any;
@@ -48,34 +59,54 @@ Deno.serve(async (req) => {
 
   const targetId = String(payload.user_id ?? "").trim();
   const confirmation = String(payload.confirmation ?? "").trim();
+  const separationType = String(payload.separation_type ?? "").trim();
+  const terminationReason = String(payload.termination_reason ?? "").trim();
   if (!targetId) return json({ error: "Falta el ID del empleado." }, 400);
+  if (!SEPARATION_TYPES.has(separationType)) {
+    return json({ error: "Tipo de separación inválido." }, 400);
+  }
 
   if (targetId === userData.user.id) {
-    return json({ error: "No puedes eliminar tu propia cuenta." }, 400);
+    return json({ error: "No puedes dar de baja tu propia cuenta." }, 400);
   }
 
   const { data: targetProfile, error: targetErr } = await admin
-    .from("profiles").select("id, full_name, role, email:auth.users(email)").eq("id", targetId).single();
+    .from("profiles").select("id, full_name, role").eq("id", targetId).single();
   if (targetErr || !targetProfile) return json({ error: "Empleado no encontrado." }, 404);
 
-  const targetEmail = (targetProfile as { email?: { email?: string } | null }).email?.email;
+  const { data: targetUser } = await admin.auth.admin.getUserById(targetId);
+  const targetEmail = targetUser?.user?.email?.toLowerCase();
   if (targetEmail && PROTECTED_EMAILS.has(targetEmail)) {
-    return json({ error: "Esta cuenta no se puede eliminar." }, 400);
+    return json({ error: "Esta cuenta no se puede dar de baja." }, 400);
   }
 
   if (confirmation !== targetProfile.full_name) {
     return json({ error: "El nombre de confirmación no coincide." }, 400);
   }
 
-  // Limpia FK NO ACTION antes de borrar para que la transacción no falle.
-  await admin.from("profiles").update({ manager_id: null }).eq("manager_id", targetId);
-  await admin.from("leave_requests").update({ reviewed_by: null }).eq("reviewed_by", targetId);
-  await admin.from("leave_request_approvals").update({ reviewer_id: null }).eq("reviewer_id", targetId);
+  // Sus reportes directos quedan sin jefe (van directo a RH en nuevas solicitudes).
+  const { error: mgrErr } = await admin.from("profiles").update({ manager_id: null }).eq("manager_id", targetId);
+  if (mgrErr) return json({ error: mgrErr.message }, 400);
 
-  // auth.users.id -> profiles.id es CASCADE; perfiles -> leave_requests (employee_id) y
-  // -> notifications (user_id) son CASCADE. Borra el auth user para arrastrar todo.
-  const { error: deleteErr } = await admin.auth.admin.deleteUser(targetId);
-  if (deleteErr) return json({ error: deleteErr.message }, 400);
+  // Soft-delete: estado terminado + razón; historial intacto.
+  const { error: updateErr } = await admin
+    .from("profiles")
+    .update({
+      employment_status: "terminated",
+      terminated_at: new Date().toISOString(),
+      termination_reason: terminationReason || null,
+      separation_type: separationType,
+      manager_id: null,
+    })
+    .eq("id", targetId);
+  if (updateErr) return json({ error: updateErr.message }, 400);
+
+  // Bloquea el acceso: ban de auth (100 años) + revoca sesiones activas.
+  const { error: banErr } = await admin.auth.admin.updateUserById(targetId, {
+    ban_duration: "876000h",
+  });
+  if (banErr) return json({ error: banErr.message }, 400);
+  await admin.auth.admin.signOut(targetId, "global").catch(() => {});
 
   return json({ ok: true, user_id: targetId });
 });

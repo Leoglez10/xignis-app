@@ -143,7 +143,6 @@ Luego correr en Xcode con simulador o dispositivo real.
 - `docs/design.md`: UI kit y pantallas iniciales.
 - `docs/screens.md`: mapa completo de pantallas.
 - `docs/flows.md`: flujos empleado, manager y RH.
-- `docs/database.md`: modelo Supabase propuesto.
 - `docs/rules.md`: reglas de negocio.
 - `docs/api.md`: contratos de servicios.
 - `docs/tech.md`: decisiones tecnicas.

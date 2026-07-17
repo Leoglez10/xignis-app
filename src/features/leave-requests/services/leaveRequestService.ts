@@ -14,9 +14,11 @@ import { getCurrentProfile } from "../../profiles/services/profileService";
 export { leaveTypeLabel } from "../config";
 
 export type LeaveRequestDraft = {
+  coverageContact?: string;
   endDate: string;
   endTime?: string;
   leaveType: LeaveType;
+  paid?: boolean;
   pendingTasks?: string;
   scheduleType: ScheduleType;
   startDate: string;
@@ -24,7 +26,7 @@ export type LeaveRequestDraft = {
 };
 
 export type LeaveRequestWithEmployee = LeaveRequest & {
-  employee?: Pick<Profile, "full_name" | "job_title"> | null;
+  employee?: (Pick<Profile, "avatar_url" | "full_name" | "job_title"> & { department_id?: string | null }) | null;
 };
 
 export const statusLabel: Record<LeaveStatus, string> = {
@@ -57,6 +59,7 @@ async function getCurrentUserId() {
 
 export type VacationBalance = {
   available: number;
+  pending: number;
   quota: number;
   taken: number;
   year: number;
@@ -79,23 +82,30 @@ export async function getMyVacationBalance(): Promise<VacationBalance> {
     .filter(
       (r) =>
         r.leave_type === "vacation" &&
+        r.paid !== false && // sin goce no descuenta saldo de vacaciones
         r.status === "approved" &&
         r.start_date <= yearEnd &&
         r.end_date >= yearStart,
     )
     .reduce((sum, r) => sum + diffDaysInclusive(r.start_date, r.end_date), 0);
+  const pending = (requests ?? []).filter((r) => r.leave_type === "vacation" && r.paid !== false && ["pending_manager", "approved_by_manager", "pending_hr"].includes(r.status)).reduce((sum, r) => sum + diffDaysInclusive(r.start_date, r.end_date), 0);
   const quota = profile?.annual_vacation_days ?? 0;
-  return { available: Math.max(0, quota - taken), quota, taken, year };
+  return { available: Math.max(0, quota - taken), pending, quota, taken, year };
 }
 
-export async function listMyLeaveRequests() {
+type PageOptions = { limit: number; offset?: number };
+function page(options: PageOptions) { const offset = options.offset ?? 0; return { from: offset, to: offset + options.limit - 1 }; }
+
+export async function listMyLeaveRequests(options?: PageOptions) {
   const supabase = getSupabaseClient();
   const userId = await getCurrentUserId();
-  const { data, error } = await supabase
+  let query = supabase
     .from("leave_requests")
     .select("*")
     .eq("employee_id", userId)
     .order("created_at", { ascending: false });
+  if (options) query = query.range(page(options).from, page(options).to);
+  const { data, error } = await query;
 
   if (error) throw error;
   return data;
@@ -125,12 +135,12 @@ export async function getLeaveRequestWithEmployee(id: string) {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("leave_requests")
-    .select("*, employee:profiles!leave_requests_employee_id_fkey(full_name, job_title)")
-    .eq("id", id)
-    .single();
+.select("*, employee:profiles!leave_requests_employee_id_fkey(avatar_url, full_name, job_title)")
+      .eq("id", id)
+      .single();
 
   if (error) throw error;
-  return data as LeaveRequestWithEmployee;
+  return data as unknown as LeaveRequestWithEmployee;
 }
 
 export async function createLeaveRequest(draft: LeaveRequestDraft) {
@@ -139,10 +149,12 @@ export async function createLeaveRequest(draft: LeaveRequestDraft) {
   const { data, error } = await supabase
     .from("leave_requests")
     .insert({
+      coverage_contact: draft.coverageContact?.trim() || null,
       employee_id: userId,
       end_date: draft.endDate,
       end_time: draft.scheduleType === "time_range" ? draft.endTime : null,
       leave_type: draft.leaveType,
+      paid: draft.paid ?? true,
       pending_tasks: draft.pendingTasks || null,
       schedule_type: draft.scheduleType,
       start_date: draft.startDate,
@@ -175,7 +187,7 @@ export async function listAbsencesForEmployeesToday(employeeIds: string[]) {
     .lte("start_date", today)
     .gte("end_date", today);
   if (error) throw error;
-  return (data ?? []) as LeaveRequestWithEmployee[];
+  return (data ?? []) as unknown as LeaveRequestWithEmployee[];
 }
 
 export async function listManagerLeaveRequests() {
@@ -187,7 +199,7 @@ export async function listManagerLeaveRequests() {
     .order("created_at", { ascending: true });
 
   if (error) throw error;
-  return (data ?? []) as LeaveRequestWithEmployee[];
+  return (data ?? []) as unknown as LeaveRequestWithEmployee[];
 }
 
 export async function listTeamUpcomingAbsences() {
@@ -201,7 +213,7 @@ export async function listTeamUpcomingAbsences() {
     .order("start_date", { ascending: true });
 
   if (error) throw error;
-  return (data ?? []) as LeaveRequestWithEmployee[];
+  return (data ?? []) as unknown as LeaveRequestWithEmployee[];
 }
 
 /** Ausencias aprobadas que solapan un rango [startISO, endISO] inclusive.
@@ -217,7 +229,7 @@ export async function listTeamAbsencesInRange(startISO: string, endISO: string) 
     .order("start_date", { ascending: true });
 
   if (error) throw error;
-  return (data ?? []) as LeaveRequestWithEmployee[];
+  return (data ?? []) as unknown as LeaveRequestWithEmployee[];
 }
 
 /** Tiempo promedio de aprobación (en horas) del manager actual sobre
@@ -252,16 +264,18 @@ export async function getManagerApprovalSlaHours(daysBack = 30) {
   return { avgHours, count: rows.length };
 }
 
-export async function listHrLeaveRequests() {
+export async function listHrLeaveRequests(options?: PageOptions) {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("leave_requests")
-    .select("*, employee:profiles!leave_requests_employee_id_fkey(full_name, job_title)")
+    .select("*, employee:profiles!leave_requests_employee_id_fkey(full_name, job_title, department_id)")
     .in("status", ["pending_hr", "approved_by_manager", "approved", "rejected"])
     .order("created_at", { ascending: false });
+  if (options) query = query.range(page(options).from, page(options).to);
+  const { data, error } = await query;
 
   if (error) throw error;
-  return (data ?? []) as LeaveRequestWithEmployee[];
+  return (data ?? []) as unknown as LeaveRequestWithEmployee[];
 }
 
 export async function reviewLeaveRequest(input: {

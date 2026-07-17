@@ -1,4 +1,4 @@
-import { BarChart3, FileText, Settings, UserPlus } from "lucide-react";
+import { BarChart3, FileText, Inbox, SlidersHorizontal, UserPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export function AdminQuickActions() {
@@ -7,7 +7,8 @@ export function AdminQuickActions() {
     { icon: UserPlus, label: "Invitar", to: "/admin/employees" },
     { icon: BarChart3, label: "Reportes", to: "/admin/reports" },
     { icon: FileText, label: "Reglas", to: "/admin/rules" },
-    { icon: Settings, label: "Ajustes", to: "/admin/rules" },
+    { icon: Inbox, label: "Solicitudes", to: "/admin/requests" },
+    { icon: SlidersHorizontal, label: "Campos", to: "/admin/fields" },
   ];
   return (
     <section

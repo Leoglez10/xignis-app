@@ -28,6 +28,10 @@ tsconfig.tsbuildinfo
 
 # Logs
 *.log
+playwright-report/
+test-results/
+coverage/
+.atl/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

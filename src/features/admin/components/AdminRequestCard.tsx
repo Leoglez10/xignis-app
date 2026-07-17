@@ -1,3 +1,4 @@
+import { initials } from "../../../lib/avatar";
 import { UserCheck } from "lucide-react";
 import { memo } from "react";
 import { ChevronRight } from "lucide-react";
@@ -9,10 +10,6 @@ type AdminRequestCardProps = {
   onClick: () => void;
   request: LeaveRequestWithEmployee;
 };
-
-function initials(name: string) {
-  return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "X";
-}
 
 export const AdminRequestCard = memo(function AdminRequestCard({ onClick, request }: AdminRequestCardProps) {
   const config = leaveTypeConfig[request.leave_type];

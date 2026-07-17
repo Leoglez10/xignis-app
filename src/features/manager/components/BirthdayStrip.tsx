@@ -1,13 +1,10 @@
+import { initials } from "../../../lib/avatar";
 import { Cake } from "lucide-react";
 import type { Profile } from "../../../lib/database.types";
 
 type BirthdayStripProps = {
   members: Profile[];
 };
-
-function initials(name: string) {
-  return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "?";
-}
 
 function upcomingBirthday(birthISO: string, now: Date = new Date()): { date: Date; days: number } | null {
   const b = new Date(birthISO);

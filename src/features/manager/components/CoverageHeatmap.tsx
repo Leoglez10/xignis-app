@@ -1,3 +1,4 @@
+import { initials } from "../../../lib/avatar";
 import { eachDayIso, todayIso } from "../../../lib/date";
 import type { LeaveRequestWithEmployee } from "../../leave-requests/services/leaveRequestService";
 import type { Profile } from "../../../lib/database.types";
@@ -7,10 +8,6 @@ type CoverageHeatmapProps = {
   absences: LeaveRequestWithEmployee[];
   days?: number;
 };
-
-function initials(name: string) {
-  return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "?";
-}
 
 const WEEKDAY = ["L", "M", "X", "J", "V", "S", "D"];
 

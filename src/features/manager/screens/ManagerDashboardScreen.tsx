@@ -1,125 +1,32 @@
-import { AlertTriangle, CalendarDays, CheckCircle2, UserCircle, Users } from "lucide-react";
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { formatDateRangeEs, eachDayIso, overlapsToday, startsWithinDays, todayIso } from "../../../lib/date";
+import { AlertTriangle, ArrowRight, CalendarDays, ChevronRight, Inbox, UserX, Users } from "lucide-react";
+import { useMemo } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { formatDateRangeEs, eachDayIso, overlapsToday, startsWithinDays } from "../../../lib/date";
 import { roleLabel } from "../../profiles/services/profileService";
-import { NotificationBell } from "../../notifications/NotificationBell";
+import { ManagerShell } from "../components/managerNav";
 import { useAuth } from "../../session/AuthContext";
-import {
-  getManagerApprovalSlaHours,
-  listManagerLeaveRequests,
-  listTeamUpcomingAbsences,
-  type LeaveRequestWithEmployee,
-} from "../../leave-requests/services/leaveRequestService";
-import { listMyTeam } from "../../profiles/services/profileService";
-import type { Profile } from "../../../lib/database.types";
+import { leaveTypeConfig } from "../../leave-requests/config";
 import { STATS_CONFIG, UPCOMING_WINDOW_DAYS } from "../dashboard.config";
 import { useDashboardPrefs } from "../useDashboardPrefs";
 import { AgendaItem } from "../components/AgendaItem";
-import { AgingBadge } from "../components/AgingBadge";
+import { AgingBadge } from "../../../components/ui/AgingBadge";
 import { BirthdayStrip } from "../components/BirthdayStrip";
-import { BulkActionsBar } from "../components/BulkActionsBar";
+import { usePreferences } from "../../settings/PreferencesContext";
 import { CoverageHeatmap } from "../components/CoverageHeatmap";
-import { ManagerBottomNav } from "../components/ManagerBottomNav";
 import { DashboardSkeleton } from "../components/DashboardSkeleton";
-import { PendingRequestCard } from "../components/PendingRequestCard";
 import { RefreshBoundary } from "../components/RefreshBoundary";
 import { SlaCard } from "../components/SlaCard";
 import { StatCard } from "../components/StatCard";
 import { TeamMemberRow } from "../components/TeamMemberRow";
-import { TopRequesters } from "../components/TopRequesters";
-
-type SlaInfo = { avgHours: number | null; count: number };
-
-type DashboardState = {
-  absences: LeaveRequestWithEmployee[];
-  error: string | null;
-  isLoading: boolean;
-  pending: LeaveRequestWithEmployee[];
-  sla: SlaInfo | null;
-  team: Profile[];
-};
-
-type DashboardAction =
-  | { type: "loading" }
-  | {
-      absences: LeaveRequestWithEmployee[];
-      pending: LeaveRequestWithEmployee[];
-      sla: SlaInfo | null;
-      team: Profile[];
-      type: "loaded";
-    }
-  | { message: string; type: "error" };
-
-const INITIAL_STATE: DashboardState = {
-  absences: [],
-  error: null,
-  isLoading: true,
-  pending: [],
-  sla: null,
-  team: [],
-};
-
-function reducer(state: DashboardState, action: DashboardAction): DashboardState {
-  switch (action.type) {
-    case "loading":
-      return { ...state, isLoading: true };
-    case "loaded":
-      return {
-        absences: action.absences,
-        error: null,
-        isLoading: false,
-        pending: action.pending,
-        sla: action.sla,
-        team: action.team,
-      };
-    case "error":
-      return { ...state, error: action.message, isLoading: false };
-    default:
-      return state;
-  }
-}
+import { useManagerPendingRequests } from "../hooks/useManagerPendingRequests";
 
 export function ManagerDashboardScreen() {
+  const { preferences } = usePreferences();
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { prefs } = useDashboardPrefs();
 
-  const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const isMounted = useRef(true);
-  const mountedOnce = useRef(false);
-  const todayRef = useRef(todayIso());
-
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  const loadAll = useCallback(async () => {
-    dispatch({ type: "loading" });
-    try {
-      const [pending, upcoming, members, sla] = await Promise.all([
-        listManagerLeaveRequests(),
-        listTeamUpcomingAbsences(),
-        listMyTeam().catch(() => [] as Profile[]),
-        getManagerApprovalSlaHours(30).catch(() => null),
-      ]);
-      if (!isMounted.current) return;
-      dispatch({ absences: upcoming, pending, sla, team: members, type: "loaded" });
-    } catch (loadError) {
-      if (!isMounted.current) return;
-      dispatch({ message: loadError instanceof Error ? loadError.message : "No se pudieron cargar los datos.", type: "error" });
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadAll();
-  }, [loadAll]);
-
-  const { absences, error, isLoading, pending, sla, team } = state;
+  const { absences, error, isLoading, pending, refetch, sla, team } = useManagerPendingRequests();
 
   const absentEmployeeIds = useMemo(
     () => new Set(absences.filter((a) => overlapsToday(a.start_date, a.end_date)).map((a) => a.employee_id)),
@@ -155,6 +62,10 @@ export function ManagerDashboardScreen() {
     return pending.filter((p) => new Date(p.created_at).getTime() < cutoff).length;
   }, [pending]);
 
+  // Top-3 most urgent pending requests. The service returns pending ordered by
+  // created_at ascending, so the oldest (most aged) already come first.
+  const topUrgent = useMemo(() => pending.slice(0, 3), [pending]);
+
   const managerFirstName = profile?.full_name.split(" ")[0] ?? "Jefe";
   const roleBadge = profile ? roleLabel[profile.role] : "Jefe";
 
@@ -169,61 +80,27 @@ export function ManagerDashboardScreen() {
     [absences, absentEmployeeIds, pending, team, upcomingWeekCount],
   );
 
-  const markMountOnce = () => {
-    if (mountedOnce.current) return false;
-    mountedOnce.current = true;
-    return true;
-  };
-
-  const toggleSelect = useCallback((id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
-
-  const clearSelection = useCallback(() => setSelected(new Set()), []);
+  const shortcuts = [
+    { count: pending.length, icon: Inbox, label: "Solicitudes pendientes", to: "/manager/requests", tone: "bg-[var(--stat-pending)] text-[var(--stat-pending-text)]" },
+    { count: absentEmployeeIds.size, icon: UserX, label: "Ausentes hoy", to: "/manager/calendar", tone: "bg-[var(--stat-absent)] text-[var(--stat-absent-text)]" },
+    { count: team.length, icon: Users, label: "Equipo", to: "/manager/team", tone: "bg-[var(--stat-upcoming)] text-[var(--stat-upcoming-text)]" },
+  ];
 
   return (
-    <main className="min-h-dvh bg-slate-100 text-[var(--color-text)]" id="main-content" tabIndex={-1}>
-      <RefreshBoundary onRefresh={loadAll}>
+    <ManagerShell>
+      <RefreshBoundary onRefresh={refetch}>
         <section className="grid min-h-dvh gap-5 p-4 pb-24 pt-[calc(1rem+env(safe-area-inset-top))] md:p-6 md:pb-24 lg:grid-cols-[1fr_var(--aside-width)]">
           <div className="min-w-0 bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px] md:p-6">
-            <header className="animate-fade-up mb-6 flex flex-col gap-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-black text-[var(--color-muted)]">{roleBadge}</p>
-                  <h1 className="mt-1 text-2xl font-black md:text-3xl">{managerFirstName}</h1>
-                  <p className="mt-1 text-sm text-[var(--color-muted)]">
-                    {isLoading
-                      ? "Cargando…"
-                      : agedCount > 0
-                        ? `${pending.length} pendientes · ${agedCount} con más de 48 h`
-                        : `${pending.length} solicitudes pendientes`}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <NotificationBell />
-                  <button
-                    aria-label="Mi perfil"
-                    className="press grid size-11 place-items-center rounded-full bg-[var(--card-muted)] text-[var(--color-muted)] ring-1 ring-[var(--card-border)]"
-                    onClick={() => navigate("/profile")}
-                    type="button"
-                  >
-                    <UserCircle aria-hidden="true" className="size-5" />
-                  </button>
-                </div>
-              </div>
-              <button
-                className="press inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[var(--card-muted)] px-4 text-sm font-black text-[var(--color-text)] ring-1 ring-[var(--card-border)] lg:w-auto lg:justify-self-end"
-                onClick={() => navigate("/manager/team")}
-                type="button"
-              >
-                <Users aria-hidden="true" className="size-4" />
-                Mi equipo
-              </button>
+            <header className="animate-fade-up mb-6">
+              <p className="text-sm font-black text-[var(--color-muted)]">{roleBadge}</p>
+              <h2 className="mt-1 text-2xl font-black md:text-3xl">{managerFirstName}</h2>
+              <p className="mt-1 text-sm text-[var(--color-muted)]">
+                {isLoading
+                  ? "Cargando…"
+                  : agedCount > 0
+                    ? `${pending.length} pendientes · ${agedCount} con más de 48 h`
+                    : `${pending.length} solicitudes pendientes`}
+              </p>
             </header>
 
             {isLoading ? (
@@ -243,6 +120,25 @@ export function ManagerDashboardScreen() {
                     />
                   ))}
                   {sla ? <SlaCard avgHours={sla.avgHours} count={sla.count} /> : null}
+                </section>
+
+                <section
+                  className="animate-fade-up stagger mb-5 grid grid-cols-3 gap-3"
+                  aria-label="Accesos directos"
+                >
+                  {shortcuts.map(({ count, icon: Icon, label, to, tone }) => (
+                    <NavLink
+                      key={to}
+                      to={to}
+                      className="press flex flex-col gap-2 rounded-[20px] bg-[var(--card-muted)] p-4 ring-1 ring-[var(--card-border)]"
+                    >
+                      <span className={`grid size-9 place-items-center rounded-2xl ${tone}`}>
+                        <Icon aria-hidden="true" className="size-5" />
+                      </span>
+                      <span className="text-2xl font-black leading-none">{count}</span>
+                      <span className="text-xs font-bold text-[var(--color-muted)]">{label}</span>
+                    </NavLink>
+                  ))}
                 </section>
 
                 {agedCount > 0 ? (
@@ -272,57 +168,51 @@ export function ManagerDashboardScreen() {
                   </p>
                 ) : null}
 
-                <section className="rounded-[24px] bg-[var(--card-muted)] p-4" aria-labelledby="manager-pending-title">
+                <section className="rounded-[24px] bg-[var(--card-muted)] p-4" aria-labelledby="manager-urgent-title">
                   <div className="mb-4 flex items-center justify-between gap-4">
-                    <h2 className="text-lg font-black md:text-xl" id="manager-pending-title">
-                      Pendientes de tu equipo
+                    <h2 className="text-lg font-black md:text-xl" id="manager-urgent-title">
+                      Próximas 3 urgentes
                     </h2>
-                    <span className="rounded-full bg-[var(--card-bg)] px-3 py-1 text-xs font-black text-[var(--color-muted)]">
-                      {pending.length} abiertas
-                    </span>
+                    <NavLink
+                      to="/manager/requests"
+                      className="press inline-flex items-center gap-1 text-xs font-black text-[var(--color-muted)]"
+                    >
+                      Ver todas ({pending.length})
+                      <ArrowRight aria-hidden="true" className="size-4" />
+                    </NavLink>
                   </div>
 
-                  <ul className="stagger space-y-3">
-                    {pending.length === 0 ? (
-                      <li className="flex flex-col items-center gap-2 rounded-[20px] bg-[var(--card-bg)] p-8 text-center ring-1 ring-[var(--card-border)]">
-                        <CheckCircle2 aria-hidden="true" className="size-8 text-emerald-500" />
-                        <p className="text-sm font-semibold text-[var(--color-muted)]">
-                          No hay solicitudes pendientes para tu equipo.
-                        </p>
-                      </li>
-                    ) : null}
-                    {pending.map((request) => (
-                      <li className="relative" key={request.id}>
-                        <PendingRequestCard
-                          mount={markMountOnce()}
-                          onClick={() => navigate(`/manager/requests/${request.id}`)}
-                          onToggleSelect={toggleSelect}
-                          request={request}
-                          selected={selected.has(request.id)}
-                        />
-                        <span className="absolute right-16 top-4">
-                          <AgingBadge request={request} />
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-
-                <section className="mt-5 flex flex-col gap-5" aria-label="Widgets de equipo">
-                  <TopRequesters members={team} requests={absences} />
+                  {topUrgent.length === 0 ? (
+                    <p className="rounded-[20px] bg-[var(--card-bg)] p-6 text-center text-sm font-semibold text-[var(--color-muted)] ring-1 ring-[var(--card-border)]">
+                      No hay solicitudes pendientes para tu equipo.
+                    </p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {topUrgent.map((request) => (
+                        <li key={request.id}>
+                          <button
+                            className="press flex w-full items-center gap-3 rounded-[20px] bg-[var(--card-bg)] p-3 text-left ring-1 ring-[var(--card-border)]"
+                            type="button"
+                            onClick={() => navigate(`/manager/requests/${request.id}`)}
+                          >
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-black">
+                                {request.employee?.full_name ?? "Empleado"}
+                              </span>
+                              <span className="block truncate text-xs text-[var(--color-muted)]">
+                                {leaveTypeConfig[request.leave_type].label}
+                              </span>
+                            </span>
+                            <AgingBadge request={request} />
+                            <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-[var(--color-muted)]" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </section>
               </>
             )}
-            {!isLoading ? (
-              <BulkActionsBar
-                ids={Array.from(selected)}
-                onComplete={() => {
-                  clearSelection();
-                  void loadAll();
-                }}
-                reviewerRole="manager"
-              />
-            ) : null}
           </div>
 
           {!isLoading && prefs.showAgenda ? (
@@ -399,12 +289,11 @@ export function ManagerDashboardScreen() {
                 </section>
               ) : null}
 
-              <BirthdayStrip members={team} />
+              {preferences.birthdayVisibility ? <BirthdayStrip members={team} /> : null}
             </aside>
           ) : null}
         </section>
       </RefreshBoundary>
-      <ManagerBottomNav />
-    </main>
+    </ManagerShell>
   );
 }

@@ -1,10 +1,13 @@
+import { Avatar } from "../../../components/ui/Avatar";
 import { ArrowLeft, CalendarDays, Pencil, Search, Trash2, UserPlus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomSheet } from "../../../components/ui/BottomSheet";
+import { Select } from "../../../components/ui/Select";
 import { Button } from "../../../components/ui/Button";
+import { DateInput } from "../../../components/ui/DateInput";
 import { TextInput } from "../../../components/ui/TextInput";
-import type { Profile, UserRole } from "../../../lib/database.types";
+import type { Department, EmploymentStatus, Profile, SeparationType, UserRole } from "../../../lib/database.types";
 import { AdminShell } from "../components/adminNav";
 import {
   deleteEmployee,
@@ -15,6 +18,30 @@ import {
   updateProfileAssignment,
   type ProfileWithManager,
 } from "../../profiles/services/profileService";
+import { listActiveDepartments } from "../services/departmentService";
+
+const separationLabel: Record<SeparationType, string> = {
+  voluntary: "Renuncia voluntaria",
+  involuntary: "Baja involuntaria",
+  end_contract: "Fin de contrato",
+  relocation: "Reubicación",
+  retirement: "Jubilación",
+  other: "Otro",
+};
+
+type StatusFilter = "active" | "terminated" | "all";
+
+const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
+  { key: "active", label: "Activos" },
+  { key: "terminated", label: "Bajas" },
+  { key: "all", label: "Todos" },
+];
+
+function matchesStatus(status: EmploymentStatus, filter: StatusFilter): boolean {
+  if (filter === "all") return true;
+  if (filter === "terminated") return status === "terminated" || status === "archived";
+  return status === "active" || status === "on_leave";
+}
 
 const roleBadge: Record<UserRole, string> = {
   admin: "bg-slate-900 text-white",
@@ -25,14 +52,12 @@ const roleBadge: Record<UserRole, string> = {
 
 const roleOptions: UserRole[] = ["employee", "manager", "hr_admin", "admin"];
 
-function initials(name: string) {
-  return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "X";
-}
-
 export function EmployeesScreen() {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState<ProfileWithManager[]>([]);
   const [managers, setManagers] = useState<Pick<Profile, "id" | "full_name" | "role">[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
   const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,11 +67,12 @@ export function EmployeesScreen() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return employees;
-    return employees.filter(
-      (e) => e.full_name.toLowerCase().includes(q) || (e.job_title ?? "").toLowerCase().includes(q),
-    );
-  }, [employees, query]);
+    return employees.filter((e) => {
+      if (!matchesStatus(e.employment_status, statusFilter)) return false;
+      if (q && !(e.full_name.toLowerCase().includes(q) || (e.job_title ?? "").toLowerCase().includes(q))) return false;
+      return true;
+    });
+  }, [employees, query, statusFilter]);
 
   async function load() {
     try {
@@ -56,8 +82,10 @@ export function EmployeesScreen() {
       const mgrs = await listManagers().catch((loadError) => {
         throw new Error(`Jefes: ${loadError instanceof Error ? loadError.message : "No se pudieron cargar."}`);
       });
+      const depts = await listActiveDepartments().catch(() => [] as Department[]);
       setEmployees(emps);
       setManagers(mgrs);
+      setDepartments(depts);
       setError(null);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "No se pudo cargar el directorio.");
@@ -84,7 +112,7 @@ export function EmployeesScreen() {
           </button>
           <div className="flex-1">
             <p className="text-sm font-black text-[var(--color-muted)]">Recursos Humanos</p>
-            <h1 className="text-2xl font-black md:text-3xl">Empleados</h1>
+            <h2 className="text-2xl font-black md:text-3xl">Empleados</h2>
           </div>
           <Button className="min-h-12 px-4" onClick={() => setInviteOpen(true)}>
             <UserPlus aria-hidden="true" className="mr-2 size-4" />
@@ -110,10 +138,26 @@ export function EmployeesScreen() {
           </p>
         ) : null}
 
+        <div aria-label="Filtro por estado de empleo" className="mb-4 flex flex-wrap gap-2" role="group">
+          {STATUS_FILTERS.map((f) => (
+            <button
+              aria-pressed={statusFilter === f.key}
+              className={`press rounded-full px-4 py-2 text-xs font-black transition ${
+                statusFilter === f.key ? "bg-slate-950 text-white" : "bg-white text-[var(--color-muted)] ring-1 ring-slate-200"
+              }`}
+              key={f.key}
+              type="button"
+              onClick={() => setStatusFilter(f.key)}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
         {isLoading ? (
           <p className="text-sm font-semibold text-[var(--color-muted)]">Cargando directorio…</p>
         ) : (
-          <ul className="stagger grid gap-3 sm:grid-cols-2">
+          <ul className="stagger grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filtered.length === 0 ? (
               <li className="rounded-2xl bg-white p-6 text-center text-sm font-semibold text-[var(--color-muted)] ring-1 ring-slate-200 sm:col-span-2">
                 Sin empleados que coincidan.
@@ -124,16 +168,28 @@ export function EmployeesScreen() {
                 className="flex items-center gap-4 rounded-[20px] bg-white p-4 shadow-sm ring-1 ring-slate-200"
                 key={emp.id}
               >
-                <span className="grid size-12 shrink-0 place-items-center rounded-full bg-emerald-100 text-sm font-black text-emerald-700">
-                  {initials(emp.full_name)}
-                </span>
-                <div className="min-w-0 flex-1">
+                <Avatar className="text-sm text-emerald-700" name={emp.full_name} size="size-12" src={emp.avatar_url} />
+                <button
+                  className="press min-w-0 flex-1 text-left"
+                  type="button"
+                  onClick={() => navigate(`/admin/employees/${emp.id}`)}
+                >
                   <p className="truncate font-black">{emp.full_name}</p>
                   <p className="truncate text-xs text-[var(--color-muted)]">{emp.job_title ?? "Sin puesto"}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <span className={`rounded-full px-2.5 py-1 text-[11px] font-black ${roleBadge[emp.role]}`}>
                       {roleLabel[emp.role]}
                     </span>
+                    {emp.department?.name ? (
+                      <span className="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-black text-sky-800">
+                        {emp.department.name}
+                      </span>
+                    ) : null}
+                    {emp.employment_status === "terminated" || emp.employment_status === "archived" ? (
+                      <span className="rounded-full bg-slate-200 px-2.5 py-1 text-[11px] font-black text-slate-700">
+                        Baja{emp.separation_type ? ` · ${separationLabel[emp.separation_type]}` : ""}
+                      </span>
+                    ) : null}
                     {emp.manager?.full_name ? (
                       <span className="text-[11px] text-[var(--color-muted)]">Jefe: {emp.manager.full_name}</span>
                     ) : null}
@@ -144,7 +200,7 @@ export function EmployeesScreen() {
                       {emp.annual_vacation_days === null ? "Vacaciones no configuradas" : `${emp.annual_vacation_days} días/año`}
                     </span>
                   </div>
-                </div>
+                </button>
                 <button
                   aria-label={`Editar a ${emp.full_name}`}
                   className="press grid size-10 place-items-center rounded-full bg-slate-100 text-[var(--color-text)]"
@@ -154,8 +210,9 @@ export function EmployeesScreen() {
                   <Pencil aria-hidden="true" className="size-4" />
                 </button>
                 <button
-                  aria-label={`Eliminar a ${emp.full_name}`}
-                  className="press grid size-10 place-items-center rounded-full bg-red-50 text-red-700 ring-1 ring-red-100"
+                  aria-label={`Dar de baja a ${emp.full_name}`}
+                  className="press grid size-10 place-items-center rounded-full bg-red-50 text-red-700 ring-1 ring-red-100 disabled:opacity-40"
+                  disabled={emp.employment_status === "terminated" || emp.employment_status === "archived"}
                   type="button"
                   onClick={() => setDeleteTarget(emp)}
                 >
@@ -168,6 +225,7 @@ export function EmployeesScreen() {
       </div>
 
       <InviteSheet
+        departments={departments}
         isOpen={inviteOpen}
         managers={managers}
         onClose={() => setInviteOpen(false)}
@@ -178,6 +236,7 @@ export function EmployeesScreen() {
       />
 
       <EditSheet
+        departments={departments}
         managers={managers}
         target={editTarget}
         onClose={() => setEditTarget(null)}
@@ -204,11 +263,13 @@ type ManagerOption = Pick<Profile, "id" | "full_name" | "role">;
 function InviteSheet({
   isOpen,
   managers,
+  departments,
   onClose,
   onSaved,
 }: {
   isOpen: boolean;
   managers: ManagerOption[];
+  departments: Department[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -218,6 +279,7 @@ function InviteSheet({
   const [annualVacationDays, setAnnualVacationDays] = useState("");
   const [role, setRole] = useState<UserRole>("employee");
   const [managerId, setManagerId] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -240,6 +302,7 @@ function InviteSheet({
         role,
         job_title: jobTitle.trim() || null,
         manager_id: managerId || null,
+        department_id: departmentId || null,
         annual_vacation_days: parsedVacationDays,
       });
       setEmail("");
@@ -248,6 +311,7 @@ function InviteSheet({
       setAnnualVacationDays("");
       setRole("employee");
       setManagerId("");
+      setDepartmentId("");
       onSaved();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "No se pudo invitar.");
@@ -273,6 +337,7 @@ function InviteSheet({
         />
         <RoleSelect value={role} onChange={setRole} />
         <ManagerSelect managers={managers} value={managerId} onChange={setManagerId} />
+        <DepartmentSelect departments={departments} value={departmentId} onChange={setDepartmentId} />
 
         {error ? (
           <p className="rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-700" role="alert">
@@ -292,21 +357,26 @@ function InviteSheet({
   );
 }
 
-function EditSheet({
+export function EditSheet({
   managers,
+  departments,
   target,
   onClose,
   onSaved,
 }: {
   managers: ManagerOption[];
+  departments: Department[];
   target: ProfileWithManager | null;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [role, setRole] = useState<UserRole>("employee");
   const [managerId, setManagerId] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [annualVacationDays, setAnnualVacationDays] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [hireDate, setHireDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -314,8 +384,11 @@ function EditSheet({
     if (target) {
       setRole(target.role);
       setManagerId(target.manager_id ?? "");
+      setDepartmentId(target.department_id ?? "");
       setJobTitle(target.job_title ?? "");
       setAnnualVacationDays(target.annual_vacation_days === null ? "" : String(target.annual_vacation_days));
+      setBirthDate(target.birth_date ?? "");
+      setHireDate(target.hire_date ?? "");
       setError(null);
     }
   }, [target]);
@@ -332,8 +405,11 @@ function EditSheet({
       await updateProfileAssignment(target.id, {
         role,
         manager_id: managerId || null,
+        department_id: departmentId || null,
         job_title: jobTitle.trim() || null,
         annual_vacation_days: parsedVacationDays,
+        birth_date: birthDate || null,
+        hire_date: hireDate || null,
       });
       onSaved();
     } catch (saveError) {
@@ -357,11 +433,14 @@ function EditSheet({
           onChange={(e) => setAnnualVacationDays(e.target.value)}
         />
         <RoleSelect value={role} onChange={setRole} />
+        <DateInput label="Cumpleaños" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+        <DateInput label="Fecha de ingreso" value={hireDate} onChange={(e) => setHireDate(e.target.value)} />
         <ManagerSelect
           managers={managers.filter((m) => m.id !== target?.id)}
           value={managerId}
           onChange={setManagerId}
         />
+        <DepartmentSelect departments={departments} value={departmentId} onChange={setDepartmentId} />
         {error ? (
           <p className="rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-700" role="alert">
             {error}
@@ -388,6 +467,8 @@ function DeleteEmployeeSheet({
   const [nameInput, setNameInput] = useState("");
   const [ackDelete, setAckDelete] = useState(false);
   const [ackHistory, setAckHistory] = useState(false);
+  const [separationType, setSeparationType] = useState<SeparationType>("voluntary");
+  const [terminationReason, setTerminationReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -397,6 +478,8 @@ function DeleteEmployeeSheet({
       setNameInput("");
       setAckDelete(false);
       setAckHistory(false);
+      setSeparationType("voluntary");
+      setTerminationReason("");
       setError(null);
     }
   }, [target]);
@@ -412,7 +495,12 @@ function DeleteEmployeeSheet({
     try {
       setSaving(true);
       setError(null);
-      await deleteEmployee({ confirmation: nameInput.trim(), user_id: target.id });
+      await deleteEmployee({
+        confirmation: nameInput.trim(),
+        user_id: target.id,
+        separation_type: separationType,
+        termination_reason: terminationReason.trim() || null,
+      });
       onSaved();
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : "No se pudo eliminar.");
@@ -422,7 +510,7 @@ function DeleteEmployeeSheet({
   }
 
   return (
-    <BottomSheet isOpen={Boolean(target)} title={`Eliminar a ${target.full_name}`} onClose={onClose}>
+    <BottomSheet isOpen={Boolean(target)} title={`Dar de baja a ${target.full_name}`} onClose={onClose}>
       <div className="space-y-4">
         <ol className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wide text-[var(--color-muted)]">
           {[1, 2, 3].map((current) => (
@@ -443,13 +531,13 @@ function DeleteEmployeeSheet({
         {step === 1 ? (
           <div className="space-y-4">
             <p className="text-sm leading-6 text-[var(--color-text)]">
-              Vas a eliminar a <span className="font-black">{target.full_name}</span>. Esta accion no se puede deshacer.
+              Vas a dar de baja a <span className="font-black">{target.full_name}</span>.
             </p>
             <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-[var(--color-muted)]">
-              <li>Se borrara su cuenta y acceso a la app.</li>
-              <li>Sus solicitudes de permiso se eliminaran.</li>
-              <li>Sus notificaciones se eliminaran.</li>
-              <li>Si tenia empleados a cargo, quedaran sin jefe directo.</li>
+              <li>Perderá el acceso a la app de inmediato.</li>
+              <li>Su historial de solicitudes y datos se conservan para auditoría.</li>
+              <li>Se registrará la razón de separación en su expediente.</li>
+              <li>Si tenía empleados a cargo, quedarán sin jefe directo.</li>
             </ul>
             <Button className="w-full" onClick={() => setStep(2)}>
               Entiendo, continuar
@@ -459,6 +547,29 @@ function DeleteEmployeeSheet({
 
         {step === 2 ? (
           <div className="space-y-4">
+            <label className="block min-w-0 space-y-2">
+              <span className="text-sm font-medium text-[var(--color-text)]">Tipo de separación</span>
+              <select
+                className="h-13 w-full min-w-0 appearance-none rounded-2xl bg-[var(--color-surface)] px-4 text-base font-semibold text-[var(--color-text)] outline-none ring-1 ring-inset ring-transparent focus:ring-2 focus:ring-[var(--color-focus)]"
+                value={separationType}
+                onChange={(event) => setSeparationType(event.target.value as SeparationType)}
+              >
+                {(Object.keys(separationLabel) as SeparationType[]).map((key) => (
+                  <option key={key} value={key}>
+                    {separationLabel[key]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-sm font-medium text-[var(--color-text)]">Razón de la baja (opcional)</span>
+              <textarea
+                className="mt-2 min-h-20 w-full resize-none rounded-2xl bg-[var(--color-surface)] p-4 text-sm outline-none ring-1 ring-transparent focus:ring-2 focus:ring-[var(--color-focus)]"
+                placeholder="Detalle para el expediente"
+                value={terminationReason}
+                onChange={(event) => setTerminationReason(event.target.value)}
+              />
+            </label>
             <p className="text-sm leading-6 text-[var(--color-text)]">
               Escribe el nombre completo del empleado para confirmar.
             </p>
@@ -476,7 +587,7 @@ function DeleteEmployeeSheet({
                 onChange={(event) => setAckHistory(event.target.checked)}
               />
               <span className="text-sm leading-6 text-[var(--color-text)]">
-                Confirmo que se borrara su historial de solicitudes.
+                Entiendo que perderá acceso y su historial se conserva en el expediente.
               </span>
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -493,7 +604,7 @@ function DeleteEmployeeSheet({
         {step === 3 ? (
           <div className="space-y-4">
             <p className="text-sm leading-6 text-[var(--color-text)]">
-              Ultima confirmacion. Esta accion eliminara la cuenta de forma permanente.
+              Última confirmación. Se dará de baja como “{separationLabel[separationType]}”.
             </p>
             <label className="flex items-start gap-3 rounded-2xl bg-red-50 p-3 ring-1 ring-red-200">
               <input
@@ -503,7 +614,7 @@ function DeleteEmployeeSheet({
                 onChange={(event) => setAckDelete(event.target.checked)}
               />
               <span className="text-sm leading-6 text-red-900">
-                Quiero eliminar a <span className="font-black">{target.full_name}</span> de forma definitiva.
+                Quiero dar de baja a <span className="font-black">{target.full_name}</span>.
               </span>
             </label>
             {error ? (
@@ -522,7 +633,7 @@ function DeleteEmployeeSheet({
                 onClick={handleDelete}
               >
                 <Trash2 aria-hidden="true" className="size-4" />
-                {saving ? "Eliminando..." : "Eliminar"}
+                {saving ? "Dando de baja…" : "Dar de baja"}
               </button>
             </div>
           </div>
@@ -533,22 +644,32 @@ function DeleteEmployeeSheet({
 }
 
 function RoleSelect({ value, onChange }: { value: UserRole; onChange: (role: UserRole) => void }) {
-  return (
-    <label className="block min-w-0 space-y-2">
-      <span className="text-sm font-medium text-[var(--color-text)]">Rol</span>
-      <select
-        className="h-13 w-full min-w-0 appearance-none rounded-2xl bg-[var(--color-surface)] px-4 text-base font-semibold text-[var(--color-text)] outline-none ring-1 ring-inset ring-transparent focus:ring-2 focus:ring-[var(--color-focus)]"
-        value={value}
-        onChange={(event) => onChange(event.target.value as UserRole)}
-      >
+  return <Select label="Rol" value={value} onChange={(event) => onChange(event.target.value as UserRole)}>
         {roleOptions.map((option) => (
           <option key={option} value={option}>
             {roleLabel[option]}
           </option>
         ))}
-      </select>
-    </label>
-  );
+      </Select>;
+}
+
+function DepartmentSelect({
+  departments,
+  value,
+  onChange,
+}: {
+  departments: Department[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  return <Select label="Área / Departamento" value={value} onChange={(event) => onChange(event.target.value)}>
+        <option value="">Sin área asignada</option>
+        {departments.map((dept) => (
+          <option key={dept.id} value={dept.id}>
+            {dept.name}
+          </option>
+        ))}
+      </Select>;
 }
 
 function ManagerSelect({
@@ -560,21 +681,12 @@ function ManagerSelect({
   value: string;
   onChange: (id: string) => void;
 }) {
-  return (
-    <label className="block min-w-0 space-y-2">
-      <span className="text-sm font-medium text-[var(--color-text)]">Jefe directo</span>
-      <select
-        className="h-13 w-full min-w-0 appearance-none rounded-2xl bg-[var(--color-surface)] px-4 text-base font-semibold text-[var(--color-text)] outline-none ring-1 ring-inset ring-transparent focus:ring-2 focus:ring-[var(--color-focus)]"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      >
+  return <Select label="Jefe directo" value={value} onChange={(event) => onChange(event.target.value)}>
         <option value="">Sin jefe (va directo a RH)</option>
         {managers.map((manager) => (
           <option key={manager.id} value={manager.id}>
             {manager.full_name} · {roleLabel[manager.role]}
           </option>
         ))}
-      </select>
-    </label>
-  );
+      </Select>;
 }

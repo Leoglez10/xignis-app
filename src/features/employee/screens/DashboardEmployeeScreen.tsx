@@ -2,120 +2,61 @@ import {
   CalendarPlus,
   ChevronRight,
   Clock,
-  LogOut,
   Plus,
   Sparkles,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../../components/ui/Button";
 import type { LeaveRequest } from "../../../lib/database.types";
 import type { Profile } from "../../../lib/database.types";
 import { logout } from "../../auth/services/authService";
-import { NotificationBell } from "../../notifications/NotificationBell";
-import { useAuth } from "../../session/AuthContext";
 import {
   formatDateRange,
   getMyVacationBalance,
   leaveTypeLabel,
   listAbsencesForEmployeesToday,
-  listMyLeaveRequests,
   statusLabel,
   type VacationBalance,
 } from "../../leave-requests/services/leaveRequestService";
+import { useAuth } from "../../session/AuthContext";
+import { isInFlight } from "../../leave-requests/services/leaveRequestProgressService";
+import { InProgressRequestCard } from "../../leave-requests/components/InProgressRequestCard";
 import { listMyPeers } from "../../profiles/services/profileService";
 import { statusTone } from "../../leave-requests/config";
 import { daysFromToday, overlapsToday, todayIso } from "../../../lib/date";
-import { greetingFor, longDateEs } from "../../../lib/greeting";
 import { ActivePermitBanner } from "../components/ActivePermitBanner";
 import { EmployeeDashboardSkeleton } from "../components/EmployeeDashboardSkeleton";
 import { NextAbsenceCard } from "../components/NextAbsenceCard";
 import { PeersStrip } from "../components/PeersStrip";
 import { VacationBalanceCard } from "../components/VacationBalanceCard";
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
-
-type FilterKey = "all" | "pending" | "approved" | "rejected";
-
-const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: "all", label: "Todas" },
-  { key: "pending", label: "Pendientes" },
-  { key: "approved", label: "Aprobadas" },
-  { key: "rejected", label: "Rechazadas" },
-];
-
-function matchesFilter(status: LeaveRequest["status"], filter: FilterKey): boolean {
-  if (filter === "all") return true;
-  if (filter === "pending") {
-    return (
-      status === "pending_manager" ||
-      status === "approved_by_manager" ||
-      status === "pending_hr"
-    );
-  }
-  if (filter === "approved") return status === "approved";
-  if (filter === "rejected") return status === "rejected" || status === "rejected_by_manager";
-  return true;
-}
+import { useLeaveRequests } from "../../leave-requests/hooks/useLeaveRequests";
 
 export function DashboardEmployeeScreen() {
   const navigate = useNavigate();
   const { profile } = useAuth();
-  const [requests, setRequests] = useState<LeaveRequest[]>([]);
-  const [balance, setBalance] = useState<VacationBalance | null>(null);
-  const [peers, setPeers] = useState<Profile[]>([]);
-  const [peerAbsences, setPeerAbsences] = useState<LeaveRequest[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<FilterKey>("all");
-  const [refreshing, setRefreshing] = useState(false);
   const [today] = useState(todayIso);
+  const requestsQuery = useLeaveRequests("mine", profile?.id);
+  const balanceQuery = useQuery<VacationBalance | null>({ queryKey: ["vacation-balance", profile?.id], queryFn: () => getMyVacationBalance().catch(() => null) });
+  const peersQuery = useQuery<Profile[]>({ queryKey: ["peers", profile?.id], queryFn: () => listMyPeers().catch(() => []) });
+  const peers = peersQuery.data ?? [];
+  const peerIds = useMemo(() => peers.map((peer) => peer.id), [peers]);
+  const absencesQuery = useQuery<LeaveRequest[]>({ enabled: peerIds.length > 0, queryKey: ["peer-absences", today, peerIds], queryFn: async () => (await listAbsencesForEmployeesToday(peerIds)) as LeaveRequest[] });
+  const requests = requestsQuery.data ?? [];
+  const balance = balanceQuery.data ?? null;
+  const peerAbsences = absencesQuery.data ?? [];
+  const isLoading = requestsQuery.isLoading || balanceQuery.isLoading || peersQuery.isLoading;
+  const refreshing = requestsQuery.isFetching || balanceQuery.isFetching || peersQuery.isFetching || absencesQuery.isFetching;
+  const error = requestsQuery.error instanceof Error ? requestsQuery.error.message : null;
 
-  const loadAll = useCallback(async () => {
-    try {
-      const [list, bal, peerList] = await Promise.all([
-        listMyLeaveRequests(),
-        getMyVacationBalance().catch(() => null),
-        listMyPeers().catch(() => [] as Profile[]),
-      ]);
-      setRequests(list ?? []);
-      setBalance(bal);
-      setPeers(peerList);
-      const peerIds = peerList.map((p) => p.id);
-      const todayAbs = await listAbsencesForEmployeesToday(peerIds).catch(() => []);
-      setPeerAbsences(todayAbs as LeaveRequest[]);
-      setError(null);
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "No se pudieron cargar tus solicitudes.");
-    }
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    setIsLoading(true);
-    loadAll().finally(() => {
-      if (mounted) setIsLoading(false);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, [loadAll]);
+  const inFlightRequest = useMemo(
+    () => requests.find((r) => isInFlight(r.status)) ?? null,
+    [requests],
+  );
 
   async function handleRefresh() {
-    setRefreshing(true);
-    try {
-      await loadAll();
-    } finally {
-      setRefreshing(false);
-    }
+    await Promise.all([requestsQuery.refetch(), balanceQuery.refetch(), peersQuery.refetch(), absencesQuery.refetch()]);
   }
 
   async function handleLogout() {
@@ -149,62 +90,73 @@ export function DashboardEmployeeScreen() {
     return upcoming[0] ?? null;
   }, [requests, today]);
 
-  const filteredRequests = useMemo(() => {
-    return requests.filter((r) => matchesFilter(r.status, filter));
-  }, [requests, filter]);
-  const recentRequests = filteredRequests.slice(0, 6);
+  const recentRequests = requests.slice(0, 2);
 
-  const firstName = profile?.full_name.split(" ")[0] ?? "equipo";
-  const greeting = greetingFor(new Date(today));
-  const dateLabel = longDateEs(new Date(today));
 
   return (
     <main className="mobile-screen" id="main-content" tabIndex={-1}>
-      <section className="flex min-h-dvh flex-col px-5 pb-7 pt-[calc(1.5rem+env(safe-area-inset-top))] lg:px-8">
-        <header className="animate-fade-up mb-6 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-sm font-black uppercase tracking-wide text-[var(--color-muted)]">
-              {dateLabel}
-            </p>
-            <h1 className="mt-1 text-3xl font-black text-[var(--color-text)]">
-              {greeting}, {firstName}
-            </h1>
-            <p className="mt-1 text-sm text-[var(--color-muted)]">
-              {isLoading
-                ? "Cargando solicitudes"
-                : pendingCount === 0
-                  ? "Sin solicitudes pendientes"
-                  : `${pendingCount} ${pendingCount === 1 ? "solicitud pendiente" : "solicitudes pendientes"}`}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <NotificationBell />
-            <button
-              aria-label="Mi perfil"
-              className="press grid size-12 place-items-center rounded-full bg-[var(--color-surface)] text-sm font-black text-[var(--color-text)]"
-              type="button"
-              onClick={() => navigate("/profile")}
-            >
-              {profile ? getInitials(profile.full_name) : <LogOut aria-hidden="true" className="size-5" />}
-            </button>
-          </div>
-        </header>
-
+      <section className="flex min-h-dvh flex-col px-5 pb-28 pt-[calc(1.5rem+env(safe-area-inset-top))] lg:px-8">
         <button
-          className="press animate-fade-up rounded-[24px] bg-slate-950 p-5 text-left text-white shadow-xl shadow-slate-200 lg:p-7"
+          aria-label="Crear nuevo permiso"
+          className="group press animate-fade-up relative overflow-hidden rounded-[24px] bg-slate-950 p-5 text-left text-white shadow-xl shadow-slate-200 lg:p-7"
           type="button"
           onClick={() => navigate("/employee/request")}
         >
           <div className="mb-4 flex items-center justify-between">
-            <span className="grid size-11 place-items-center rounded-2xl bg-[var(--color-primary)]">
+            <span className="grid size-12 place-items-center rounded-2xl bg-[var(--color-primary)] transition-transform duration-200 group-hover:scale-105 group-active:scale-95">
               <CalendarPlus aria-hidden="true" className="size-6" />
             </span>
             <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black">2 min</span>
           </div>
           <h2 className="text-2xl font-black">Nuevo permiso</h2>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Selecciona fechas, tipo y pendientes sin hablar con RH antes.
+            Vacaciones o permisos, en un par de toques.
           </p>
+          <div className="mt-4 flex items-center gap-1 text-xs font-bold text-[var(--color-primary)]">
+            Tocar para empezar
+            <ChevronRight aria-hidden="true" className="size-4 transition-transform group-hover:translate-x-0.5" />
+          </div>
+          <ChevronRight
+            aria-hidden="true"
+            className="absolute right-5 top-1/2 size-7 -translate-y-1/2 text-white/20 transition-all group-hover:translate-x-0.5 group-hover:text-white/60"
+          />
+        </button>
+
+        <button
+          className="press animate-fade-up mt-4 flex w-full items-center justify-between gap-4 rounded-[24px] border border-[var(--card-border)] bg-[var(--card-bg)] p-5 text-left shadow-sm"
+          type="button"
+          onClick={() => navigate("/employee/requests")}
+        >
+          <span className="flex items-center gap-4">
+            <span
+              className="grid size-12 shrink-0 place-items-center rounded-2xl"
+              style={{
+                background: pendingCount > 0 ? "var(--stat-pending)" : "var(--stat-upcoming)",
+                color: pendingCount > 0 ? "var(--stat-pending-text)" : "var(--stat-upcoming-text)",
+              }}
+            >
+              {pendingCount > 0 ? (
+                <Clock aria-hidden="true" className="size-6" />
+              ) : (
+                <Sparkles aria-hidden="true" className="size-6" />
+              )}
+            </span>
+            <span className="min-w-0">
+              <span className="block text-2xl font-black leading-none text-[var(--color-text)]">
+                {isLoading ? "—" : pendingCount}
+              </span>
+              <span className="mt-1 block text-sm font-semibold text-[var(--color-muted)]">
+                {isLoading
+                  ? "Cargando…"
+                  : pendingCount === 0
+                    ? "Sin pendientes · ver historial"
+                    : pendingCount === 1
+                      ? "Solicitud pendiente · ver todas"
+                      : "Solicitudes pendientes · ver todas"}
+              </span>
+            </span>
+          </span>
+          <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-[var(--color-muted)]" />
         </button>
 
         {isLoading ? (
@@ -213,6 +165,16 @@ export function DashboardEmployeeScreen() {
           </div>
         ) : (
           <>
+            {inFlightRequest ? (
+              <div className="mt-5">
+                <InProgressRequestCard
+                  requestId={inFlightRequest.id}
+                  title="Solicitud en curso"
+                  onView={(id) => navigate(`/employee/requests/${id}`)}
+                />
+              </div>
+            ) : null}
+
             {activePermit ? (
               <div className="mt-5">
                 <ActivePermitBanner request={activePermit} />
@@ -281,27 +243,6 @@ export function DashboardEmployeeScreen() {
                   {refreshing ? "Actualizando…" : "Actualizar"}
                 </button>
               </div>
-              <div
-                aria-label="Filtro de solicitudes"
-                className="mb-3 flex flex-wrap gap-2"
-                role="group"
-              >
-                {FILTERS.map((f) => (
-                  <button
-                    aria-pressed={filter === f.key}
-                    className={`press rounded-full px-3 py-1.5 text-xs font-black transition ${
-                      filter === f.key
-                        ? "bg-slate-950 text-white"
-                        : "bg-[var(--color-surface)] text-[var(--color-muted)]"
-                    }`}
-                    key={f.key}
-                    type="button"
-                    onClick={() => setFilter(f.key)}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
               <div className="stagger space-y-3">
                 {recentRequests.length === 0 ? (
                   <div className="flex flex-col items-center gap-3 rounded-2xl bg-[var(--color-surface)] p-8 text-center">
@@ -309,9 +250,7 @@ export function DashboardEmployeeScreen() {
                       <Sparkles aria-hidden="true" className="size-6" />
                     </span>
                     <p className="text-sm font-black text-[var(--color-text)]">
-                      {requests.length === 0
-                        ? "Aún no tienes solicitudes"
-                        : "Sin resultados para este filtro"}
+                      Aún no tienes solicitudes
                     </p>
                     <p className="text-xs text-[var(--color-muted)]">
                       Toca el botón verde para crear la primera.
@@ -351,14 +290,17 @@ export function DashboardEmployeeScreen() {
                   </button>
                 ))}
               </div>
+              {requests.length > 0 ? (
+                <button
+                  className="press mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] py-3 text-sm font-black text-[var(--color-text)]"
+                  type="button"
+                  onClick={() => navigate("/employee/requests")}
+                >
+                  Ver historial completo
+                  <ChevronRight aria-hidden="true" className="size-4" />
+                </button>
+              ) : null}
             </section>
-
-            <div className="mt-auto pt-8">
-              <Button className="w-full" onClick={() => navigate("/employee/request")}>
-                <Plus aria-hidden="true" className="size-5" />
-                Nueva solicitud
-              </Button>
-            </div>
           </>
         )}
       </section>

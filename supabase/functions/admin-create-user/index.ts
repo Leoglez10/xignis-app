@@ -51,6 +51,7 @@ Deno.serve(async (req) => {
   const role = String(payload.role ?? "employee");
   const jobTitle = payload.job_title ? String(payload.job_title).trim() : null;
   const managerId = payload.manager_id ? String(payload.manager_id) : null;
+  const departmentId = payload.department_id ? String(payload.department_id) : null;
   const redirectTo = payload.redirect_to ? String(payload.redirect_to) : undefined;
   const annualVacationDays = parseVacationDays(payload.annual_vacation_days);
 
@@ -73,6 +74,7 @@ Deno.serve(async (req) => {
     role,
     job_title: jobTitle,
     manager_id: managerId,
+    department_id: departmentId,
     annual_vacation_days: annualVacationDays,
   }, { onConflict: "id" });
   if (profErr) return json({ error: profErr.message }, 400);

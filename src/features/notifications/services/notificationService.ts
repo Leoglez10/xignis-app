@@ -1,13 +1,14 @@
 import type { AppNotification } from "../../../lib/database.types";
 import { getSupabaseClient } from "../../../lib/supabase";
+import { subscribeShared } from "../../../lib/realtimeChannel";
 
-export async function listNotifications(limit = 30) {
+export async function listNotifications(limit = 30, offset = 0) {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("notifications")
     .select("*")
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .range(offset, offset + limit - 1);
 
   if (error) throw error;
   return (data ?? []) as AppNotification[];
@@ -16,6 +17,12 @@ export async function listNotifications(limit = 30) {
 export async function markNotificationRead(id: string) {
   const supabase = getSupabaseClient();
   const { error } = await supabase.from("notifications").update({ read: true }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteNotification(id: string) {
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.from("notifications").delete().eq("id", id);
   if (error) throw error;
 }
 
@@ -30,17 +37,14 @@ export async function markAllNotificationsRead() {
  * Devuelve función para cancelar.
  */
 export function subscribeToNotifications(userId: string, onInsert: (row: AppNotification) => void) {
-  const supabase = getSupabaseClient();
-  const channel = supabase
-    .channel(`notifications:${userId}`)
-    .on(
-      "postgres_changes",
-      { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
-      (payload) => onInsert(payload.new as AppNotification),
-    )
-    .subscribe();
-
-  return () => {
-    supabase.removeChannel(channel);
-  };
+  return subscribeShared<AppNotification>(
+    `notifications:${userId}`,
+    (channel, fire) =>
+      channel.on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
+        (payload) => fire(payload.new as AppNotification),
+      ),
+    onInsert,
+  );
 }

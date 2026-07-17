@@ -1,3 +1,4 @@
+import { initials } from "../../../lib/avatar";
 import { memo } from "react";
 import { formatDateRangeEs } from "../../../lib/date";
 import { leaveTypeConfig } from "../../leave-requests/config";
@@ -8,10 +9,6 @@ type AgendaItemProps = {
   mount?: boolean;
   onClick?: () => void;
 };
-
-function initials(name: string) {
-  return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "X";
-}
 
 export const AgendaItem = memo(function AgendaItem({ absence, mount = false, onClick }: AgendaItemProps) {
   const config = leaveTypeConfig[absence.leave_type];

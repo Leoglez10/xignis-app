@@ -1,14 +1,24 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { RequireAuth } from "./RequireAuth";
 import { NotFoundScreen } from "../features/system/screens/NotFoundScreen";
+import { PageTransition } from "./PageTransition";
+import { USER_ROLES } from "../lib/database.types";
+import { TopBar } from "../components/TopBar";
+import { useAuth } from "../features/session/AuthContext";
 
 // Code-splitting por ruta: cada pantalla en su chunk → menor parse en cold start (WKWebView).
 // Named exports → mapear a default para React.lazy.
 const AdminDashboardScreen = lazy(() => import("../features/admin/screens/AdminDashboardScreen").then((m) => ({ default: m.AdminDashboardScreen })));
 const AdminReportsScreen = lazy(() => import("../features/admin/screens/AdminReportsScreen").then((m) => ({ default: m.AdminReportsScreen })));
 const AdminRulesScreen = lazy(() => import("../features/admin/screens/AdminRulesScreen").then((m) => ({ default: m.AdminRulesScreen })));
+const AdminRequestsScreen = lazy(() => import("../features/admin/screens/AdminRequestsScreen").then((m) => ({ default: m.AdminRequestsScreen })));
+const AdminAbsencesScreen = lazy(() => import("../features/admin/screens/AdminAbsencesScreen").then((m) => ({ default: m.AdminAbsencesScreen })));
 const EmployeesScreen = lazy(() => import("../features/admin/screens/EmployeesScreen").then((m) => ({ default: m.EmployeesScreen })));
+const EmployeeDetailScreen = lazy(() => import("../features/admin/screens/EmployeeDetailScreen").then((m) => ({ default: m.EmployeeDetailScreen })));
+const FieldDefsScreen = lazy(() => import("../features/admin/screens/FieldDefsScreen").then((m) => ({ default: m.FieldDefsScreen })));
+const DepartmentsScreen = lazy(() => import("../features/admin/screens/DepartmentsScreen").then((m) => ({ default: m.DepartmentsScreen })));
 const ForgotPasswordScreen = lazy(() => import("../features/auth/screens/ForgotPasswordScreen").then((m) => ({ default: m.ForgotPasswordScreen })));
 const LoginScreen = lazy(() => import("../features/auth/screens/LoginScreen").then((m) => ({ default: m.LoginScreen })));
 const SetPasswordScreen = lazy(() => import("../features/auth/screens/SetPasswordScreen").then((m) => ({ default: m.SetPasswordScreen })));
@@ -17,14 +27,24 @@ const EmployeeRequestsListScreen = lazy(() => import("../features/employee/scree
 const LeaveRequestDetailScreen = lazy(() => import("../features/employee/screens/LeaveRequestDetailScreen").then((m) => ({ default: m.LeaveRequestDetailScreen })));
 const LeaveRequestScreen = lazy(() => import("../features/employee/screens/LeaveRequestScreen").then((m) => ({ default: m.LeaveRequestScreen })));
 const ManagerDashboardScreen = lazy(() => import("../features/manager/screens/ManagerDashboardScreen").then((m) => ({ default: m.ManagerDashboardScreen })));
+const ManagerRequestsScreen = lazy(() => import("../features/manager/screens/ManagerRequestsScreen").then((m) => ({ default: m.ManagerRequestsScreen })));
 const ManagerRequestDetailScreen = lazy(() => import("../features/manager/screens/ManagerRequestDetailScreen").then((m) => ({ default: m.ManagerRequestDetailScreen })));
 const ManagerCalendarScreen = lazy(() => import("../features/manager/screens/ManagerCalendarScreen").then((m) => ({ default: m.ManagerCalendarScreen })));
 const ManagerMemberDetailScreen = lazy(() => import("../features/manager/screens/ManagerMemberDetailScreen").then((m) => ({ default: m.ManagerMemberDetailScreen })));
 const ManagerTeamScreen = lazy(() => import("../features/manager/screens/ManagerTeamScreen").then((m) => ({ default: m.ManagerTeamScreen })));
 const AdminRequestDetailScreen = lazy(() => import("../features/admin/screens/AdminRequestDetailScreen").then((m) => ({ default: m.AdminRequestDetailScreen })));
 const ProfileScreen = lazy(() => import("../features/profiles/screens/ProfileScreen").then((m) => ({ default: m.ProfileScreen })));
+const ComingSoonScreen = lazy(() => import("../features/system/screens/ComingSoonScreen").then((m) => ({ default: m.ComingSoonScreen })));
+const SettingsScreen = lazy(() => import("../features/settings/screens/SettingsScreen").then((m) => ({ default: m.SettingsScreen })));
+const SearchScreen = lazy(() => import("../features/search/screens/SearchScreen").then((m) => ({ default: m.SearchScreen })));
 
-const ALL_ROLES = ["employee", "manager", "hr_admin", "admin"] as const;
+/** Header persistente: se monta una sola vez y queda fijo fuera de la transición
+ *  de página, para que al cambiar de pestaña se sienta la misma pantalla. Solo
+ *  visible con sesión (en login/signup no aparece). */
+function AppChrome() {
+  const { session, profile } = useAuth();
+  return session && profile ? <TopBar /> : null;
+}
 
 export function App() {
   return (
@@ -32,8 +52,12 @@ export function App() {
       <a className="skip-link" href="#main-content">
         Saltar al contenido
       </a>
+      <AppChrome />
+      <ErrorBoundary>
       <Suspense fallback={<div className="min-h-dvh" />}>
-        <Routes>
+        <PageTransition>
+        {(location) => (
+        <Routes location={location}>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/signup" element={<Navigate to="/login" replace />} />
@@ -42,11 +66,13 @@ export function App() {
           <Route
             path="/profile"
             element={
-              <RequireAuth allowedRoles={[...ALL_ROLES]}>
+              <RequireAuth allowedRoles={[...USER_ROLES]}>
                 <ProfileScreen />
               </RequireAuth>
             }
           />
+          <Route path="/settings" element={<RequireAuth allowedRoles={[...USER_ROLES]}><SettingsScreen /></RequireAuth>} />
+          <Route path="/buscar" element={<RequireAuth allowedRoles={[...USER_ROLES]}><SearchScreen /></RequireAuth>} />
           <Route
             path="/employee"
             element={
@@ -84,6 +110,14 @@ export function App() {
             element={
               <RequireAuth allowedRoles={["manager"]}>
                 <ManagerDashboardScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/manager/requests"
+            element={
+              <RequireAuth allowedRoles={["manager"]}>
+                <ManagerRequestsScreen />
               </RequireAuth>
             }
           />
@@ -128,10 +162,50 @@ export function App() {
             }
           />
           <Route
+            path="/admin/requests"
+            element={
+              <RequireAuth allowedRoles={["hr_admin", "admin"]}>
+                <AdminRequestsScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin/absences"
+            element={
+              <RequireAuth allowedRoles={["hr_admin", "admin"]}>
+                <AdminAbsencesScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
             path="/admin/employees"
             element={
               <RequireAuth allowedRoles={["hr_admin", "admin"]}>
                 <EmployeesScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin/employees/:id"
+            element={
+              <RequireAuth allowedRoles={["hr_admin", "admin"]}>
+                <EmployeeDetailScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin/fields"
+            element={
+              <RequireAuth allowedRoles={["hr_admin", "admin"]}>
+                <FieldDefsScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin/departments"
+            element={
+              <RequireAuth allowedRoles={["hr_admin", "admin"]}>
+                <DepartmentsScreen />
               </RequireAuth>
             }
           />
@@ -159,9 +233,24 @@ export function App() {
               </RequireAuth>
             }
           />
+          {/* Módulos futuros de la plataforma Xignis (coming soon) */}
+          {["gastos", "reportes", "nomina", "documentos", "organizacion"].map((id) => (
+            <Route
+              key={id}
+              path={`/${id}`}
+              element={
+                <RequireAuth allowedRoles={[...USER_ROLES]}>
+                  <ComingSoonScreen moduleId={id} />
+                </RequireAuth>
+              }
+            />
+          ))}
           <Route path="*" element={<NotFoundScreen />} />
         </Routes>
+        )}
+        </PageTransition>
       </Suspense>
+      </ErrorBoundary>
     </>
   );
 }

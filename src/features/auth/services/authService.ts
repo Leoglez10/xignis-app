@@ -2,8 +2,6 @@ import type { UserRole } from "../../../lib/database.types";
 import { getSupabaseClient } from "../../../lib/supabase";
 import { getCurrentProfile } from "../../profiles/services/profileService";
 
-export type LoginRole = "employee" | "manager" | "hr_admin";
-
 const roleRoute: Record<UserRole, string> = {
   admin: "/admin",
   employee: "/employee",
@@ -15,12 +13,7 @@ export function routeForRole(role: UserRole) {
   return roleRoute[role];
 }
 
-export function loginRoleMatchesProfile(selectedRole: LoginRole, profileRole: UserRole) {
-  if (selectedRole === "hr_admin") return profileRole === "hr_admin" || profileRole === "admin";
-  return selectedRole === profileRole;
-}
-
-export async function login(input: { email: string; password: string; selectedRole: LoginRole }) {
+export async function login(input: { email: string; password: string }) {
   const supabase = getSupabaseClient();
   const { error } = await supabase.auth.signInWithPassword({
     email: input.email,
@@ -34,11 +27,6 @@ export async function login(input: { email: string; password: string; selectedRo
   if (!profile) {
     await supabase.auth.signOut();
     throw new Error("No existe un perfil para esta cuenta.");
-  }
-
-  if (!loginRoleMatchesProfile(input.selectedRole, profile.role)) {
-    await supabase.auth.signOut();
-    throw new Error("La cuenta no corresponde al rol seleccionado.");
   }
 
   return { profile, redirectTo: routeForRole(profile.role) };

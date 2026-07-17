@@ -171,6 +171,35 @@ export type InactiveEmployee = {
   job_title: string | null;
 };
 
+export type RecentTermination = {
+  created_at: string;
+  full_name: string;
+  id: string;
+  job_title: string | null;
+  separation_type: string | null;
+  termination_reason: string | null;
+  terminated_at: string;
+};
+
+/** Empleados dados de baja en los últimos `daysBack` días. */
+export async function getRecentTerminations(daysBack = 30): Promise<RecentTermination[]> {
+  const employees = await listEmployees();
+  const cutoff = new Date(Date.now() - daysBack * 86_400_000).toISOString();
+  return employees
+    .filter((e) => (e.employment_status === "terminated" || e.employment_status === "archived") && e.terminated_at && e.terminated_at >= cutoff)
+    .map((e) => ({
+      created_at: e.created_at,
+      full_name: e.full_name,
+      id: e.id,
+      job_title: e.job_title,
+      separation_type: e.separation_type,
+      termination_reason: e.termination_reason,
+      terminated_at: e.terminated_at as string,
+    }))
+    .sort((a, b) => b.terminated_at.localeCompare(a.terminated_at))
+    .slice(0, 6);
+}
+
 /** Empleados sin ninguna solicitud creada en los últimos `daysBack` días. */
 export async function getInactiveEmployees(daysBack = 180): Promise<InactiveEmployee[]> {
   const [employees, requests] = await Promise.all([listEmployees(), listHrLeaveRequests()]);

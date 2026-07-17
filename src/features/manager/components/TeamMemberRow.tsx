@@ -1,3 +1,4 @@
+import { initials } from "../../../lib/avatar";
 import { memo } from "react";
 import type { Profile } from "../../../lib/database.types";
 
@@ -7,10 +8,6 @@ type TeamMemberRowProps = {
   member: Profile;
   onClick?: () => void;
 };
-
-function initials(name: string) {
-  return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "X";
-}
 
 export const TeamMemberRow = memo(function TeamMemberRow({
   absentToday,

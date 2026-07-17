@@ -25,7 +25,7 @@ export function RequireAuth({ allowedRoles, children }: { allowedRoles: UserRole
   }
 
   if (!session) return <Navigate replace state={{ from: location }} to="/login" />;
-  if (!profile) return <Navigate replace to="/login" />;
+  if (!profile) return <Navigate replace state={{ from: location }} to="/login" />;
   if (!allowedRoles.includes(profile.role)) return <Navigate replace to={routeForRole(profile.role)} />;
 
   return <>{children}</>;

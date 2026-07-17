@@ -1,11 +1,12 @@
 import { relativeTimeEs } from "../../lib/relativeTime";
-import { Bell, CheckCheck } from "lucide-react";
-import { memo, useCallback, useEffect, useState } from "react";
+import { Bell, CheckCheck, Trash2 } from "lucide-react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomSheet } from "../../components/ui/BottomSheet";
 import type { AppNotification } from "../../lib/database.types";
 import { useAuth } from "../session/AuthContext";
 import {
+  deleteNotification,
   listNotifications,
   markAllNotificationsRead,
   markNotificationRead,
@@ -26,30 +27,120 @@ type NotificationBellProps = {
   className?: string;
 };
 
+/** Fila de notificación: arrastrable a la izquierda para eliminar (móvil) + botón papelera. */
+function NotificationRow({
+  item,
+  onOpen,
+  onDelete,
+}: {
+  item: AppNotification;
+  onOpen: (item: AppNotification) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [dx, setDx] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const startX = useRef(0);
+  const moved = useRef(false);
+
+  return (
+    <li className="relative overflow-hidden rounded-2xl">
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-end rounded-2xl bg-red-500 pr-5 text-white">
+        <Trash2 aria-hidden="true" className="size-5" />
+      </div>
+      <div
+        className="relative flex touch-pan-y items-stretch gap-0"
+        style={{ transform: `translateX(${dx}px)`, transition: dragging ? "none" : "transform .2s ease" }}
+        onPointerDown={(e) => {
+          startX.current = e.clientX;
+          moved.current = false;
+          setDragging(true);
+          e.currentTarget.setPointerCapture(e.pointerId);
+        }}
+        onPointerMove={(e) => {
+          if (!dragging) return;
+          const d = e.clientX - startX.current;
+          if (Math.abs(d) > 8) moved.current = true;
+          setDx(Math.max(-120, Math.min(0, d)));
+        }}
+        onPointerUp={() => {
+          setDragging(false);
+          if (dx < -80) onDelete(item.id);
+          else setDx(0);
+        }}
+        onPointerCancel={() => {
+          setDragging(false);
+          setDx(0);
+        }}
+      >
+        <button
+          className={`press flex min-w-0 flex-1 items-start gap-3 rounded-l-2xl p-4 text-left ${
+            item.read ? "bg-white ring-1 ring-slate-100" : "bg-[var(--color-surface)]"
+          }`}
+          type="button"
+          onClick={() => {
+            if (moved.current) return;
+            onOpen(item);
+          }}
+        >
+          <span
+            aria-hidden="true"
+            className={`mt-0.5 grid size-9 shrink-0 place-items-center rounded-full text-xs font-black ${typeAccent[item.type] ?? typeAccent.info}`}
+          >
+            {item.read ? "" : "•"}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center justify-between gap-2">
+              <span className="font-black text-[var(--color-text)]">{item.title}</span>
+              <time className="shrink-0 text-xs text-[var(--color-muted)]" dateTime={item.created_at}>
+                {relativeTimeEs(item.created_at)}
+              </time>
+            </span>
+            {item.body ? (
+              <span className="mt-1 block text-sm leading-6 text-[var(--color-muted)]">{item.body}</span>
+            ) : null}
+          </span>
+        </button>
+        <button
+          aria-label="Eliminar notificación"
+          className={`press grid w-11 shrink-0 place-items-center rounded-r-2xl text-[var(--color-muted)] ${
+            item.read ? "bg-white ring-1 ring-slate-100" : "bg-[var(--color-surface)]"
+          }`}
+          type="button"
+          onClick={() => onDelete(item.id)}
+        >
+          <Trash2 aria-hidden="true" className="size-5" />
+        </button>
+      </div>
+    </li>
+  );
+}
+
 export const NotificationBell = memo(function NotificationBell({ className }: NotificationBellProps) {
   const { profile, session } = useAuth();
   const navigate = useNavigate();
   const userId = session?.user.id ?? null;
   const [isOpen, setIsOpen] = useState(false);
   const [items, setItems] = useState<AppNotification[]>([]);
+  const [limit, setLimit] = useState(30);
+  const [announcement, setAnnouncement] = useState("");
   const unread = items.filter((item) => !item.read).length;
 
   const load = useCallback(async () => {
     try {
-      setItems(await listNotifications());
+      setItems(await listNotifications(limit));
     } catch {
       /* silencioso: la campana no debe romper el dashboard */
     }
-  }, []);
+  }, [limit]);
 
   useEffect(() => {
     if (!userId) return;
     load();
     const unsubscribe = subscribeToNotifications(userId, (row) => {
-      setItems((current) => [row, ...current].slice(0, 30));
+      setItems((current) => [row, ...current].slice(0, limit));
     });
     return unsubscribe;
-  }, [userId, load]);
+  }, [userId, load, limit]);
 
   async function handleOpen() {
     setIsOpen(true);
@@ -78,6 +169,12 @@ export const NotificationBell = memo(function NotificationBell({ className }: No
     [navigate, profile?.role],
   );
 
+  const handleDelete = useCallback((id: string) => {
+    setItems((current) => current.filter((n) => n.id !== id));
+    setAnnouncement("Notificación eliminada.");
+    void deleteNotification(id).catch(() => {});
+  }, []);
+
   async function handleMarkAll() {
     setItems((current) => current.map((n) => ({ ...n, read: true })));
     try {
@@ -89,6 +186,7 @@ export const NotificationBell = memo(function NotificationBell({ className }: No
 
   return (
     <>
+      <span aria-live="polite" className="sr-only">{announcement}</span>
       <button
         aria-label={unread > 0 ? `Notificaciones, ${unread} sin leer` : "Notificaciones"}
         className={`press relative grid size-11 place-items-center rounded-full ${className ?? "bg-[var(--color-surface)] text-[var(--color-text)]"}`}
@@ -125,35 +223,15 @@ export const NotificationBell = memo(function NotificationBell({ className }: No
             </li>
           ) : null}
           {items.map((item) => (
-            <li key={item.id}>
-              <button
-                className={`press flex w-full items-start gap-3 rounded-2xl p-4 text-left ${
-                  item.read ? "bg-white ring-1 ring-slate-100" : "bg-[var(--color-surface)]"
-                }`}
-                type="button"
-                onClick={() => handleItemClick(item)}
-              >
-                <span
-                  aria-hidden="true"
-                  className={`mt-0.5 grid size-9 shrink-0 place-items-center rounded-full text-xs font-black ${typeAccent[item.type] ?? typeAccent.info}`}
-                >
-                  {item.read ? "" : "•"}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center justify-between gap-2">
-                    <span className="font-black text-[var(--color-text)]">{item.title}</span>
-                    <time className="shrink-0 text-xs text-[var(--color-muted)]" dateTime={item.created_at}>
-                      {relativeTimeEs(item.created_at)}
-                    </time>
-                  </span>
-                  {item.body ? (
-                    <span className="mt-1 block text-sm leading-6 text-[var(--color-muted)]">{item.body}</span>
-                  ) : null}
-                </span>
-              </button>
-            </li>
+            <NotificationRow
+              key={item.id}
+              item={item}
+              onOpen={handleItemClick}
+              onDelete={handleDelete}
+            />
           ))}
         </ul>
+        {items.length >= limit ? <button className="press mt-3 min-h-11 w-full rounded-full bg-[var(--color-surface)] px-4 text-sm font-black" type="button" onClick={() => setLimit((current) => current + 30)}>Ver notificaciones anteriores</button> : null}
       </BottomSheet>
     </>
   );

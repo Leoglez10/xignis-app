@@ -1,4 +1,4 @@
-import type { LeaveRequest } from "../../../lib/database.types";
+import type { LeaveRequest } from "../../lib/database.types";
 
 type AgingBadgeProps = {
   request: LeaveRequest;

@@ -6,6 +6,7 @@
     ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --color-primary: #0DEC0D;
   --color-primary-strong: #0ab80a;
+  --color-field-focus: #078a07;
   --color-primary-contrast: #062314;
   --color-background: #ffffff;
   --color-surface: #f3f4f6;
@@ -28,6 +29,44 @@
   --stat-upcoming-text: #065f46;
   --aside-width: 360px;
   --skeleton-base: #e2e8f0;
+  --topbar-h: 9.25rem;
+  --topbar-bg: rgb(255 255 255 / 0.95);
+
+  /* Anchos máximos de contenido por rol para que el desktop no sature el ancho completo. */
+  --content-max-employee: 32rem;
+  --content-max-manager: 64rem;
+  --content-max-admin: 80rem;
+}
+
+[data-theme="dark"] {
+  --color-background: #08110d;
+  --color-surface: #142019;
+  --color-text: #f4f7f5;
+  --color-muted: #aebbb4;
+  --color-border: #304039;
+  --color-ink: #f4f7f5;
+  --color-primary: #24e824;
+  --color-primary-strong: #53f153;
+  --color-field-focus: #53f153;
+  --color-primary-contrast: #041208;
+  --card-bg: #0e1913;
+  --card-muted: #142019;
+  --card-border: #293a32;
+  --stat-pending: #3a2411;
+  --stat-pending-text: #fdba74;
+  --stat-absent: #3a1720;
+  --stat-absent-text: #fda4af;
+  --stat-upcoming: #0c3024;
+  --stat-upcoming-text: #6ee7b7;
+  --skeleton-base: #26362e;
+  --topbar-bg: rgb(14 25 19 / 0.95);
+}
+
+/* Empuja el contenido bajo la TopBar fija. La TopBar se monta una vez a nivel de
+   app (fuera de la transición de página) y solo cuando hay sesión, así que
+   usamos :has() en vez de hermano adyacente. Login/signup no llevan barra. */
+body:has(.app-topbar) #main-content {
+  padding-top: var(--topbar-h);
 }
 
 * {
@@ -35,7 +74,7 @@
 }
 
 html {
-  background: #f8fafc;
+  background: var(--color-background);
   scroll-behavior: smooth;
 }
 
@@ -43,7 +82,8 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #f8fafc;
+  background: var(--color-background);
+  color: var(--color-text);
   overscroll-behavior: none; /* sin rubber-band de la página en iOS */
   -webkit-tap-highlight-color: transparent; /* sin flash gris al tocar */
 }
@@ -62,6 +102,12 @@ select:focus-visible,
 textarea:focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 3px;
+}
+
+.text-input:focus-visible {
+  outline: none;
+  outline-offset: 0;
+  border-bottom: 2px solid var(--color-field-focus);
 }
 
 button,
@@ -109,6 +155,97 @@ button {
   margin-inline: auto;
 }
 
+[data-theme="dark"] .mobile-screen { background: linear-gradient(180deg, #08110d 0%, #0e1913 58%, #0b2115 100%); }
+[data-theme="dark"] .bg-white { background-color: var(--card-bg); }
+[data-theme="dark"] .bg-slate-100,
+[data-theme="dark"] .bg-slate-50 { background-color: var(--color-surface); }
+[data-theme="dark"] .ring-slate-200 { --tw-ring-color: var(--card-border); }
+[data-theme="dark"] .border-slate-200 { border-color: var(--card-border); }
+
+/* ---- Dark mode: remapeo de clases Tailwind hardcodeadas para buen contraste.
+   Centralizado aquí para no tocar ~30 componentes. Las utilidades de Tailwind v4
+   van sin @layer propio, así que estas reglas ganan sin !important.
+   NO se tocan bg-slate-900/950 ni text-white: son bloques oscuros a propósito. ---- */
+
+/* Texto gris → tokens de texto / muted */
+[data-theme="dark"] .text-slate-900,
+[data-theme="dark"] .text-slate-800,
+[data-theme="dark"] .text-slate-700 { color: var(--color-text); }
+[data-theme="dark"] .text-slate-600,
+[data-theme="dark"] .text-slate-500,
+[data-theme="dark"] .text-slate-400 { color: var(--color-muted); }
+
+/* Rellenos gris claro (tracks, chips, avatares) → superficie / borde oscuros */
+[data-theme="dark"] .bg-slate-200,
+[data-theme="dark"] .bg-slate-300 { background-color: var(--color-border); }
+
+/* Badges de estado: pastel claro → tinte oscuro + texto claro (verde/éxito) */
+[data-theme="dark"] .bg-emerald-50,
+[data-theme="dark"] .bg-emerald-100,
+[data-theme="dark"] .bg-green-50,
+[data-theme="dark"] .bg-green-100 { background-color: #0c3024; }
+[data-theme="dark"] .text-emerald-600,
+[data-theme="dark"] .text-emerald-700,
+[data-theme="dark"] .text-emerald-800,
+[data-theme="dark"] .text-emerald-900,
+[data-theme="dark"] .text-green-700,
+[data-theme="dark"] .text-green-800 { color: #6ee7b7; }
+
+/* Badges rojo / rosa (error, ausente) */
+[data-theme="dark"] .bg-red-50,
+[data-theme="dark"] .bg-red-100,
+[data-theme="dark"] .bg-rose-50,
+[data-theme="dark"] .bg-rose-100 { background-color: #3a1720; }
+[data-theme="dark"] .text-red-600,
+[data-theme="dark"] .text-red-700,
+[data-theme="dark"] .text-red-800,
+[data-theme="dark"] .text-red-900,
+[data-theme="dark"] .text-rose-600,
+[data-theme="dark"] .text-rose-700,
+[data-theme="dark"] .text-rose-800,
+[data-theme="dark"] .text-rose-900 { color: #fda4af; }
+[data-theme="dark"] .border-red-200 { border-color: #5b2530; }
+
+/* Badges ámbar / naranja (pendiente, aviso) */
+[data-theme="dark"] .bg-amber-50,
+[data-theme="dark"] .bg-amber-100,
+[data-theme="dark"] .bg-yellow-50,
+[data-theme="dark"] .bg-yellow-100,
+[data-theme="dark"] .bg-orange-50,
+[data-theme="dark"] .bg-orange-100 { background-color: #3a2411; }
+[data-theme="dark"] .text-amber-600,
+[data-theme="dark"] .text-amber-700,
+[data-theme="dark"] .text-amber-800,
+[data-theme="dark"] .text-amber-900,
+[data-theme="dark"] .text-orange-900 { color: #fdba74; }
+
+/* Badges azul / celeste (info) */
+[data-theme="dark"] .bg-blue-50,
+[data-theme="dark"] .bg-blue-100,
+[data-theme="dark"] .bg-sky-50,
+[data-theme="dark"] .bg-sky-100 { background-color: #10243a; }
+[data-theme="dark"] .text-blue-700,
+[data-theme="dark"] .text-blue-800,
+[data-theme="dark"] .text-sky-700,
+[data-theme="dark"] .text-sky-800 { color: #93c5fd; }
+
+/* Acento índigo (usado en toda la app) + rosa: pastel claro → tinte oscuro + texto claro */
+[data-theme="dark"] .bg-indigo-50,
+[data-theme="dark"] .bg-indigo-100 { background-color: #1e1b3a; }
+[data-theme="dark"] .text-indigo-600,
+[data-theme="dark"] .text-indigo-700,
+[data-theme="dark"] .text-indigo-800,
+[data-theme="dark"] .text-indigo-900 { color: #a5b4fc; }
+[data-theme="dark"] .ring-indigo-100 { --tw-ring-color: #2e2a52; }
+[data-theme="dark"] .bg-pink-50,
+[data-theme="dark"] .bg-pink-100 { background-color: #3a1726; }
+[data-theme="dark"] .text-pink-700,
+[data-theme="dark"] .text-pink-800,
+[data-theme="dark"] .text-pink-900 { color: #f9a8d4; }
+
+/* Sombras gris claro → oscuras: en dark una sombra clara se ve como halo blanco. */
+[data-theme="dark"] .shadow-slate-200 { --tw-shadow-color: rgb(0 0 0 / 0.45); }
+
 @media (min-width: 1024px) {
   .mobile-screen > section,
   .mobile-screen > form {
@@ -152,6 +289,18 @@ button {
 .animate-scale-in { animation: scale-in 320ms var(--ease-soft) both; }
 .animate-slide-up { animation: slide-up 420ms var(--ease-ios) both; }
 .animate-backdrop { animation: backdrop-in 240ms ease both; }
+
+/* Wizard step transitions: horizontal slide suave (24px) entre pasos. */
+@keyframes step-in-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes step-in-left {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: none; }
+}
+.animate-step-next { animation: step-in-right 280ms var(--ease-ios) both; }
+.animate-step-back { animation: step-in-left 280ms var(--ease-ios) both; }
 
 /* stagger: hijos aparecen en cascada; usar con .stagger en el contenedor.
    data-mount="true" evita titilar items existentes al re-render post-acción (approve/reject). */

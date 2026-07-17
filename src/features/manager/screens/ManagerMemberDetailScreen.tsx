@@ -1,3 +1,5 @@
+import { initials } from "../../../lib/avatar";
+import { Avatar } from "../../../components/ui/Avatar";
 import { ArrowLeft, CalendarClock, CalendarDays, ChevronRight, Clock } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -17,10 +19,10 @@ import {
 } from "../../leave-requests/services/leaveRequestService";
 import { leaveTypeConfig, statusTone } from "../../leave-requests/config";
 import { getTeamMemberProfile } from "../../profiles/services/profileService";
-
-function initials(name: string) {
-  return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "X";
-}
+import { ManagerShell } from "../components/managerNav";
+import { usePageTitle } from "../../../lib/usePageTitle";
+import { useProfileSheet } from "../../profiles/hooks/useProfileSheet";
+import { ProfileSheet } from "../../profiles/components/ProfileSheet";
 
 export function ManagerMemberDetailScreen() {
   const navigate = useNavigate();
@@ -29,6 +31,8 @@ export function ManagerMemberDetailScreen() {
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  usePageTitle(member?.full_name ?? "Detalle de miembro");
+  const sheetQuery = useProfileSheet(memberId);
 
   useEffect(() => {
     if (!memberId) {
@@ -90,17 +94,17 @@ export function ManagerMemberDetailScreen() {
 
   if (isLoading) {
     return (
-      <main className="min-h-dvh bg-slate-50 text-[var(--color-text)]" id="main-content" tabIndex={-1}>
+      <ManagerShell>
         <p className="px-4 pt-[calc(1.5rem+env(safe-area-inset-top))] text-sm font-semibold text-[var(--color-muted)]">
           Cargando…
         </p>
-      </main>
+      </ManagerShell>
     );
   }
 
   if (!member) {
     return (
-      <main className="min-h-dvh bg-slate-50 text-[var(--color-text)]" id="main-content" tabIndex={-1}>
+      <ManagerShell>
         <div className="mx-auto w-full max-w-3xl px-4 pt-[calc(1.25rem+env(safe-area-inset-top))]">
           <button
             aria-label="Regresar"
@@ -114,12 +118,12 @@ export function ManagerMemberDetailScreen() {
             {error ?? "No se encontró el miembro del equipo."}
           </p>
         </div>
-      </main>
+      </ManagerShell>
     );
   }
 
   return (
-    <main className="min-h-dvh bg-slate-50 text-[var(--color-text)]" id="main-content" tabIndex={-1}>
+    <ManagerShell>
       <div className="mx-auto w-full max-w-3xl px-4 pb-10 pt-[calc(1.25rem+env(safe-area-inset-top))] md:px-8">
         <header className="animate-fade-up mb-6 flex items-center gap-3">
           <button
@@ -131,11 +135,9 @@ export function ManagerMemberDetailScreen() {
             <ArrowLeft aria-hidden="true" className="size-5" />
           </button>
           <div className="flex flex-1 items-center gap-3">
-            <span className="grid size-16 shrink-0 place-items-center rounded-full bg-emerald-100 text-base font-black text-emerald-700">
-              {initials(member.full_name)}
-            </span>
+            <Avatar className="text-base text-emerald-700" name={member.full_name} size="size-16" src={member.avatar_url} />
             <div className="min-w-0">
-              <h1 className="truncate text-2xl font-black md:text-3xl">{member.full_name}</h1>
+              <h2 className="truncate text-2xl font-black md:text-3xl">{member.full_name}</h2>
               <p className="truncate text-sm text-[var(--color-muted)]">{member.job_title ?? "Sin puesto"}</p>
               <span className={`mt-1 inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-black ${activeToday ? "bg-rose-100 text-rose-800" : "bg-emerald-50 text-emerald-800"}`}>
                 {activeToday ? "Ausente hoy" : "Disponible"}
@@ -158,6 +160,12 @@ export function ManagerMemberDetailScreen() {
             <p className="mt-1 text-2xl font-black text-[var(--color-text)]">{stats.thisMonth}</p>
           </article>
         </section>
+
+        {sheetQuery.data?.sheet ? (
+          <div className="mb-5">
+            <ProfileSheet defs={sheetQuery.data.defs} sheet={sheetQuery.data.sheet} />
+          </div>
+        ) : null}
 
         {error ? (
           <p className="mb-4 rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-700" role="alert">
@@ -237,7 +245,7 @@ export function ManagerMemberDetailScreen() {
           </ul>
         </section>
       </div>
-    </main>
+    </ManagerShell>
   );
 }
 

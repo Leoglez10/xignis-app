@@ -8,7 +8,8 @@ export function SplashScreen({ children }: { children: React.ReactNode }) {
   const [gone, setGone] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setFading(true), SPLASH_MS);
+    const reduceTransparency = matchMedia("(prefers-reduced-transparency: reduce)").matches;
+    const t = setTimeout(() => setFading(true), reduceTransparency ? 250 : SPLASH_MS);
     return () => clearTimeout(t);
   }, []);
 
@@ -26,7 +27,7 @@ export function SplashScreen({ children }: { children: React.ReactNode }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background: "#0DEC0D",
+            background: "var(--color-primary)",
             zIndex: 9999,
             opacity: fading ? 0 : 1,
             transition: "opacity 300ms ease",

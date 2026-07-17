@@ -1,3 +1,4 @@
+import { initials } from "../../../lib/avatar";
 import { Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { InactiveEmployee } from "../services/dashboardService";
@@ -5,10 +6,6 @@ import type { InactiveEmployee } from "../services/dashboardService";
 type InactiveEmployeesWidgetProps = {
   items: InactiveEmployee[];
 };
-
-function initials(name: string) {
-  return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "?";
-}
 
 export function InactiveEmployeesWidget({ items }: InactiveEmployeesWidgetProps) {
   const navigate = useNavigate();

@@ -1,243 +1,79 @@
-import { ChevronLeft, CheckCircle2, Clock, FileText, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { CheckCircle2, XCircle } from "lucide-react";
+import { useState } from "react";
+import { usePageTitle } from "../../../lib/usePageTitle";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../../components/ui/Button";
-import type { LeaveStatus } from "../../../lib/database.types";
-import { leaveTypeConfig, statusTone } from "../../leave-requests/config";
-import {
-  formatDateRange,
-  getLeaveRequestWithEmployee,
-  reviewLeaveRequest,
-  statusLabel,
-  type LeaveRequestWithEmployee,
-} from "../../leave-requests/services/leaveRequestService";
+import { RequestDetailLayout } from "../../leave-requests/components/RequestDetailLayout";
+import { reviewLeaveRequest } from "../../leave-requests/services/leaveRequestService";
+import { successHaptic } from "../../../lib/haptics";
+import type { LeaveRequest } from "../../../lib/database.types";
 
-const statusDetail: Record<LeaveStatus, { card: string; folio: string; panel: string; icon: string; title: string; text: string; body: string }> = {
-  approved: {
-    card: "bg-emerald-50",
-    folio: "text-emerald-800/80",
-    panel: "bg-emerald-50",
-    icon: "text-emerald-700",
-    title: "text-emerald-900",
-    text: "text-emerald-800",
-    body: "Permiso confirmado. El empleado ya puede verlo como aprobado.",
-  },
-  approved_by_manager: {
-    card: "bg-indigo-50",
-    folio: "text-indigo-800/80",
-    panel: "bg-indigo-50",
-    icon: "text-indigo-700",
-    title: "text-indigo-900",
-    text: "text-indigo-800",
-    body: "El jefe ya aprobó. RH debe confirmar o rechazar la solicitud.",
-  },
-  cancelled: {
-    card: "bg-slate-100",
-    folio: "text-slate-700/80",
-    panel: "bg-slate-100",
-    icon: "text-slate-600",
-    title: "text-slate-900",
-    text: "text-slate-700",
-    body: "El empleado canceló esta solicitud. No requiere acción.",
-  },
-  pending_hr: {
-    card: "bg-amber-50",
-    folio: "text-amber-800/80",
-    panel: "bg-amber-50",
-    icon: "text-amber-700",
-    title: "text-amber-900",
-    text: "text-amber-800",
-    body: "RH tiene la decisión final pendiente.",
-  },
-  pending_manager: {
-    card: "bg-orange-50",
-    folio: "text-orange-800/80",
-    panel: "bg-orange-50",
-    icon: "text-orange-700",
-    title: "text-orange-900",
-    text: "text-orange-800",
-    body: "Esta solicitud todavía espera revisión del jefe directo.",
-  },
-  rejected: {
-    card: "bg-red-50",
-    folio: "text-red-800/80",
-    panel: "bg-red-50",
-    icon: "text-red-700",
-    title: "text-red-900",
-    text: "text-red-800",
-    body: "RH rechazó esta solicitud. El flujo quedó cerrado.",
-  },
-  rejected_by_manager: {
-    card: "bg-red-50",
-    folio: "text-red-800/80",
-    panel: "bg-red-50",
-    icon: "text-red-700",
-    title: "text-red-900",
-    text: "text-red-800",
-    body: "El jefe rechazó esta solicitud. No pasa a validación RH.",
-  },
-};
+const REVIEWABLE = new Set(["pending_hr", "approved_by_manager"]);
 
 export function AdminRequestDetailScreen() {
   const navigate = useNavigate();
   const { requestId } = useParams();
-  const [request, setRequest] = useState<LeaveRequestWithEmployee | null>(null);
+  usePageTitle("Detalle RH");
   const [comment, setComment] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isWorking, setIsWorking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!requestId) {
-      setError("Solicitud no encontrada.");
-      setIsLoading(false);
-      return;
-    }
-
-    (async () => {
-      try {
-        const data = await getLeaveRequestWithEmployee(requestId);
-        setRequest(data);
-        setError(null);
-      } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : "No se pudo cargar la solicitud.");
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, [requestId]);
-
-  async function handleReview(decision: "approved" | "rejected") {
-    if (!request) return;
+  async function handleReview(id: string, decision: "approved" | "rejected") {
     try {
       setIsWorking(true);
-      await reviewLeaveRequest({ comment: comment || undefined, decision, id: request.id, reviewerRole: "hr_admin" });
+      await reviewLeaveRequest({ comment: comment.trim() || undefined, decision, id, reviewerRole: "hr_admin" });
+      void successHaptic();
       navigate("/admin", { replace: true });
     } catch (reviewError) {
-      setError(reviewError instanceof Error ? reviewError.message : "No se pudo actualizar la solicitud.");
+      setError(reviewError instanceof Error ? reviewError.message : "No se pudo actualizar la solicitude.");
     } finally {
       setIsWorking(false);
     }
   }
 
-  const summaryItems = request
-    ? [
-        ["Fechas", formatDateRange(request)],
-        ["Horario", request.schedule_type === "full_day" ? "Completo" : `${request.start_time} - ${request.end_time}`],
-        ["Enviada", new Date(request.created_at).toLocaleString()],
-      ]
-    : [];
-
-  const canReview = request && (request.status === "pending_hr" || request.status === "approved_by_manager");
-  const detail = request ? statusDetail[request.status] : null;
+  const id = requestId ?? "";
 
   return (
-    <main className="mobile-screen" id="main-content" tabIndex={-1}>
-      <section className="flex min-h-dvh flex-col px-5 pb-7 pt-[calc(1.25rem+env(safe-area-inset-top))] lg:px-8">
-        <header className="mb-5 grid grid-cols-[44px_1fr_44px] items-center">
-          <button
-            aria-label="Regresar al panel"
-            className="press grid size-11 place-items-center rounded-full bg-[var(--color-surface)] text-[var(--color-text)]"
-            type="button"
-            onClick={() => navigate("/admin")}
-          >
-            <ChevronLeft aria-hidden="true" className="size-5" />
-          </button>
-          <h1 className="text-center text-lg font-black text-[var(--color-text)]">Detalle RH</h1>
-        </header>
-
-        {isLoading ? (
-          <section className="rounded-[24px] bg-[var(--color-surface)] p-5 text-sm font-bold text-[var(--color-muted)]">
-            Cargando solicitud...
-          </section>
-        ) : null}
-
-        {error ? (
-          <p className="rounded-2xl bg-red-50 p-4 text-sm font-semibold leading-6 text-red-700" role="alert">
-            {error}
-          </p>
-        ) : null}
-
-        {request ? (
+    <RequestDetailLayout
+      actions={(request: LeaveRequest) =>
+        REVIEWABLE.has(request.status) ? (
           <>
-            <section className={`rounded-[24px] p-5 ${detail?.card ?? "bg-amber-50"}`}>
-              <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${statusTone[request.status] ?? statusTone.pending_hr}`}>
-                {statusLabel[request.status]}
-              </span>
-              <h2 className="mt-4 text-3xl font-black text-[var(--color-text)]">
-                {leaveTypeConfig[request.leave_type].label}
-              </h2>
-              <p className="mt-2 text-sm font-black text-[var(--color-muted)]">
-                {request.employee?.full_name ?? "Empleado"}
+            {error ? (
+              <p className="mb-3 rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700" role="alert">
+                {error}
               </p>
-              {request.employee?.job_title ? (
-                <p className="mt-1 text-xs text-[var(--color-muted)]">{request.employee.job_title}</p>
-              ) : null}
-              <p className={`mt-3 text-xs font-semibold ${detail?.folio ?? "text-amber-800/80"}`}>Folio: {request.id}</p>
-            </section>
-
-            <section className="mt-5 space-y-3" aria-labelledby="request-summary-title">
-              <h2 className="sr-only" id="request-summary-title">Resumen de solicitud</h2>
-              {summaryItems.map(([label, value]) => (
-                <div className="flex min-h-14 items-center justify-between rounded-2xl bg-[var(--color-surface)] px-4" key={label}>
-                  <span className="text-sm font-bold text-[var(--color-text)]">{label}</span>
-                  <span className="text-sm font-bold text-[var(--color-muted)]">{value}</span>
-                </div>
-              ))}
-            </section>
-
-            <section className="mt-3 rounded-2xl bg-[var(--color-surface)] p-4" aria-labelledby="pending-tasks-title">
-              <div className="mb-2 flex items-center gap-2">
-                <FileText aria-hidden="true" className="size-4 text-[var(--color-muted)]" />
-                <h2 className="text-sm font-black text-[var(--color-text)]" id="pending-tasks-title">Actividades pendientes</h2>
-              </div>
-              <p className="text-sm leading-6 text-[var(--color-muted)]">{request.pending_tasks || "Sin actividades capturadas."}</p>
-            </section>
-
-            {canReview ? (
-              <>
-                <label className="mt-4 block">
-                  <span className="text-sm font-black">Comentario interno (opcional)</span>
-                  <textarea
-                    className="mt-2 min-h-24 w-full resize-none rounded-2xl bg-[var(--color-surface)] p-4 text-sm outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[var(--color-focus)]"
-                    placeholder="Para auditoría o seguimiento"
-                    value={comment}
-                    onChange={(event) => setComment(event.target.value)}
-                  />
-                </label>
-
-                <section className={`mt-3 rounded-2xl p-4 ${detail?.panel ?? "bg-amber-50"}`} aria-labelledby="next-step-title">
-                  <div className="mb-2 flex items-center gap-2">
-                    <Clock aria-hidden="true" className={`size-4 ${detail?.icon ?? "text-amber-700"}`} />
-                    <h2 className={`text-sm font-black ${detail?.title ?? "text-amber-900"}`} id="next-step-title">Decisión final</h2>
-                  </div>
-                  <p className={`text-sm leading-6 ${detail?.text ?? "text-amber-800"}`}>{detail?.body}</p>
-                </section>
-
-                <div className="mt-auto grid gap-3 pt-8 sm:grid-cols-2">
-                  <Button className="press w-full" disabled={isWorking} onClick={() => handleReview("approved")}>
-                    <CheckCircle2 aria-hidden="true" className="size-5" />
-                    Aprobar
-                  </Button>
-                  <Button
-                    className="press w-full border-red-200 text-red-700"
-                    disabled={isWorking}
-                    variant="secondary"
-                    onClick={() => handleReview("rejected")}
-                  >
-                    <XCircle aria-hidden="true" className="size-5" />
-                    Rechazar
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <p className="mt-auto pt-8 text-center text-sm font-semibold text-[var(--color-muted)]">
-                Esta solicitud ya fue revisada por RH.
-              </p>
-            )}
+            ) : null}
+            <label className="mb-3 block">
+              <span className="text-sm font-black">Comentario (requerido para rechazar)</span>
+              <textarea
+                className="mt-2 min-h-24 w-full resize-none rounded-2xl bg-[var(--card-bg)] p-4 text-sm outline-none ring-1 ring-[var(--card-border)] focus:ring-2 focus:ring-[var(--color-focus)]"
+                placeholder="Para auditoría o seguimiento"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+              />
+            </label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Button disabled={isWorking} onClick={() => void handleReview(id, "approved")}>
+                <CheckCircle2 aria-hidden="true" className="size-5" />
+                Aprobar
+              </Button>
+              <Button
+                className="border-red-200 text-red-700"
+                disabled={isWorking || comment.trim().length === 0}
+                variant="secondary"
+                onClick={() => void handleReview(id, "rejected")}
+              >
+                <XCircle aria-hidden="true" className="size-5" />
+                Rechazar
+              </Button>
+            </div>
           </>
-        ) : null}
-      </section>
-    </main>
+        ) : null
+      }
+      onBack={() => navigate("/admin")}
+      requestId={id}
+      showEmployee
+      title="Detalle RH"
+    />
   );
 }

@@ -1,31 +1,10 @@
 import { CalendarDays, Check, RotateCcw, Users } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../../components/ui/Button";
 import { AdminShell } from "../components/adminNav";
-
-type Rules = {
-  allowHalfDay: boolean;
-  notifyByEmail: boolean;
-  requireManagerApproval: boolean;
-};
-
-const STORAGE_KEY = "xignis.rules";
-
-const defaults: Rules = {
-  allowHalfDay: true,
-  notifyByEmail: true,
-  requireManagerApproval: true,
-};
-
-function loadRules(): Rules {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? { ...defaults, ...(JSON.parse(raw) as Partial<Rules>) } : defaults;
-  } catch {
-    return defaults;
-  }
-}
+import { defaultRules, getRules, saveRules, type AppRules } from "../services/settingsService";
 
 function Toggle({ checked, label, hint, onChange }: { checked: boolean; label: string; hint: string; onChange: (next: boolean) => void }) {
   return (
@@ -57,21 +36,33 @@ function Toggle({ checked, label, hint, onChange }: { checked: boolean; label: s
 
 export function AdminRulesScreen() {
   const navigate = useNavigate();
-  const [rules, setRules] = useState<Rules>(defaults);
+  const [rules, setRules] = useState<AppRules>(defaultRules);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const rulesQuery = useQuery({ queryKey: ["settings", "rules"], queryFn: getRules });
 
   useEffect(() => {
-    setRules(loadRules());
-  }, []);
+    if (rulesQuery.data) setRules(rulesQuery.data);
+  }, [rulesQuery.data]);
+  const visibleError = error ?? (rulesQuery.error ? "No se pudieron cargar las reglas. Se muestran los valores por defecto." : null);
 
-  function update<K extends keyof Rules>(key: K, value: Rules[K]) {
+  function update<K extends keyof AppRules>(key: K, value: AppRules[K]) {
     setRules((current) => ({ ...current, [key]: value }));
     setSavedAt(null);
   }
 
-  function handleSave() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(rules));
-    setSavedAt(Date.now());
+  async function handleSave() {
+    try {
+      setIsSaving(true);
+      setError(null);
+      await saveRules(rules);
+      setSavedAt(Date.now());
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "No se pudieron guardar las reglas.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -79,7 +70,7 @@ export function AdminRulesScreen() {
       <section className="p-4 md:p-6">
         <header className="animate-fade-up mb-5">
           <p className="text-sm font-black text-[var(--color-muted)]">Recursos Humanos</p>
-          <h1 className="mt-1 text-2xl font-black md:text-3xl">Reglas</h1>
+          <h2 className="mt-1 text-2xl font-black md:text-3xl">Reglas</h2>
           <p className="mt-2 text-sm text-[var(--color-muted)]">Políticas operativas del flujo de permisos.</p>
         </header>
 
@@ -132,6 +123,12 @@ export function AdminRulesScreen() {
             </article>
           </section>
 
+          {visibleError ? (
+            <p className="mt-4 rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-700" role="alert">
+              {visibleError}
+            </p>
+          ) : null}
+
           <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
             <p className={`text-sm font-semibold ${savedAt ? "text-emerald-700" : "text-[var(--color-muted)]"}`}>
               {savedAt ? "Reglas guardadas." : "Cambios pendientes de guardar."}
@@ -141,16 +138,16 @@ export function AdminRulesScreen() {
                 className="press w-full"
                 variant="secondary"
                 onClick={() => {
-                  setRules(defaults);
+                  setRules(defaultRules);
                   setSavedAt(null);
                 }}
               >
                 <RotateCcw aria-hidden="true" className="size-5" />
                 Restaurar
               </Button>
-              <Button className="press w-full" onClick={handleSave}>
+              <Button className="press w-full" disabled={isSaving} onClick={() => void handleSave()}>
                 {savedAt ? <Check aria-hidden="true" className="size-5" /> : null}
-                {savedAt ? "Guardado" : "Guardar"}
+                {isSaving ? "Guardando…" : savedAt ? "Guardado" : "Guardar"}
               </Button>
             </div>
           </div>

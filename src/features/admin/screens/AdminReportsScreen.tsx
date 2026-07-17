@@ -1,15 +1,20 @@
-import { Download, Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Download, FileDown, Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { formatDateRangeEs } from "../../../lib/date";
-import type { LeaveStatus, LeaveType } from "../../../lib/database.types";
+import type { Department, LeaveStatus, LeaveType } from "../../../lib/database.types";
 import { statusTone as statusChipTone } from "../../leave-requests/config";
 import {
   leaveTypeLabel,
-  listHrLeaveRequests,
   statusLabel,
   type LeaveRequestWithEmployee,
 } from "../../leave-requests/services/leaveRequestService";
 import { AdminShell } from "../components/adminNav";
+import { Select } from "../../../components/ui/Select";
+import { DateInput as UiDateInput } from "../../../components/ui/DateInput";
+import { DepartmentBreakdown } from "../components/DepartmentBreakdown";
+import { listActiveDepartments } from "../services/departmentService";
+import { useLeaveRequests } from "../../leave-requests/hooks/useLeaveRequests";
 
 const statusTone: Record<string, string> = {
   approved: "bg-emerald-500",
@@ -81,6 +86,23 @@ function exportCsv(rows: LeaveRequestWithEmployee[]) {
   URL.revokeObjectURL(url);
 }
 
+async function exportPdf(rows: LeaveRequestWithEmployee[]) {
+  const [{ jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
+  const doc = new jsPDF({ orientation: "landscape" });
+  doc.setFontSize(18);
+  doc.text("Reporte de permisos · Xignis", 14, 18);
+  doc.setFontSize(9);
+  doc.text(`Generado ${new Date().toLocaleString("es-MX")} · ${rows.length} registros`, 14, 25);
+  autoTable(doc, {
+    head: [["Empleado", "Puesto", "Tipo", "Fechas", "Días", "Goce", "Estado"]],
+    body: rows.map((request) => [request.employee?.full_name ?? "", request.employee?.job_title ?? "", leaveTypeLabel[request.leave_type], formatDateRangeEs(request.start_date, request.end_date), dayCount(request.start_date, request.end_date), request.paid ? "Sí" : "No", statusLabel[request.status]]),
+    margin: { top: 31 },
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [7, 80, 48] },
+  });
+  doc.save(`xignis-reportes-${todayISO()}.pdf`);
+}
+
 function Bar({ label, value, total, tone }: { label: string; value: number; total: number; tone: string }) {
   const pct = total === 0 ? 0 : Math.round((value / total) * 100);
   return (
@@ -99,21 +121,18 @@ function Bar({ label, value, total, tone }: { label: string; value: number; tota
 }
 
 export function AdminReportsScreen() {
-  const [requests, setRequests] = useState<LeaveRequestWithEmployee[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const requestsQuery = useLeaveRequests("hr");
+  const departmentsQuery = useQuery<Department[]>({ queryKey: ["departments", "active"], queryFn: listActiveDepartments });
+  const requests = (requestsQuery.data ?? []) as LeaveRequestWithEmployee[];
+  const departments = departmentsQuery.data ?? [];
+  const error = requestsQuery.error ?? departmentsQuery.error;
+  const isLoading = requestsQuery.isLoading || departmentsQuery.isLoading;
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | LeaveStatus>("all");
   const [typeFilter, setTypeFilter] = useState<"all" | LeaveType>("all");
+  const [deptFilter, setDeptFilter] = useState<string>("all");
   const [startDate, setStartDate] = useState(monthStartISO);
   const [endDate, setEndDate] = useState(todayISO);
-
-  useEffect(() => {
-    listHrLeaveRequests()
-      .then(setRequests)
-      .catch((loadError) => setError(loadError instanceof Error ? loadError.message : "No se pudieron cargar los datos."))
-      .finally(() => setIsLoading(false));
-  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -122,6 +141,7 @@ export function AdminReportsScreen() {
       if (endDate && request.start_date > endDate) return false;
       if (statusFilter !== "all" && request.status !== statusFilter) return false;
       if (typeFilter !== "all" && request.leave_type !== typeFilter) return false;
+      if (deptFilter !== "all" && request.employee?.department_id !== deptFilter) return false;
       if (q) {
         const haystack = [request.employee?.full_name, request.employee?.job_title, statusLabel[request.status], leaveTypeLabel[request.leave_type]]
           .filter(Boolean)
@@ -131,7 +151,7 @@ export function AdminReportsScreen() {
       }
       return true;
     });
-  }, [endDate, query, requests, startDate, statusFilter, typeFilter]);
+  }, [deptFilter, endDate, query, requests, startDate, statusFilter, typeFilter]);
 
   const byStatus = useMemo(() => {
     const counts = new Map<string, number>();
@@ -166,12 +186,12 @@ export function AdminReportsScreen() {
         <header className="animate-fade-up mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-black text-[var(--color-muted)]">Recursos Humanos</p>
-            <h1 className="mt-1 text-3xl font-black md:text-4xl">Reportes</h1>
+            <h2 className="mt-1 text-3xl font-black md:text-4xl">Reportes</h2>
             <p className="mt-2 text-sm text-[var(--color-muted)]">
               {isLoading ? "Cargando datos." : `${total} solicitudes en el periodo filtrado.`}
             </p>
           </div>
-          <button
+          <div className="flex flex-col gap-2 sm:flex-row"><button
             className="press inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-slate-950 px-5 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 sm:w-auto"
             disabled={filtered.length === 0}
             type="button"
@@ -179,17 +199,17 @@ export function AdminReportsScreen() {
           >
             <Download aria-hidden="true" className="size-4" />
             Exportar CSV
-          </button>
+          </button><button className="press inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] px-5 text-sm font-black disabled:opacity-50 sm:w-auto" disabled={filtered.length === 0} type="button" onClick={() => void exportPdf(filtered)}><FileDown aria-hidden="true" className="size-4" />Exportar PDF</button></div>
         </header>
 
         {error ? (
           <p className="mb-4 rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-700" role="alert">
-            {error}
+            {error instanceof Error ? error.message : "No se pudieron cargar los datos."}
           </p>
         ) : null}
 
         <section className="animate-fade-up mb-5 rounded-[24px] bg-white p-4 ring-1 ring-slate-200" aria-label="Filtros de reportes">
-          <div className="grid gap-3 md:grid-cols-[1fr_repeat(4,auto)] md:items-end">
+          <div className="grid gap-3 md:grid-cols-[1fr_repeat(5,auto)] md:items-end">
             <label className="block min-w-0 space-y-2">
               <span className="text-xs font-black text-[var(--color-muted)]">Buscar</span>
               <span className="relative block">
@@ -210,6 +230,10 @@ export function AdminReportsScreen() {
             <ReportSelect label="Tipo" value={typeFilter} onChange={(value) => setTypeFilter(value as "all" | LeaveType)}>
               <option value="all">Todos</option>
               {allTypes.map((type) => <option key={type} value={type}>{leaveTypeLabel[type]}</option>)}
+            </ReportSelect>
+            <ReportSelect label="Área" value={deptFilter} onChange={setDeptFilter}>
+              <option value="all">Todas</option>
+              {departments.map((dept) => <option key={dept.id} value={dept.id}>{dept.name}</option>)}
             </ReportSelect>
             <DateInput label="Desde" value={startDate} onChange={setStartDate} />
             <DateInput label="Hasta" value={endDate} onChange={setEndDate} />
@@ -273,6 +297,8 @@ export function AdminReportsScreen() {
             </div>
           </section>
         </div>
+
+        <DepartmentBreakdown departments={departments} requests={filtered} />
 
         <section className="animate-fade-up mt-4 rounded-[24px] bg-white p-5 ring-1 ring-slate-200" aria-labelledby="report-table">
           <h2 className="mb-4 text-xl font-black" id="report-table">Detalle filtrado</h2>
@@ -363,30 +389,9 @@ export function AdminReportsScreen() {
 }
 
 function ReportSelect({ children, label, onChange, value }: { children: React.ReactNode; label: string; onChange: (value: string) => void; value: string }) {
-  return (
-    <label className="block min-w-0 space-y-2">
-      <span className="text-xs font-black text-[var(--color-muted)]">{label}</span>
-      <select
-        className="h-11 w-full min-w-0 rounded-full bg-slate-50 px-4 text-sm font-bold outline-none ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-[var(--color-focus)] md:w-40"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        {children}
-      </select>
-    </label>
-  );
+  return <Select className="h-11 rounded-full text-sm font-bold md:w-40" label={label} value={value} onChange={(event) => onChange(event.target.value)}>{children}</Select>;
 }
 
 function DateInput({ label, onChange, value }: { label: string; onChange: (value: string) => void; value: string }) {
-  return (
-    <label className="block min-w-0 space-y-2">
-      <span className="text-xs font-black text-[var(--color-muted)]">{label}</span>
-      <input
-        className="h-11 w-full min-w-0 rounded-full bg-slate-50 px-4 text-sm font-bold outline-none ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-[var(--color-focus)] md:w-36"
-        type="date"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </label>
-  );
+  return <UiDateInput className="h-11 rounded-full text-sm font-bold md:w-36" label={label} value={value} onChange={(event) => onChange(event.target.value)} />;
 }
