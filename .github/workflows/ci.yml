@@ -6,6 +6,12 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    env:
+      # Dummy Supabase config so the production build wires up the auth guard.
+      # getSession() reads empty local storage (no network), so protected routes
+      # redirect to /login as the e2e smoke test expects.
+      VITE_SUPABASE_URL: https://dummy.supabase.co
+      VITE_SUPABASE_ANON_KEY: dummy-anon-key-for-ci
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
