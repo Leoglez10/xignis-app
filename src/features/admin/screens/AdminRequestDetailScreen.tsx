@@ -44,7 +44,7 @@ export function AdminRequestDetailScreen() {
               </p>
             ) : null}
             <label className="mb-3 block">
-              <span className="text-sm font-black">Comentario (requerido para rechazar)</span>
+              <span className="text-sm font-bold">Comentario (requerido para rechazar)</span>
               <textarea
                 className="mt-2 min-h-24 w-full resize-none rounded-2xl bg-[var(--card-bg)] p-4 text-sm outline-none ring-1 ring-[var(--card-border)] focus:ring-2 focus:ring-[var(--color-focus)]"
                 placeholder="Para auditoría o seguimiento"

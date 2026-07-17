@@ -50,11 +50,11 @@ export function ManagerRequestsScreen() {
   return (
     <ManagerShell>
       <RefreshBoundary onRefresh={refetch}>
-        <section className="grid min-h-dvh gap-5 p-4 pb-24 pt-[calc(1rem+env(safe-area-inset-top))] md:p-6 md:pb-24">
+        <section className="grid min-h-dvh gap-5 p-4 pb-24 pt-4 md:p-6 md:pb-24">
           <div className="min-w-0 bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px] md:p-6">
             <header className="animate-fade-up mb-6">
-              <p className="text-sm font-black text-[var(--color-muted)]">Jefe</p>
-              <h2 className="mt-1 text-2xl font-black md:text-3xl">Solicitudes</h2>
+              <p className="text-sm font-bold text-[var(--color-muted)]">Jefe</p>
+              <h2 className="mt-1 text-2xl font-bold md:text-3xl">Solicitudes</h2>
               <p className="mt-1 text-sm text-[var(--color-muted)]">
                 {isLoading ? "Cargando…" : `${pending.length} pendientes de tu equipo`}
               </p>
@@ -83,10 +83,10 @@ export function ManagerRequestsScreen() {
 
                 <section className="rounded-[24px] bg-[var(--card-muted)] p-4" aria-labelledby="manager-pending-title">
                   <div className="mb-4 flex items-center justify-between gap-4">
-                    <h2 className="text-lg font-black md:text-xl" id="manager-pending-title">
+                    <h2 className="text-lg font-bold md:text-xl" id="manager-pending-title">
                       Pendientes de tu equipo
                     </h2>
-                    <span className="rounded-full bg-[var(--card-bg)] px-3 py-1 text-xs font-black text-[var(--color-muted)]">
+                    <span className="rounded-full bg-[var(--card-bg)] px-3 py-1 text-xs font-bold text-[var(--color-muted)]">
                       {pending.length} abiertas
                     </span>
                   </div>

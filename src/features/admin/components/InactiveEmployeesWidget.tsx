@@ -17,7 +17,7 @@ export function InactiveEmployeesWidget({ items }: InactiveEmployeesWidgetProps)
     >
       <div className="mb-3 flex items-center gap-2">
         <Clock aria-hidden="true" className="size-4 text-[var(--color-muted)]" />
-        <h2 className="font-black">Sin actividad reciente</h2>
+        <h2 className="font-bold">Sin actividad reciente</h2>
       </div>
       <p className="mb-3 text-xs text-[var(--color-muted)]">
         Más de 6 meses sin solicitudes. Útil para detectar cuellos de botella.
@@ -30,14 +30,14 @@ export function InactiveEmployeesWidget({ items }: InactiveEmployeesWidgetProps)
               type="button"
               onClick={() => navigate(`/admin/employees`)}
             >
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-slate-200 text-[10px] font-black text-slate-700">
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-700">
                 {initials(item.full_name)}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-black">{item.full_name}</p>
+                <p className="truncate text-sm font-bold">{item.full_name}</p>
                 <p className="truncate text-xs text-[var(--color-muted)]">{item.job_title ?? "Sin puesto"}</p>
               </div>
-              <span className="shrink-0 text-[10px] font-black text-[var(--color-muted)]">
+              <span className="shrink-0 text-[10px] font-bold text-[var(--color-muted)]">
                 {item.daysSince}d
               </span>
             </button>

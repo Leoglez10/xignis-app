@@ -109,7 +109,7 @@ function Bar({ label, value, total, tone }: { label: string; value: number; tota
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-sm">
         <span className="font-semibold">{label}</span>
-        <span className="font-black text-[var(--color-muted)]">
+        <span className="font-bold text-[var(--color-muted)]">
           {value} · {pct}%
         </span>
       </div>
@@ -185,21 +185,21 @@ export function AdminReportsScreen() {
       <section className="p-4 md:p-6">
         <header className="animate-fade-up mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-black text-[var(--color-muted)]">Recursos Humanos</p>
-            <h2 className="mt-1 text-3xl font-black md:text-4xl">Reportes</h2>
+            <p className="text-sm font-bold text-[var(--color-muted)]">Recursos Humanos</p>
+            <h2 className="mt-1 text-3xl font-bold md:text-4xl">Reportes</h2>
             <p className="mt-2 text-sm text-[var(--color-muted)]">
               {isLoading ? "Cargando datos." : `${total} solicitudes en el periodo filtrado.`}
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row"><button
-            className="press inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-slate-950 px-5 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 sm:w-auto"
+            className="press inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-slate-950 px-5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 sm:w-auto"
             disabled={filtered.length === 0}
             type="button"
             onClick={() => exportCsv(filtered)}
           >
             <Download aria-hidden="true" className="size-4" />
             Exportar CSV
-          </button><button className="press inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] px-5 text-sm font-black disabled:opacity-50 sm:w-auto" disabled={filtered.length === 0} type="button" onClick={() => void exportPdf(filtered)}><FileDown aria-hidden="true" className="size-4" />Exportar PDF</button></div>
+          </button><button className="press inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] px-5 text-sm font-bold disabled:opacity-50 sm:w-auto" disabled={filtered.length === 0} type="button" onClick={() => void exportPdf(filtered)}><FileDown aria-hidden="true" className="size-4" />Exportar PDF</button></div>
         </header>
 
         {error ? (
@@ -211,7 +211,7 @@ export function AdminReportsScreen() {
         <section className="animate-fade-up mb-5 rounded-[24px] bg-white p-4 ring-1 ring-slate-200" aria-label="Filtros de reportes">
           <div className="grid gap-3 md:grid-cols-[1fr_repeat(5,auto)] md:items-end">
             <label className="block min-w-0 space-y-2">
-              <span className="text-xs font-black text-[var(--color-muted)]">Buscar</span>
+              <span className="text-xs font-bold text-[var(--color-muted)]">Buscar</span>
               <span className="relative block">
                 <Search aria-hidden="true" className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[var(--color-muted)]" />
                 <input
@@ -250,15 +250,15 @@ export function AdminReportsScreen() {
             ["Prom. revision", averageApprovalDays, "bg-indigo-50"],
           ].map(([label, value, tone]) => (
             <article className={`rounded-[20px] p-5 ring-1 ring-slate-200 ${tone}`} key={label}>
-              <p className="text-sm font-black text-[var(--color-muted)]">{label}</p>
-              <p className="mt-2 text-3xl font-black">{value}</p>
+              <p className="text-sm font-bold text-[var(--color-muted)]">{label}</p>
+              <p className="mt-2 text-3xl font-bold">{value}</p>
             </article>
           ))}
         </section>
 
         <div className="grid gap-4 lg:grid-cols-2">
           <section className="animate-fade-up rounded-[24px] bg-white p-5 ring-1 ring-slate-200" aria-labelledby="rep-status">
-            <h2 className="mb-4 text-xl font-black" id="rep-status">
+            <h2 className="mb-4 text-xl font-bold" id="rep-status">
               Por estado
             </h2>
             <div className="space-y-4">
@@ -278,7 +278,7 @@ export function AdminReportsScreen() {
           </section>
 
           <section className="animate-fade-up rounded-[24px] bg-white p-5 ring-1 ring-slate-200" aria-labelledby="rep-type">
-            <h2 className="mb-4 text-xl font-black" id="rep-type">
+            <h2 className="mb-4 text-xl font-bold" id="rep-type">
               Por tipo de permiso
             </h2>
             <div className="space-y-4">
@@ -301,7 +301,7 @@ export function AdminReportsScreen() {
         <DepartmentBreakdown departments={departments} requests={filtered} />
 
         <section className="animate-fade-up mt-4 rounded-[24px] bg-white p-5 ring-1 ring-slate-200" aria-labelledby="report-table">
-          <h2 className="mb-4 text-xl font-black" id="report-table">Detalle filtrado</h2>
+          <h2 className="mb-4 text-xl font-bold" id="report-table">Detalle filtrado</h2>
           {recentRows.length === 0 && !isLoading ? (
             <p className="text-sm text-[var(--color-muted)]">Sin solicitudes para estos filtros.</p>
           ) : null}
@@ -312,28 +312,28 @@ export function AdminReportsScreen() {
                 <article className="rounded-[20px] bg-slate-50 p-4 ring-1 ring-slate-200" key={request.id}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate font-black">{request.employee?.full_name ?? "Empleado"}</p>
+                      <p className="truncate font-bold">{request.employee?.full_name ?? "Empleado"}</p>
                       <p className="mt-1 text-xs text-[var(--color-muted)]">{request.employee?.job_title ?? "Sin puesto"}</p>
                     </div>
-                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-black ${statusChipTone[request.status]}`}>
+                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${statusChipTone[request.status]}`}>
                       {statusLabel[request.status]}
                     </span>
                   </div>
                   <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-xs font-black text-[var(--color-muted)]">Tipo</p>
+                      <p className="text-xs font-bold text-[var(--color-muted)]">Tipo</p>
                       <p className="mt-1 font-bold">{leaveTypeLabel[request.leave_type]}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-black text-[var(--color-muted)]">Dias</p>
+                      <p className="text-xs font-bold text-[var(--color-muted)]">Dias</p>
                       <p className="mt-1 font-bold">{dayCount(request.start_date, request.end_date)}</p>
                     </div>
                     <div className="col-span-2">
-                      <p className="text-xs font-black text-[var(--color-muted)]">Periodo</p>
+                      <p className="text-xs font-bold text-[var(--color-muted)]">Periodo</p>
                       <p className="mt-1 font-bold">{formatDateRangeEs(request.start_date, request.end_date)}</p>
                     </div>
                     <div className="col-span-2">
-                      <p className="text-xs font-black text-[var(--color-muted)]">Revision</p>
+                      <p className="text-xs font-bold text-[var(--color-muted)]">Revision</p>
                       <p className="mt-1 font-bold">{duration === null ? "Pendiente" : `${duration}d`}</p>
                     </div>
                   </div>
@@ -343,7 +343,7 @@ export function AdminReportsScreen() {
           </div>
           <div className="hidden md:block">
             <table className="w-full table-fixed text-left text-sm">
-              <thead className="text-xs font-black uppercase tracking-wide text-[var(--color-muted)]">
+              <thead className="text-xs font-bold uppercase tracking-wide text-[var(--color-muted)]">
                 <tr>
                   <th className="w-[28%] pb-3 pr-4">Empleado</th>
                   <th className="w-[15%] pb-3 pr-4">Tipo</th>
@@ -359,14 +359,14 @@ export function AdminReportsScreen() {
                   return (
                     <tr key={request.id}>
                       <td className="py-3 pr-4">
-                        <p className="truncate font-black">{request.employee?.full_name ?? "Empleado"}</p>
+                        <p className="truncate font-bold">{request.employee?.full_name ?? "Empleado"}</p>
                         <p className="truncate text-xs text-[var(--color-muted)]">{request.employee?.job_title ?? "Sin puesto"}</p>
                       </td>
                       <td className="truncate py-3 pr-4 font-bold">{leaveTypeLabel[request.leave_type]}</td>
                       <td className="py-3 pr-4 text-[var(--color-muted)]">{formatDateRangeEs(request.start_date, request.end_date)}</td>
-                      <td className="py-3 pr-4 font-black">{dayCount(request.start_date, request.end_date)}</td>
+                      <td className="py-3 pr-4 font-bold">{dayCount(request.start_date, request.end_date)}</td>
                       <td className="py-3 pr-4">
-                        <span className={`rounded-full px-2.5 py-1 text-[11px] font-black ${statusChipTone[request.status]}`}>
+                        <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusChipTone[request.status]}`}>
                           {statusLabel[request.status]}
                         </span>
                       </td>

@@ -51,7 +51,7 @@ export function SetPasswordScreen() {
   return (
     <main className="mobile-screen grid place-items-center px-6 pb-10 pt-[calc(2.5rem+env(safe-area-inset-top))]" id="main-content" tabIndex={-1}>
       <section className="animate-fade-up w-full max-w-sm">
-        <h1 className="text-3xl font-black text-[var(--color-text)]">Crear nueva password</h1>
+        <h1 className="text-3xl font-bold text-[var(--color-text)]">Crear nueva password</h1>
         <p className="mt-2 text-sm text-[var(--color-muted)]">Define tu password para entrar a Xignis.</p>
 
         {isLoading ? (
@@ -62,7 +62,7 @@ export function SetPasswordScreen() {
           <div className="mt-6 space-y-3 rounded-2xl bg-orange-50 p-4 text-sm leading-6 text-orange-900" role="alert">
             <p>El enlace no es válido o expiró.</p>
             <Link
-              className="press inline-flex w-full items-center justify-center rounded-full bg-white px-4 py-3 font-black text-orange-900 ring-1 ring-orange-200"
+              className="press inline-flex w-full items-center justify-center rounded-full bg-white px-4 py-3 font-bold text-orange-900 ring-1 ring-orange-200"
               to="/forgot-password"
             >
               Solicitar nuevo enlace

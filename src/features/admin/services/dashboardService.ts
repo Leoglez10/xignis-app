@@ -108,37 +108,6 @@ export async function getLeaveTypeDistribution(): Promise<TypeDistribution> {
   return (Object.keys(counts) as LeaveType[]).map((type) => ({ count: counts[type], type }));
 }
 
-export type StagnantRequest = {
-  daysOld: number;
-  employee_name: string;
-  id: string;
-  leave_type: LeaveType;
-  start_date: string;
-  status: string;
-};
-
-/** Solicitudes pendientes/old con más de X horas sin resolver. */
-export async function getStagnantRequests(thresholdHours = 72): Promise<StagnantRequest[]> {
-  const requests = await listHrLeaveRequests();
-  const cutoff = Date.now() - thresholdHours * 3_600_000;
-  return requests
-    .filter(
-      (r) =>
-        (r.status === "pending_hr" || r.status === "approved_by_manager" || r.status === "pending_manager") &&
-        new Date(r.created_at).getTime() < cutoff,
-    )
-    .map((r) => ({
-      daysOld: Math.floor((Date.now() - new Date(r.created_at).getTime()) / 86_400_000),
-      employee_name: r.employee?.full_name ?? "Empleado",
-      id: r.id,
-      leave_type: r.leave_type,
-      start_date: r.start_date,
-      status: r.status,
-    }))
-    .sort((a, b) => b.daysOld - a.daysOld)
-    .slice(0, 8);
-}
-
 export type RecentOnboarding = {
   created_at: string;
   full_name: string;

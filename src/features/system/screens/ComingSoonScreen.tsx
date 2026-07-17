@@ -16,7 +16,7 @@ export function ComingSoonScreen({ moduleId }: { moduleId: string }) {
 
   return (
     <main className="mobile-screen" id="main-content" tabIndex={-1}>
-      <section className="flex min-h-dvh flex-col px-5 pb-16 pt-[calc(1.5rem+env(safe-area-inset-top))]">
+      <section className="flex min-h-dvh flex-col px-5 pb-16 pt-6">
         <button
           aria-label="Volver"
           className="press mb-8 grid size-11 place-items-center rounded-full bg-[var(--card-bg)] text-[var(--color-text)] shadow-sm"
@@ -30,10 +30,10 @@ export function ComingSoonScreen({ moduleId }: { moduleId: string }) {
           <span className="grid size-20 place-items-center rounded-[28px] bg-[var(--color-surface)] text-[var(--color-muted)]">
             <Icon aria-hidden="true" className="size-10" />
           </span>
-          <span className="rounded-full bg-[var(--color-primary)] px-4 py-1.5 text-xs font-black text-[var(--color-primary-contrast)]">
+          <span className="rounded-full bg-[var(--color-primary)] px-4 py-1.5 text-xs font-bold text-[var(--color-primary-contrast)]">
             Próximamente
           </span>
-          <h2 className="text-3xl font-black text-[var(--color-text)]">{mod.name}</h2>
+          <h2 className="text-3xl font-bold text-[var(--color-text)]">{mod.name}</h2>
           <p className="max-w-xs text-sm leading-6 text-[var(--color-muted)]">{mod.description}</p>
           <p className="max-w-xs text-xs leading-5 text-[var(--color-muted)]">
             Forma parte de la plataforma Xignis. Te avisaremos cuando esté disponible.

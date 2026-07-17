@@ -53,7 +53,7 @@ export function EmployeeRequestsListScreen() {
 
   return (
     <main className="mobile-screen" id="main-content" tabIndex={-1}>
-      <section className="flex min-h-dvh flex-col px-5 pb-28 pt-[calc(1rem+env(safe-area-inset-top))] lg:px-8">
+      <section className="flex min-h-dvh flex-col px-5 pb-28 pt-4 lg:px-8">
         <header className="animate-fade-up mb-5 flex items-center gap-3">
           <button
             aria-label="Volver"
@@ -64,7 +64,7 @@ export function EmployeeRequestsListScreen() {
             <ChevronLeft aria-hidden="true" className="size-5" />
           </button>
           <div className="min-w-0">
-            <h2 className="truncate text-2xl font-black">Mis solicitudes</h2>
+            <h2 className="truncate text-2xl font-bold">Mis solicitudes</h2>
             <p className="text-sm text-[var(--color-muted)]">
               {isLoading ? "Cargando…" : `${filtered.length} resultado${filtered.length === 1 ? "" : "s"}`}
             </p>
@@ -87,7 +87,7 @@ export function EmployeeRequestsListScreen() {
           {STATUS_FILTERS.map((f) => (
             <button
               aria-pressed={filter === f.key}
-              className={`press rounded-full px-3 py-1.5 text-xs font-black transition ${
+              className={`press rounded-full px-3 py-1.5 text-xs font-bold transition ${
                 filter === f.key ? "bg-slate-950 text-white" : "bg-[var(--color-surface)] text-[var(--color-muted)]"
               }`}
               key={f.key}
@@ -125,15 +125,15 @@ export function EmployeeRequestsListScreen() {
                     onClick={() => navigate(`/employee/requests/${r.id}`)}
                   >
                     <span
-                      className={`grid size-10 shrink-0 place-items-center rounded-2xl text-xs font-black ${cfg.avatarTone}`}
+                      className={`grid size-10 shrink-0 place-items-center rounded-2xl text-xs font-bold ${cfg.avatarTone}`}
                     >
                       {cfg.label.slice(0, 1)}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-black">{cfg.label}</p>
+                      <p className="truncate font-bold">{cfg.label}</p>
                       <p className="truncate text-xs text-[var(--color-muted)]">{formatDateRange(r)}</p>
                     </div>
-                    <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-black ${statusTone[r.status]}`}>
+                    <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${statusTone[r.status]}`}>
                       {statusLabel[r.status]}
                     </span>
                   </button>

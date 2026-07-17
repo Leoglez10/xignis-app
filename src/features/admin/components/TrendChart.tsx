@@ -37,8 +37,8 @@ export function TrendChart({ data }: TrendChartProps) {
       className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px] md:p-6"
     >
       <header className="mb-3 flex items-center justify-between">
-        <h2 className="font-black">Tendencia 12 meses</h2>
-        <div className="flex items-center gap-3 text-[10px] font-black text-[var(--color-muted)]">
+        <h2 className="font-bold">Tendencia 12 meses</h2>
+        <div className="flex items-center gap-3 text-[10px] font-bold text-[var(--color-muted)]">
           <span className="flex items-center gap-1">
             <span aria-hidden="true" className="size-2 rounded-full" style={{ background: COLORS.approved }} />
             Aprobadas

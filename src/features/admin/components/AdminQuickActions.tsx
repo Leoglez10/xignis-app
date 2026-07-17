@@ -27,7 +27,7 @@ export function AdminQuickActions() {
             <span className="grid size-10 place-items-center rounded-xl bg-indigo-50 text-indigo-700">
               <Icon aria-hidden="true" className="size-5" />
             </span>
-            <span className="text-xs font-black">{action.label}</span>
+            <span className="text-xs font-bold">{action.label}</span>
           </button>
         );
       })}

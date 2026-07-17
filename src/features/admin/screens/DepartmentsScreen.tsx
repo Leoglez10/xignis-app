@@ -77,7 +77,7 @@ function DepartmentSheet({
           onChange={(e) => setName(e.target.value)}
         />
         <label className="block">
-          <span className="text-sm font-black">Descripción (opcional)</span>
+          <span className="text-sm font-bold">Descripción (opcional)</span>
           <textarea
             className="mt-2 min-h-20 w-full resize-none rounded-2xl bg-[var(--color-surface)] p-4 text-sm outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[var(--color-focus)]"
             value={description}
@@ -124,7 +124,7 @@ function MembersSheet({
             <li className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-200" key={m.id}>
               <Avatar className="size-10" name={m.full_name} src={m.avatar_url} />
               <div className="min-w-0">
-                <p className="truncate text-sm font-black">{m.full_name}</p>
+                <p className="truncate text-sm font-bold">{m.full_name}</p>
                 {m.job_title ? <p className="truncate text-xs text-[var(--color-muted)]">{m.job_title}</p> : null}
               </div>
             </li>
@@ -178,8 +178,8 @@ export function DepartmentsScreen() {
       <section className="p-4 md:p-6">
         <header className="animate-fade-up mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-sm font-black text-[var(--color-muted)]">Recursos Humanos</p>
-            <h2 className="mt-1 text-2xl font-black md:text-3xl">Áreas</h2>
+            <p className="text-sm font-bold text-[var(--color-muted)]">Recursos Humanos</p>
+            <h2 className="mt-1 text-2xl font-bold md:text-3xl">Áreas</h2>
             <p className="mt-2 text-sm text-[var(--color-muted)]">Departamentos de la organización.</p>
           </div>
           <Button
@@ -222,9 +222,9 @@ export function DepartmentsScreen() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="truncate text-base font-black">{dept.name}</h2>
+                      <h2 className="truncate text-base font-bold">{dept.name}</h2>
                       {dept.archived_at ? (
-                        <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-[11px] font-black text-slate-700">
+                        <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">
                           Archivada
                         </span>
                       ) : null}
@@ -236,7 +236,7 @@ export function DepartmentsScreen() {
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <button
-                    className="press inline-flex min-h-9 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-black text-slate-700 ring-1 ring-slate-200"
+                    className="press inline-flex min-h-9 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-bold text-slate-700 ring-1 ring-slate-200"
                     type="button"
                     onClick={() => setViewingMembers(dept)}
                   >
@@ -244,7 +244,7 @@ export function DepartmentsScreen() {
                     {dept.memberCount} {dept.memberCount === 1 ? "miembro" : "miembros"}
                   </button>
                   <button
-                    className="press inline-flex min-h-9 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-black text-slate-700 ring-1 ring-slate-200"
+                    className="press inline-flex min-h-9 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-bold text-slate-700 ring-1 ring-slate-200"
                     type="button"
                     onClick={() => {
                       setEditing(dept);
@@ -255,7 +255,7 @@ export function DepartmentsScreen() {
                     Editar
                   </button>
                   <button
-                    className="press inline-flex min-h-9 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-black text-slate-700 ring-1 ring-slate-200 disabled:opacity-50"
+                    className="press inline-flex min-h-9 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-bold text-slate-700 ring-1 ring-slate-200 disabled:opacity-50"
                     disabled={workingId === dept.id}
                     type="button"
                     onClick={() => void toggleArchived(dept)}

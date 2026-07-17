@@ -15,7 +15,7 @@ export function VacationBalanceCard({ balance }: VacationBalanceCardProps) {
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm text-[var(--color-muted)]">Días disponibles</p>
-          <p className="mt-1 text-3xl font-black text-[var(--color-text)]">
+          <p className="mt-1 text-3xl font-bold text-[var(--color-text)]">
             {balance.available}
             <span className="ml-1 text-base font-bold text-[var(--color-muted)]">/ {balance.quota}</span>
           </p>

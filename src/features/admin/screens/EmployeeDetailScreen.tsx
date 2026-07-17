@@ -84,7 +84,7 @@ export function EmployeeDetailScreen() {
 
   return (
     <AdminShell>
-      <div className="mx-auto w-full max-w-3xl px-4 pb-10 pt-[calc(1.25rem+env(safe-area-inset-top))] md:px-8">
+      <div className="mx-auto w-full max-w-3xl px-4 pb-10 pt-5 md:px-8">
         <header className="animate-fade-up mb-6 flex items-center gap-3">
           <button
             aria-label="Regresar a Empleados"
@@ -98,9 +98,9 @@ export function EmployeeDetailScreen() {
             <div className="flex flex-1 items-center gap-3">
               <Avatar className="text-base text-emerald-700" name={sheet.full_name} size="size-16" src={sheet.avatar_url} />
               <div className="min-w-0">
-                <h2 className="truncate text-2xl font-black md:text-3xl">{sheet.full_name}</h2>
+                <h2 className="truncate text-2xl font-bold md:text-3xl">{sheet.full_name}</h2>
                 <p className="truncate text-sm text-[var(--color-muted)]">{sheet.job_title ?? "Sin puesto"}</p>
-                <span className="mt-1 inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-black text-[var(--color-muted)]">
+                <span className="mt-1 inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-[var(--color-muted)]">
                   {roleLabel[sheet.role]}
                 </span>
               </div>
@@ -138,7 +138,7 @@ export function EmployeeDetailScreen() {
           >
             <div className="mb-4 flex items-center gap-2">
               <Clock aria-hidden="true" className="size-5 text-[var(--color-muted)]" />
-              <h2 className="text-base font-black" id="leave-history-title">Historial de vacaciones y permisos</h2>
+              <h2 className="text-base font-bold" id="leave-history-title">Historial de vacaciones y permisos</h2>
             </div>
 
             {requestsQuery.isLoading ? (
@@ -162,13 +162,13 @@ export function EmployeeDetailScreen() {
                       onClick={() => navigate(`/admin/requests/${request.id}`)}
                     >
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-black">{leaveTypeLabel[request.leave_type]}</span>
+                        <span className="block truncate text-sm font-bold">{leaveTypeLabel[request.leave_type]}</span>
                         <span className="mt-1 block text-xs text-[var(--color-muted)]">
                           {formatDateRangeEs(request.start_date, request.end_date)}
                         </span>
                       </span>
                       <span className="flex shrink-0 items-center gap-2">
-                        <span className={`rounded-full px-2.5 py-1 text-[11px] font-black ${statusTone[request.status]}`}>
+                        <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusTone[request.status]}`}>
                           {statusLabel[request.status]}
                         </span>
                         <ChevronRight aria-hidden="true" className="size-5 text-[var(--color-muted)]" />
@@ -186,7 +186,7 @@ export function EmployeeDetailScreen() {
           >
             <div className="mb-4 flex items-center gap-2">
               <History aria-hidden="true" className="size-5 text-[var(--color-muted)]" />
-              <h2 className="text-base font-black" id="employment-history-title">Historial laboral</h2>
+              <h2 className="text-base font-bold" id="employment-history-title">Historial laboral</h2>
             </div>
             {employmentEventsQuery.isLoading ? (
               <p className="text-sm font-semibold text-[var(--color-muted)]">Cargando historial laboral…</p>

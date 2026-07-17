@@ -45,7 +45,7 @@ export function CoverageHeatmap({ members, absences, days = 14 }: CoverageHeatma
       className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px] md:p-6"
     >
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="font-black">
+        <h2 className="font-bold">
           Cobertura <span className="md:hidden">7 días</span><span className="hidden md:inline">{days} días</span>
         </h2>
         <p className="text-xs text-[var(--color-muted)]">
@@ -56,12 +56,12 @@ export function CoverageHeatmap({ members, absences, days = 14 }: CoverageHeatma
         <table className="w-full table-fixed text-[11px]">
           <thead>
             <tr>
-              <th className="w-20 px-1 py-1 text-left font-black text-[var(--color-muted)]">Persona</th>
+              <th className="w-20 px-1 py-1 text-left font-bold text-[var(--color-muted)]">Persona</th>
               {dateList.map((iso, i) => {
                 const d = new Date(`${iso}T00:00:00`);
                 return (
                   <th
-                    className={`px-1 py-1 text-center font-black text-[var(--color-muted)] ${i >= 7 ? "hidden md:table-cell" : ""}`}
+                    className={`px-1 py-1 text-center font-bold text-[var(--color-muted)] ${i >= 7 ? "hidden md:table-cell" : ""}`}
                     key={iso}
                     title={iso}
                   >
@@ -87,7 +87,7 @@ export function CoverageHeatmap({ members, absences, days = 14 }: CoverageHeatma
                 <tr key={m.id}>
                   <td className="px-1 py-1 text-left">
                     <div className="flex items-center gap-2">
-                      <span className="grid size-6 place-items-center rounded-full bg-emerald-100 text-[9px] font-black text-emerald-700">
+                      <span className="grid size-6 place-items-center rounded-full bg-emerald-100 text-[9px] font-bold text-emerald-700">
                         {initials(m.full_name)}
                       </span>
                       <span className="truncate text-xs font-bold">{m.full_name.split(" ")[0]}</span>
@@ -99,7 +99,7 @@ export function CoverageHeatmap({ members, absences, days = 14 }: CoverageHeatma
                       <td className={`px-0.5 py-0.5 ${i >= 7 ? "hidden md:table-cell" : ""}`} key={iso}>
                         <span
                           aria-label={isAbsent ? `Ausente el ${iso}` : `Disponible el ${iso}`}
-                          className={`block size-full min-h-5 rounded-md text-center text-[9px] font-black leading-5 ${
+                          className={`block size-full min-h-5 rounded-md text-center text-[9px] font-bold leading-5 ${
                             isAbsent ? "bg-rose-300 text-rose-900" : "bg-emerald-50 text-emerald-700"
                           }`}
                         >
@@ -121,7 +121,7 @@ export function CoverageHeatmap({ members, absences, days = 14 }: CoverageHeatma
               return (
                 <span
                   aria-label={`${iso}: ${count} ausencias`}
-                  className={`grid size-5 place-items-center rounded font-black ${tone(count, members.length)}`}
+                  className={`grid size-5 place-items-center rounded font-bold ${tone(count, members.length)}`}
                   key={iso}
                   title={`${iso} · ${count} ausencias`}
                 >

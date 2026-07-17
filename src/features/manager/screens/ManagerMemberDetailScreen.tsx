@@ -95,7 +95,7 @@ export function ManagerMemberDetailScreen() {
   if (isLoading) {
     return (
       <ManagerShell>
-        <p className="px-4 pt-[calc(1.5rem+env(safe-area-inset-top))] text-sm font-semibold text-[var(--color-muted)]">
+        <p className="px-4 pt-6 text-sm font-semibold text-[var(--color-muted)]">
           Cargando…
         </p>
       </ManagerShell>
@@ -105,7 +105,7 @@ export function ManagerMemberDetailScreen() {
   if (!member) {
     return (
       <ManagerShell>
-        <div className="mx-auto w-full max-w-3xl px-4 pt-[calc(1.25rem+env(safe-area-inset-top))]">
+        <div className="mx-auto w-full max-w-3xl px-4 pt-5">
           <button
             aria-label="Regresar"
             className="press grid size-11 place-items-center rounded-full bg-white ring-1 ring-slate-200"
@@ -124,7 +124,7 @@ export function ManagerMemberDetailScreen() {
 
   return (
     <ManagerShell>
-      <div className="mx-auto w-full max-w-3xl px-4 pb-10 pt-[calc(1.25rem+env(safe-area-inset-top))] md:px-8">
+      <div className="mx-auto w-full max-w-3xl px-4 pb-10 pt-5 md:px-8">
         <header className="animate-fade-up mb-6 flex items-center gap-3">
           <button
             aria-label="Regresar a Mi equipo"
@@ -137,9 +137,9 @@ export function ManagerMemberDetailScreen() {
           <div className="flex flex-1 items-center gap-3">
             <Avatar className="text-base text-emerald-700" name={member.full_name} size="size-16" src={member.avatar_url} />
             <div className="min-w-0">
-              <h2 className="truncate text-2xl font-black md:text-3xl">{member.full_name}</h2>
+              <h2 className="truncate text-2xl font-bold md:text-3xl">{member.full_name}</h2>
               <p className="truncate text-sm text-[var(--color-muted)]">{member.job_title ?? "Sin puesto"}</p>
-              <span className={`mt-1 inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-black ${activeToday ? "bg-rose-100 text-rose-800" : "bg-emerald-50 text-emerald-800"}`}>
+              <span className={`mt-1 inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-bold ${activeToday ? "bg-rose-100 text-rose-800" : "bg-emerald-50 text-emerald-800"}`}>
                 {activeToday ? "Ausente hoy" : "Disponible"}
               </span>
             </div>
@@ -148,16 +148,16 @@ export function ManagerMemberDetailScreen() {
 
         <section className="mb-5 grid grid-cols-3 gap-3" aria-label="Resumen">
           <article className="rounded-2xl bg-white p-3 text-center ring-1 ring-slate-200">
-            <p className="text-xs font-black text-[var(--color-muted)]">Aprobadas</p>
-            <p className="mt-1 text-2xl font-black text-[var(--color-text)]">{stats.approved}</p>
+            <p className="text-xs font-bold text-[var(--color-muted)]">Aprobadas</p>
+            <p className="mt-1 text-2xl font-bold text-[var(--color-text)]">{stats.approved}</p>
           </article>
           <article className="rounded-2xl bg-white p-3 text-center ring-1 ring-slate-200">
-            <p className="text-xs font-black text-[var(--color-muted)]">Pendientes</p>
-            <p className="mt-1 text-2xl font-black text-[var(--color-text)]">{stats.pending}</p>
+            <p className="text-xs font-bold text-[var(--color-muted)]">Pendientes</p>
+            <p className="mt-1 text-2xl font-bold text-[var(--color-text)]">{stats.pending}</p>
           </article>
           <article className="rounded-2xl bg-white p-3 text-center ring-1 ring-slate-200">
-            <p className="text-xs font-black text-[var(--color-muted)]">Este mes</p>
-            <p className="mt-1 text-2xl font-black text-[var(--color-text)]">{stats.thisMonth}</p>
+            <p className="text-xs font-bold text-[var(--color-muted)]">Este mes</p>
+            <p className="mt-1 text-2xl font-bold text-[var(--color-text)]">{stats.thisMonth}</p>
           </article>
         </section>
 
@@ -177,9 +177,9 @@ export function ManagerMemberDetailScreen() {
           <section className="mb-5 rounded-[20px] bg-emerald-50 p-4 ring-1 ring-emerald-200" aria-labelledby="active-title">
             <div className="mb-2 flex items-center gap-2">
               <CalendarDays aria-hidden="true" className="size-5 text-emerald-700" />
-              <h2 className="text-sm font-black text-emerald-900" id="active-title">Permiso activo ahora</h2>
+              <h2 className="text-sm font-bold text-emerald-900" id="active-title">Permiso activo ahora</h2>
             </div>
-            <p className="text-sm font-black text-emerald-900">{leaveTypeLabel[activeToday.leave_type]}</p>
+            <p className="text-sm font-bold text-emerald-900">{leaveTypeLabel[activeToday.leave_type]}</p>
             <p className="mt-1 text-sm text-emerald-800">
               {formatDateRangeEs(activeToday.start_date, activeToday.end_date)}
             </p>
@@ -193,16 +193,16 @@ export function ManagerMemberDetailScreen() {
           <section className="mb-5" aria-labelledby="upcoming-title">
             <div className="mb-3 flex items-center gap-2">
               <CalendarClock aria-hidden="true" className="size-5 text-[var(--color-muted)]" />
-              <h2 className="text-base font-black" id="upcoming-title">Próximas ausencias (30 días)</h2>
+              <h2 className="text-base font-bold" id="upcoming-title">Próximas ausencias (30 días)</h2>
             </div>
             <ul className="stagger space-y-2">
               {upcoming.map((r) => (
                 <li className="flex items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-slate-200" key={r.id}>
-                  <span className={`grid size-10 shrink-0 place-items-center rounded-full text-xs font-black ${leaveTypeConfig[r.leave_type].avatarTone}`}>
+                  <span className={`grid size-10 shrink-0 place-items-center rounded-full text-xs font-bold ${leaveTypeConfig[r.leave_type].avatarTone}`}>
                     {initials(member.full_name)}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-black">{leaveTypeLabel[r.leave_type]}</span>
+                    <span className="block truncate text-sm font-bold">{leaveTypeLabel[r.leave_type]}</span>
                     <span className="block truncate text-xs text-[var(--color-muted)]">{formatDateRangeEs(r.start_date, r.end_date)}</span>
                   </span>
                 </li>
@@ -214,7 +214,7 @@ export function ManagerMemberDetailScreen() {
         <section aria-labelledby="history-title">
           <div className="mb-3 flex items-center gap-2">
             <Clock aria-hidden="true" className="size-5 text-[var(--color-muted)]" />
-            <h2 className="text-base font-black" id="history-title">Historial completo</h2>
+            <h2 className="text-base font-bold" id="history-title">Historial completo</h2>
           </div>
           <ul className="stagger space-y-2">
             {history.length === 0 ? (
@@ -230,11 +230,11 @@ export function ManagerMemberDetailScreen() {
                   onClick={() => navigate(`/manager/requests/${r.id}`)}
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-black">{leaveTypeLabel[r.leave_type]}</p>
+                    <p className="truncate text-sm font-bold">{leaveTypeLabel[r.leave_type]}</p>
                     <p className="mt-1 text-xs text-[var(--color-muted)]">{formatDateRange(r)}</p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-black ${statusTone[r.status]}`}>
+                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusTone[r.status]}`}>
                       {statusLabel[r.status]}
                     </span>
                     <ChevronRight aria-hidden="true" className="size-5 text-[var(--color-muted)]" />

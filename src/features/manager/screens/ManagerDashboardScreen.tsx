@@ -1,12 +1,11 @@
 import { AlertTriangle, ArrowRight, CalendarDays, ChevronRight, Inbox, UserX, Users } from "lucide-react";
 import { useMemo } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { formatDateRangeEs, eachDayIso, overlapsToday, startsWithinDays } from "../../../lib/date";
+import { formatDateRangeEs, eachDayIso, overlapsToday } from "../../../lib/date";
 import { roleLabel } from "../../profiles/services/profileService";
 import { ManagerShell } from "../components/managerNav";
 import { useAuth } from "../../session/AuthContext";
 import { leaveTypeConfig } from "../../leave-requests/config";
-import { STATS_CONFIG, UPCOMING_WINDOW_DAYS } from "../dashboard.config";
 import { useDashboardPrefs } from "../useDashboardPrefs";
 import { AgendaItem } from "../components/AgendaItem";
 import { AgingBadge } from "../../../components/ui/AgingBadge";
@@ -15,8 +14,6 @@ import { usePreferences } from "../../settings/PreferencesContext";
 import { CoverageHeatmap } from "../components/CoverageHeatmap";
 import { DashboardSkeleton } from "../components/DashboardSkeleton";
 import { RefreshBoundary } from "../components/RefreshBoundary";
-import { SlaCard } from "../components/SlaCard";
-import { StatCard } from "../components/StatCard";
 import { TeamMemberRow } from "../components/TeamMemberRow";
 import { useManagerPendingRequests } from "../hooks/useManagerPendingRequests";
 
@@ -26,15 +23,10 @@ export function ManagerDashboardScreen() {
   const { profile } = useAuth();
   const { prefs } = useDashboardPrefs();
 
-  const { absences, error, isLoading, pending, refetch, sla, team } = useManagerPendingRequests();
+  const { absences, error, isLoading, pending, refetch, team } = useManagerPendingRequests();
 
   const absentEmployeeIds = useMemo(
     () => new Set(absences.filter((a) => overlapsToday(a.start_date, a.end_date)).map((a) => a.employee_id)),
-    [absences],
-  );
-
-  const upcomingWeekCount = useMemo(
-    () => absences.filter((a) => startsWithinDays(a.start_date, UPCOMING_WINDOW_DAYS)).length,
     [absences],
   );
 
@@ -69,17 +61,6 @@ export function ManagerDashboardScreen() {
   const managerFirstName = profile?.full_name.split(" ")[0] ?? "Jefe";
   const roleBadge = profile ? roleLabel[profile.role] : "Jefe";
 
-  const statsState = useMemo(
-    () => ({
-      absences,
-      absentTodayCount: absentEmployeeIds.size,
-      pending,
-      teamCount: team.length,
-      upcomingWeekCount,
-    }),
-    [absences, absentEmployeeIds, pending, team, upcomingWeekCount],
-  );
-
   const shortcuts = [
     { count: pending.length, icon: Inbox, label: "Solicitudes pendientes", to: "/manager/requests", tone: "bg-[var(--stat-pending)] text-[var(--stat-pending-text)]" },
     { count: absentEmployeeIds.size, icon: UserX, label: "Ausentes hoy", to: "/manager/calendar", tone: "bg-[var(--stat-absent)] text-[var(--stat-absent-text)]" },
@@ -89,11 +70,11 @@ export function ManagerDashboardScreen() {
   return (
     <ManagerShell>
       <RefreshBoundary onRefresh={refetch}>
-        <section className="grid min-h-dvh gap-5 p-4 pb-24 pt-[calc(1rem+env(safe-area-inset-top))] md:p-6 md:pb-24 lg:grid-cols-[1fr_var(--aside-width)]">
+        <section className="grid min-h-dvh gap-5 p-4 pb-24 pt-4 md:p-6 md:pb-24 lg:grid-cols-[1fr_var(--aside-width)]">
           <div className="min-w-0 bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px] md:p-6">
             <header className="animate-fade-up mb-6">
-              <p className="text-sm font-black text-[var(--color-muted)]">{roleBadge}</p>
-              <h2 className="mt-1 text-2xl font-black md:text-3xl">{managerFirstName}</h2>
+              <p className="text-sm font-bold text-[var(--color-muted)]">{roleBadge}</p>
+              <h2 className="mt-1 text-2xl font-bold md:text-3xl">{managerFirstName}</h2>
               <p className="mt-1 text-sm text-[var(--color-muted)]">
                 {isLoading
                   ? "Cargando…"
@@ -108,21 +89,6 @@ export function ManagerDashboardScreen() {
             ) : (
               <>
                 <section
-                  className="animate-fade-up stagger mb-5 grid grid-cols-2 gap-3 md:grid-cols-4"
-                  aria-label="Resumen del equipo"
-                >
-                  {STATS_CONFIG.map((s) => (
-                    <StatCard
-                      key={s.key}
-                      label={s.label}
-                      tone={s.tone}
-                      value={s.compute(statsState)}
-                    />
-                  ))}
-                  {sla ? <SlaCard avgHours={sla.avgHours} count={sla.count} /> : null}
-                </section>
-
-                <section
                   className="animate-fade-up stagger mb-5 grid grid-cols-3 gap-3"
                   aria-label="Accesos directos"
                 >
@@ -135,7 +101,7 @@ export function ManagerDashboardScreen() {
                       <span className={`grid size-9 place-items-center rounded-2xl ${tone}`}>
                         <Icon aria-hidden="true" className="size-5" />
                       </span>
-                      <span className="text-2xl font-black leading-none">{count}</span>
+                      <span className="text-2xl font-bold leading-none">{count}</span>
                       <span className="text-xs font-bold text-[var(--color-muted)]">{label}</span>
                     </NavLink>
                   ))}
@@ -145,7 +111,7 @@ export function ManagerDashboardScreen() {
                   <div className="animate-fade-up mb-5 flex gap-3 rounded-2xl bg-rose-50 p-4 text-rose-900 ring-1 ring-rose-200">
                     <AlertTriangle aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-black">{agedCount} solicitud{agedCount === 1 ? "" : "es"} con más de 48 h</p>
+                      <p className="text-sm font-bold">{agedCount} solicitud{agedCount === 1 ? "" : "es"} con más de 48 h</p>
                       <p className="mt-0.5 text-xs text-rose-800/80">
                         Revisa las más antiguas para mantener el SLA de tu equipo.
                       </p>
@@ -170,12 +136,12 @@ export function ManagerDashboardScreen() {
 
                 <section className="rounded-[24px] bg-[var(--card-muted)] p-4" aria-labelledby="manager-urgent-title">
                   <div className="mb-4 flex items-center justify-between gap-4">
-                    <h2 className="text-lg font-black md:text-xl" id="manager-urgent-title">
+                    <h2 className="text-lg font-bold md:text-xl" id="manager-urgent-title">
                       Próximas 3 urgentes
                     </h2>
                     <NavLink
                       to="/manager/requests"
-                      className="press inline-flex items-center gap-1 text-xs font-black text-[var(--color-muted)]"
+                      className="press inline-flex items-center gap-1 text-xs font-bold text-[var(--color-muted)]"
                     >
                       Ver todas ({pending.length})
                       <ArrowRight aria-hidden="true" className="size-4" />
@@ -196,7 +162,7 @@ export function ManagerDashboardScreen() {
                             onClick={() => navigate(`/manager/requests/${request.id}`)}
                           >
                             <span className="min-w-0 flex-1">
-                              <span className="block truncate text-sm font-black">
+                              <span className="block truncate text-sm font-bold">
                                 {request.employee?.full_name ?? "Empleado"}
                               </span>
                               <span className="block truncate text-xs text-[var(--color-muted)]">
@@ -227,8 +193,8 @@ export function ManagerDashboardScreen() {
                   type="button"
                 >
                   <div>
-                    <p className="text-sm font-black text-[var(--color-muted)]">Agenda</p>
-                    <h2 className="mt-1 text-xl font-black" id="agenda-title">Próximas ausencias</h2>
+                    <p className="text-sm font-bold text-[var(--color-muted)]">Agenda</p>
+                    <h2 className="mt-1 text-xl font-bold" id="agenda-title">Próximas ausencias</h2>
                   </div>
                   <span className="grid size-11 place-items-center rounded-2xl bg-emerald-50 text-emerald-700">
                     <CalendarDays aria-hidden="true" className="size-5" />
@@ -266,9 +232,9 @@ export function ManagerDashboardScreen() {
                   >
                     <div className="flex items-center gap-2">
                       <Users aria-hidden="true" className="size-5 text-[var(--color-muted)]" />
-                      <h2 className="font-black" id="team-title">Tu equipo</h2>
+                      <h2 className="font-bold" id="team-title">Tu equipo</h2>
                     </div>
-                    <span className="text-xs font-black text-[var(--color-muted)]">{team.length}</span>
+                    <span className="text-xs font-bold text-[var(--color-muted)]">{team.length}</span>
                   </button>
                   <ul className="stagger space-y-2">
                     {team.length === 0 ? (

@@ -12,7 +12,7 @@ import { initials } from "../lib/avatar";
  * Header de la plataforma Xignis (estilo referencia): avatar + título + búsqueda
  * + notificaciones + switcher de módulos, pills de contexto y barra de tabs.
  * Fijo en pantallas autenticadas; se oculta al bajar. El offset del contenido
- * lo maneja `--topbar-h` en globals.css (regla `.app-topbar + #main-content`).
+ * lo maneja `--topbar-content-h` más el safe area en globals.css.
  */
 export function TopBar() {
   const navigate = useNavigate();
@@ -48,13 +48,13 @@ export function TopBar() {
       <div className="flex h-14 items-center gap-3 px-4">
         <button
           aria-label="Mi perfil"
-          className="press grid size-10 shrink-0 place-items-center rounded-full bg-[var(--color-surface)] text-sm font-black text-[var(--color-text)]"
+          className="press grid size-10 shrink-0 place-items-center rounded-full bg-[var(--color-surface)] text-sm font-bold text-[var(--color-text)]"
           type="button"
           onClick={() => navigate("/profile")}
         >
           {profile ? initials(profile.full_name) : ""}
         </button>
-        <h1 className="min-w-0 flex-1 truncate text-2xl font-black text-[var(--color-text)]">{title}</h1>
+        <h1 className="min-w-0 flex-1 truncate text-2xl font-bold text-[var(--color-text)]">{title}</h1>
         <div className="flex shrink-0 items-center gap-1">
           <button
             aria-label="Buscar"
@@ -78,7 +78,7 @@ export function TopBar() {
 
       {/* Fila 2: pills de contexto */}
       <div className="flex items-center gap-2 px-4 pb-2">
-        <span className="rounded-full bg-[var(--color-primary)] px-4 py-1.5 text-sm font-black text-[var(--color-primary-contrast)]">
+        <span className="rounded-full bg-[var(--color-primary)] px-4 py-1.5 text-sm font-bold text-[var(--color-primary-contrast)]">
           Mi espacio
         </span>
         <button

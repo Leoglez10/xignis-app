@@ -56,7 +56,7 @@ export function DepartmentBreakdown({
     >
       <div className="mb-4 flex items-center gap-2">
         <Building2 aria-hidden="true" className="size-5 text-[var(--color-muted)]" />
-        <h2 className="text-xl font-black" id="rep-area">
+        <h2 className="text-xl font-bold" id="rep-area">
           Por área
         </h2>
       </div>
@@ -67,7 +67,7 @@ export function DepartmentBreakdown({
             <li key={name}>
               <div className="mb-1.5 flex items-center justify-between text-sm">
                 <span className="font-semibold">{name}</span>
-                <span className="font-black text-[var(--color-muted)]">
+                <span className="font-bold text-[var(--color-muted)]">
                   {b.total}
                   <span className="ml-2 text-[11px] font-semibold">
                     <span className="text-emerald-600">▲{b.approved}</span>{" "}

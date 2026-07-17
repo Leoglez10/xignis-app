@@ -1,9 +1,11 @@
 @import "tailwindcss";
+@import "@fontsource-variable/inter";
 
 :root {
   color-scheme: light;
   font-family:
-    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    "Inter Variable", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
   --color-primary: #0DEC0D;
   --color-primary-strong: #0ab80a;
   --color-field-focus: #078a07;
@@ -29,7 +31,7 @@
   --stat-upcoming-text: #065f46;
   --aside-width: 360px;
   --skeleton-base: #e2e8f0;
-  --topbar-h: 9.25rem;
+  --topbar-content-h: 8.125rem;
   --topbar-bg: rgb(255 255 255 / 0.95);
 
   /* Anchos máximos de contenido por rol para que el desktop no sature el ancho completo. */
@@ -66,7 +68,7 @@
    app (fuera de la transición de página) y solo cuando hay sesión, así que
    usamos :has() en vez de hermano adyacente. Login/signup no llevan barra. */
 body:has(.app-topbar) #main-content {
-  padding-top: var(--topbar-h);
+  padding-top: calc(var(--topbar-content-h) + env(safe-area-inset-top));
 }
 
 * {

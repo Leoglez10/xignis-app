@@ -191,13 +191,13 @@ export function LeaveRequestScreen() {
 
   if (submitted) {
     const sentDays = diffDaysInclusive(submitted.values.startDate, submitted.values.endDate);
-    return <main className="mobile-screen grid min-h-dvh place-items-center px-5" id="main-content" tabIndex={-1}><section className="w-full max-w-md rounded-[28px] bg-[var(--card-bg)] p-7 text-center shadow-xl ring-1 ring-[var(--card-border)]"><span className="mx-auto grid size-20 place-items-center rounded-full bg-emerald-100 text-emerald-800"><Check aria-hidden="true" className="size-10" /></span><h2 className="mt-5 text-3xl font-black">Solicitud enviada</h2><p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">La enviamos al flujo de aprobación y te notificaremos cada cambio.</p><dl className="mt-5 grid grid-cols-2 gap-3 rounded-2xl bg-[var(--color-surface)] p-4 text-left text-sm"><div><dt className="text-[var(--color-muted)]">Fechas</dt><dd className="mt-1 font-black">{formatDateRangeEs(submitted.values.startDate, submitted.values.endDate)}</dd></div><div><dt className="text-[var(--color-muted)]">Duración</dt><dd className="mt-1 font-black">{sentDays} {sentDays === 1 ? "día" : "días"}</dd></div></dl><Button className="mt-6 w-full" onClick={() => navigate(`/employee/requests/${submitted.id}`)}>Ver detalle</Button></section></main>;
+    return <main className="mobile-screen grid min-h-dvh place-items-center px-5" id="main-content" tabIndex={-1}><section className="w-full max-w-md rounded-[28px] bg-[var(--card-bg)] p-7 text-center shadow-xl ring-1 ring-[var(--card-border)]"><span className="mx-auto grid size-20 place-items-center rounded-full bg-emerald-100 text-emerald-800"><Check aria-hidden="true" className="size-10" /></span><h2 className="mt-5 text-3xl font-bold">Solicitud enviada</h2><p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">La enviamos al flujo de aprobación y te notificaremos cada cambio.</p><dl className="mt-5 grid grid-cols-2 gap-3 rounded-2xl bg-[var(--color-surface)] p-4 text-left text-sm"><div><dt className="text-[var(--color-muted)]">Fechas</dt><dd className="mt-1 font-bold">{formatDateRangeEs(submitted.values.startDate, submitted.values.endDate)}</dd></div><div><dt className="text-[var(--color-muted)]">Duración</dt><dd className="mt-1 font-bold">{sentDays} {sentDays === 1 ? "día" : "días"}</dd></div></dl><Button className="mt-6 w-full" onClick={() => navigate(`/employee/requests/${submitted.id}`)}>Ver detalle</Button></section></main>;
   }
 
   return (
     <main className="mobile-screen" id="main-content" tabIndex={-1}>
       <form
-        className="flex min-h-dvh flex-col px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))] lg:px-8"
+        className="flex min-h-dvh flex-col px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-5 lg:px-8"
         noValidate
         onSubmit={handleSubmit(onSubmit)}
       >
@@ -210,7 +210,7 @@ export function LeaveRequestScreen() {
           >
             <ChevronLeft aria-hidden="true" className="size-5" />
           </button>
-          <h2 className="text-center text-lg font-black text-[var(--color-text)]">{STEP_TITLES[step]}</h2>
+          <h2 className="text-center text-lg font-bold text-[var(--color-text)]">{STEP_TITLES[step]}</h2>
           <span className="text-center text-xs font-semibold text-[var(--color-muted)]">
             {step + 1}/{TOTAL_STEPS}
           </span>
@@ -226,7 +226,7 @@ export function LeaveRequestScreen() {
         >
           <Avatar className="size-14" name={profile?.full_name ?? "Empleado"} src={profile?.avatar_url} />
           <div>
-            <h2 className="font-black text-[var(--color-text)]">{profile?.full_name ?? "Empleado"}</h2>
+            <h2 className="font-bold text-[var(--color-text)]">{profile?.full_name ?? "Empleado"}</h2>
             <p className="mt-1 text-sm text-[var(--color-muted)]">{profile?.job_title ?? "Perfil Xignis"}</p>
           </div>
         </section>
@@ -334,7 +334,7 @@ function StepDates({
       {days > 0 ? (
         <div className="rounded-2xl bg-emerald-50 p-4 text-emerald-900">
           <p className="text-sm leading-6">
-            <span className="font-black">{days}</span> {days === 1 ? "dia solicitado" : "dias solicitados"}
+            <span className="font-bold">{days}</span> {days === 1 ? "dia solicitado" : "dias solicitados"}
             <span className="block text-xs text-emerald-800/80">
               {formatDateRangeEs(startDate, endDate)}
             </span>
@@ -389,7 +389,7 @@ function StepType({
                   <Icon className="size-5" />
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-sm font-black text-[var(--color-text)]">{option.label}</span>
+                  <span className="block text-sm font-bold text-[var(--color-text)]">{option.label}</span>
                   <span className="block truncate text-xs text-[var(--color-muted)]">{option.description}</span>
                 </span>
               </label>
@@ -422,7 +422,7 @@ function StepType({
                 value={value}
                 {...register("scheduleType")}
               />
-              <span className="text-sm font-black text-[var(--color-text)]">{label}</span>
+              <span className="text-sm font-bold text-[var(--color-text)]">{label}</span>
             </label>
           ))}
         </div>
@@ -434,7 +434,7 @@ function StepType({
         }`}
       >
         <span className="min-w-0">
-          <span className="block text-sm font-black text-[var(--color-text)]">Con goce de sueldo</span>
+          <span className="block text-sm font-bold text-[var(--color-text)]">Con goce de sueldo</span>
           <span className="block text-xs text-[var(--color-muted)]">
             {paid ? "El permiso se paga con normalidad." : "Sin goce: los días no se pagan."}
           </span>

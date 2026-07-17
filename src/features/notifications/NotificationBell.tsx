@@ -84,13 +84,13 @@ function NotificationRow({
         >
           <span
             aria-hidden="true"
-            className={`mt-0.5 grid size-9 shrink-0 place-items-center rounded-full text-xs font-black ${typeAccent[item.type] ?? typeAccent.info}`}
+            className={`mt-0.5 grid size-9 shrink-0 place-items-center rounded-full text-xs font-bold ${typeAccent[item.type] ?? typeAccent.info}`}
           >
             {item.read ? "" : "•"}
           </span>
           <span className="min-w-0 flex-1">
             <span className="flex items-center justify-between gap-2">
-              <span className="font-black text-[var(--color-text)]">{item.title}</span>
+              <span className="font-bold text-[var(--color-text)]">{item.title}</span>
               <time className="shrink-0 text-xs text-[var(--color-muted)]" dateTime={item.created_at}>
                 {relativeTimeEs(item.created_at)}
               </time>
@@ -197,7 +197,7 @@ export const NotificationBell = memo(function NotificationBell({ className }: No
         {unread > 0 ? (
           <span
             aria-hidden="true"
-            className="absolute right-1.5 top-1.5 grid min-h-4 min-w-4 animate-scale-in place-items-center rounded-full bg-red-500 px-1 text-[10px] font-black leading-none text-white"
+            className="absolute right-1.5 top-1.5 grid min-h-4 min-w-4 animate-scale-in place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white"
           >
             {unread > 9 ? "9+" : unread}
           </span>
@@ -231,7 +231,7 @@ export const NotificationBell = memo(function NotificationBell({ className }: No
             />
           ))}
         </ul>
-        {items.length >= limit ? <button className="press mt-3 min-h-11 w-full rounded-full bg-[var(--color-surface)] px-4 text-sm font-black" type="button" onClick={() => setLimit((current) => current + 30)}>Ver notificaciones anteriores</button> : null}
+        {items.length >= limit ? <button className="press mt-3 min-h-11 w-full rounded-full bg-[var(--color-surface)] px-4 text-sm font-bold" type="button" onClick={() => setLimit((current) => current + 30)}>Ver notificaciones anteriores</button> : null}
       </BottomSheet>
     </>
   );

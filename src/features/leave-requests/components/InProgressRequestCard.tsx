@@ -68,12 +68,12 @@ export function InProgressRequestCard({
           />
         ) : null}
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-black uppercase tracking-wide text-[var(--color-muted)]">
+          <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-muted)]">
             {title}
           </p>
           {request ? (
             <>
-              <h2 id="in-progress-title" className="mt-1 truncate text-lg font-black text-[var(--color-text)]">
+              <h2 id="in-progress-title" className="mt-1 truncate text-lg font-bold text-[var(--color-text)]">
                 {leaveTypeLabel[request.leave_type]}
               </h2>
               {employee?.full_name ? (
@@ -122,7 +122,7 @@ export function InProgressRequestCard({
 
       {request && onView ? (
         <button
-          className="press mt-4 flex w-full items-center justify-center gap-1 rounded-2xl bg-[var(--card-muted)] py-3 text-sm font-black text-[var(--color-text)] ring-1 ring-[var(--card-border)]"
+          className="press mt-4 flex w-full items-center justify-center gap-1 rounded-2xl bg-[var(--card-muted)] py-3 text-sm font-bold text-[var(--color-text)] ring-1 ring-[var(--card-border)]"
           type="button"
           onClick={() => onView(request.id)}
         >

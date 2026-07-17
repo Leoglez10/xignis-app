@@ -232,38 +232,6 @@ export async function listTeamAbsencesInRange(startISO: string, endISO: string) 
   return (data ?? []) as unknown as LeaveRequestWithEmployee[];
 }
 
-/** Tiempo promedio de aprobación (en horas) del manager actual sobre
- *  solicitudes cerradas en los últimos `daysBack` días. null si no hay datos. */
-export async function getManagerApprovalSlaHours(daysBack = 30) {
-  const supabase = getSupabaseClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-  if (userError) throw userError;
-  if (!user) return null;
-
-  const since = new Date();
-  since.setDate(since.getDate() - daysBack);
-  const sinceIso = since.toISOString();
-
-  const { data, error } = await supabase
-    .from("leave_requests")
-    .select("created_at, reviewed_at, reviewed_by, status")
-    .in("status", ["approved_by_manager", "rejected_by_manager"])
-    .eq("reviewed_by", user.id)
-    .gte("reviewed_at", sinceIso);
-  if (error) throw error;
-  const rows = data ?? [];
-  if (rows.length === 0) return { avgHours: null, count: 0 };
-  const totalMs = rows.reduce((sum, r) => {
-    if (!r.reviewed_at) return sum;
-    return sum + (new Date(r.reviewed_at).getTime() - new Date(r.created_at).getTime());
-  }, 0);
-  const avgHours = totalMs / rows.length / 3_600_000;
-  return { avgHours, count: rows.length };
-}
-
 export async function listHrLeaveRequests(options?: PageOptions) {
   const supabase = getSupabaseClient();
   let query = supabase

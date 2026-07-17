@@ -25,7 +25,7 @@ import { isInFlight } from "../../leave-requests/services/leaveRequestProgressSe
 import { InProgressRequestCard } from "../../leave-requests/components/InProgressRequestCard";
 import { listMyPeers } from "../../profiles/services/profileService";
 import { statusTone } from "../../leave-requests/config";
-import { daysFromToday, overlapsToday, todayIso } from "../../../lib/date";
+import { overlapsToday, todayIso } from "../../../lib/date";
 import { ActivePermitBanner } from "../components/ActivePermitBanner";
 import { EmployeeDashboardSkeleton } from "../components/EmployeeDashboardSkeleton";
 import { NextAbsenceCard } from "../components/NextAbsenceCard";
@@ -74,11 +74,6 @@ export function DashboardEmployeeScreen() {
       ).length,
     [requests],
   );
-  const approvedCount = useMemo(
-    () => requests.filter((request) => request.status === "approved").length,
-    [requests],
-  );
-
   const activePermit = useMemo(
     () => requests.find((r) => r.status === "approved" && overlapsToday(r.start_date, r.end_date, new Date(today))),
     [requests, today],
@@ -95,7 +90,7 @@ export function DashboardEmployeeScreen() {
 
   return (
     <main className="mobile-screen" id="main-content" tabIndex={-1}>
-      <section className="flex min-h-dvh flex-col px-5 pb-28 pt-[calc(1.5rem+env(safe-area-inset-top))] lg:px-8">
+      <section className="flex min-h-dvh flex-col px-5 pb-28 pt-6 lg:px-8">
         <button
           aria-label="Crear nuevo permiso"
           className="group press animate-fade-up relative overflow-hidden rounded-[24px] bg-slate-950 p-5 text-left text-white shadow-xl shadow-slate-200 lg:p-7"
@@ -106,16 +101,12 @@ export function DashboardEmployeeScreen() {
             <span className="grid size-12 place-items-center rounded-2xl bg-[var(--color-primary)] transition-transform duration-200 group-hover:scale-105 group-active:scale-95">
               <CalendarPlus aria-hidden="true" className="size-6" />
             </span>
-            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black">2 min</span>
+            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold">2 min</span>
           </div>
-          <h2 className="text-2xl font-black">Nuevo permiso</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Nuevo permiso</h2>
           <p className="mt-2 text-sm leading-6 text-slate-300">
             Vacaciones o permisos, en un par de toques.
           </p>
-          <div className="mt-4 flex items-center gap-1 text-xs font-bold text-[var(--color-primary)]">
-            Tocar para empezar
-            <ChevronRight aria-hidden="true" className="size-4 transition-transform group-hover:translate-x-0.5" />
-          </div>
           <ChevronRight
             aria-hidden="true"
             className="absolute right-5 top-1/2 size-7 -translate-y-1/2 text-white/20 transition-all group-hover:translate-x-0.5 group-hover:text-white/60"
@@ -142,7 +133,7 @@ export function DashboardEmployeeScreen() {
               )}
             </span>
             <span className="min-w-0">
-              <span className="block text-2xl font-black leading-none text-[var(--color-text)]">
+              <span className="block text-2xl font-extrabold leading-none text-[var(--color-text)]">
                 {isLoading ? "—" : pendingCount}
               </span>
               <span className="mt-1 block text-sm font-semibold text-[var(--color-muted)]">
@@ -193,32 +184,6 @@ export function DashboardEmployeeScreen() {
               </div>
             ) : null}
 
-            <section className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Resumen rápido">
-              <div className="rounded-2xl bg-[var(--color-surface)] p-4">
-                <p className="text-sm text-[var(--color-muted)]">Pendientes</p>
-                <p className="mt-1 text-3xl font-black text-[var(--color-text)]">{pendingCount}</p>
-              </div>
-              <div className="rounded-2xl bg-emerald-50 p-4">
-                <p className="text-sm text-[var(--color-muted)]">Aprobadas</p>
-                <p className="mt-1 text-3xl font-black text-[var(--color-text)]">{approvedCount}</p>
-              </div>
-              {balance && balance.quota > 0 ? (
-                <div className="rounded-2xl bg-indigo-50 p-4">
-                  <p className="text-sm text-[var(--color-muted)]">Días restantes</p>
-                  <p className="mt-1 text-3xl font-black text-[var(--color-text)]">{balance.available}</p>
-                </div>
-              ) : null}
-              {nextAbsence ? (
-                <div className="rounded-2xl bg-amber-50 p-4">
-                  <p className="text-sm text-[var(--color-muted)]">Próximo</p>
-                  <p className="mt-1 text-3xl font-black text-[var(--color-text)]">
-                    {Math.max(0, daysFromToday(nextAbsence.start_date, new Date(today)))}
-                    <span className="ml-1 text-sm font-bold text-[var(--color-muted)]">días</span>
-                  </p>
-                </div>
-              ) : null}
-            </section>
-
             {peers.length > 0 ? (
               <PeersStrip absences={peerAbsences} peers={peers} />
             ) : null}
@@ -231,11 +196,11 @@ export function DashboardEmployeeScreen() {
 
             <section className="mt-7" aria-labelledby="recent-title">
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-lg font-black text-[var(--color-text)]" id="recent-title">
+                <h2 className="text-lg font-bold tracking-tight text-[var(--color-text)]" id="recent-title">
                   Actividad reciente
                 </h2>
                 <button
-                  className="press text-sm font-black text-[var(--color-muted)]"
+                  className="press text-sm font-semibold text-[var(--color-muted)]"
                   type="button"
                   onClick={handleRefresh}
                   disabled={refreshing}
@@ -249,7 +214,7 @@ export function DashboardEmployeeScreen() {
                     <span className="grid size-12 place-items-center rounded-full bg-emerald-100 text-emerald-700">
                       <Sparkles aria-hidden="true" className="size-6" />
                     </span>
-                    <p className="text-sm font-black text-[var(--color-text)]">
+                    <p className="text-sm font-bold text-[var(--color-text)]">
                       Aún no tienes solicitudes
                     </p>
                     <p className="text-xs text-[var(--color-muted)]">
@@ -292,7 +257,7 @@ export function DashboardEmployeeScreen() {
               </div>
               {requests.length > 0 ? (
                 <button
-                  className="press mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] py-3 text-sm font-black text-[var(--color-text)]"
+                  className="press mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] py-3 text-sm font-semibold text-[var(--color-text)]"
                   type="button"
                   onClick={() => navigate("/employee/requests")}
                 >

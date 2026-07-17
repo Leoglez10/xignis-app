@@ -25,14 +25,14 @@ export function NextAbsenceCard({ request }: NextAbsenceCardProps) {
         <Plane aria-hidden="true" className="size-5" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-black text-indigo-900">{headline}</p>
+        <p className="text-sm font-bold text-indigo-900">{headline}</p>
         <p className="mt-0.5 truncate text-xs text-indigo-800">
           {leaveTypeLabel[request.leave_type]} · {formatDateRangeEs(request.start_date, request.end_date)} ·{" "}
           {duration} {duration === 1 ? "día" : "días"}
         </p>
       </div>
       {!isOngoing ? (
-        <p className="shrink-0 text-xs font-black text-indigo-700">
+        <p className="shrink-0 text-xs font-bold text-indigo-700">
           Vuelve {formatDateRangeEs(returnIso, returnIso)}
         </p>
       ) : null}

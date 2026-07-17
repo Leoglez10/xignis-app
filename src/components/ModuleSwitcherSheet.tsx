@@ -42,10 +42,10 @@ export function ModuleSwitcherSheet({ isOpen, role, onClose }: Props) {
                 >
                   <Icon aria-hidden="true" className="size-6" />
                 </span>
-                <span className="text-sm font-black text-[var(--color-text)]">{name}</span>
+                <span className="text-sm font-bold text-[var(--color-text)]">{name}</span>
                 <span className="text-xs leading-5 text-[var(--color-muted)]">{description}</span>
                 {soon ? (
-                  <span className="mt-auto rounded-full bg-[var(--color-surface)] px-2.5 py-0.5 text-[11px] font-black text-[var(--color-muted)]">
+                  <span className="mt-auto rounded-full bg-[var(--color-surface)] px-2.5 py-0.5 text-[11px] font-bold text-[var(--color-muted)]">
                     Próximamente
                   </span>
                 ) : null}

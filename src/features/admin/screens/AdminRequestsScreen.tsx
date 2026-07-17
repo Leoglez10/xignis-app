@@ -79,11 +79,11 @@ export function AdminRequestsScreen() {
   return (
     <AdminShell>
       <div className="min-h-dvh">
-        <section className="flex flex-col gap-5 bg-slate-50 p-4 pb-24 pt-[calc(1rem+env(safe-area-inset-top))] md:p-6 md:pb-24">
+        <section className="flex flex-col gap-5 bg-slate-50 p-4 pb-24 pt-4 md:p-6 md:pb-24">
 
           <header className="animate-fade-up">
-            <p className="text-sm font-black text-[var(--color-muted)]">Recursos Humanos</p>
-            <h2 className="mt-1 text-2xl font-black md:text-3xl">Solicitudes</h2>
+            <p className="text-sm font-bold text-[var(--color-muted)]">Recursos Humanos</p>
+            <h2 className="mt-1 text-2xl font-bold md:text-3xl">Solicitudes</h2>
           </header>
 
           {inFlightRequest ? (
@@ -114,7 +114,7 @@ export function AdminRequestsScreen() {
               />
             </div>
             <button
-              className="press inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-slate-950 px-5 text-sm font-black text-white"
+              className="press inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-slate-950 px-5 text-sm font-bold text-white"
               type="button"
               onClick={() => exportCsv(filtered)}
               disabled={filtered.length === 0}
@@ -128,7 +128,7 @@ export function AdminRequestsScreen() {
             {FILTERS.map((f) => (
               <button
                 aria-pressed={filter === f.key}
-                className={`press rounded-full px-4 py-2 text-xs font-black transition ${
+                className={`press rounded-full px-4 py-2 text-xs font-bold transition ${
                   filter === f.key ? "bg-slate-950 text-white" : "bg-white text-[var(--color-muted)] ring-1 ring-slate-200"
                 }`}
                 key={f.key}
@@ -141,7 +141,7 @@ export function AdminRequestsScreen() {
           </div>
 
           <section aria-labelledby="recent-title">
-            <h2 className="mb-3 text-base font-black md:text-lg" id="recent-title">
+            <h2 className="mb-3 text-base font-bold md:text-lg" id="recent-title">
               Solicitudes {filter === "all" ? "" : FILTERS.find((f) => f.key === filter)?.label.toLowerCase()}
             </h2>
 

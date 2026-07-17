@@ -58,7 +58,7 @@ export function SignupScreen() {
           <div className="mx-auto mb-5 grid size-16 place-items-center rounded-full bg-emerald-100 text-emerald-700">
             <CheckCircle2 aria-hidden="true" className="size-8" />
           </div>
-          <h1 className="text-2xl font-black text-[var(--color-text)]">Revisa tu correo</h1>
+          <h1 className="text-2xl font-bold text-[var(--color-text)]">Revisa tu correo</h1>
           <p className="mt-3 text-sm leading-6 text-[var(--color-muted)]">
             Te enviamos un enlace para confirmar tu cuenta. Después podrás entrar con tu correo y password.
           </p>
@@ -73,10 +73,10 @@ export function SignupScreen() {
   return (
     <main className="mobile-screen grid place-items-center px-6 pb-10 pt-[calc(2.5rem+env(safe-area-inset-top))]" id="main-content" tabIndex={-1}>
       <section className="animate-fade-up w-full max-w-sm">
-        <div className="mb-6 grid size-14 place-items-center rounded-[18px] bg-[var(--color-primary)] text-2xl font-black text-[var(--color-primary-contrast)]">
+        <div className="mb-6 grid size-14 place-items-center rounded-[18px] bg-[var(--color-primary)] text-2xl font-bold text-[var(--color-primary-contrast)]">
           X
         </div>
-        <h1 className="text-3xl font-black text-[var(--color-text)]">Crear cuenta</h1>
+        <h1 className="text-3xl font-bold text-[var(--color-text)]">Crear cuenta</h1>
         <p className="mt-2 text-sm text-[var(--color-muted)]">Regístrate para solicitar permisos en Xignis.</p>
 
         <form className="mt-7 space-y-4" noValidate onSubmit={handleSubmit(onSubmit)}>

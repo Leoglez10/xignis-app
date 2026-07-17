@@ -8,7 +8,6 @@ import { InactiveEmployeesWidget } from "../components/InactiveEmployeesWidget";
 import { KpiGrid } from "../components/KpiGrid";
 import { RecentOnboardingsWidget } from "../components/RecentOnboardingsWidget";
 import { RecentTerminationsWidget } from "../components/RecentTerminationsWidget";
-import { StagnantRequestsWidget } from "../components/StagnantRequestsWidget";
 import { AgingBadge } from "../../../components/ui/AgingBadge";
 import { TrendChart } from "../components/TrendChart";
 import { TypeDistributionChart } from "../components/TypeDistributionChart";
@@ -23,12 +22,10 @@ import {
   getMonthlyTrend,
   getRecentOnboardings,
   getRecentTerminations,
-  getStagnantRequests,
   type InactiveEmployee,
   type MonthlyTrend,
   type RecentOnboarding,
   type RecentTermination,
-  type StagnantRequest,
   type TypeDistribution,
 } from "../services/dashboardService";
 
@@ -50,16 +47,15 @@ export function AdminDashboardScreen() {
   const dashboardQuery = useQuery({
     queryKey: dashboardKey,
     queryFn: async () => {
-        const [s, tr, td, st, on, term, inact] = await Promise.all([
+        const [s, tr, td, on, term, inact] = await Promise.all([
           getAdminDashboardStats().catch(() => null),
           getMonthlyTrend(12).catch((): MonthlyTrend => []),
           getLeaveTypeDistribution().catch((): TypeDistribution => []),
-          getStagnantRequests(72).catch(() => [] as StagnantRequest[]),
           getRecentOnboardings(30).catch(() => [] as RecentOnboarding[]),
           getRecentTerminations(30).catch(() => [] as RecentTermination[]),
           getInactiveEmployees(180).catch(() => [] as InactiveEmployee[]),
         ]);
-        return { inactive: inact, onboardings: on, stagnant: st, stats: s, terminations: term, trend: tr, typeDist: td };
+        return { inactive: inact, onboardings: on, stats: s, terminations: term, trend: tr, typeDist: td };
     },
   });
 
@@ -69,7 +65,7 @@ export function AdminDashboardScreen() {
     });
     return unsubscribe;
   }, [queryClient]);
-  const { inactive = [], onboardings = [], stagnant = [], stats = null, terminations = [], trend = [], typeDist = [] } = dashboardQuery.data ?? {};
+  const { inactive = [], onboardings = [], stats = null, terminations = [], trend = [], typeDist = [] } = dashboardQuery.data ?? {};
   const error = dashboardQuery.error instanceof Error ? dashboardQuery.error.message : null;
   const isLoading = dashboardQuery.isLoading;
 
@@ -86,11 +82,11 @@ export function AdminDashboardScreen() {
   return (
     <AdminShell>
       <div className="min-h-dvh">
-        <section className="flex flex-col gap-5 bg-slate-50 p-4 pb-24 pt-[calc(1rem+env(safe-area-inset-top))] md:p-6 md:pb-24">
+        <section className="flex flex-col gap-5 bg-slate-50 p-4 pb-24 pt-4 md:p-6 md:pb-24">
 
           <header className="animate-fade-up">
-            <p className="text-sm font-black text-[var(--color-muted)]">Recursos Humanos</p>
-            <h2 className="mt-1 text-2xl font-black md:text-3xl">{adminFirstName}</h2>
+            <p className="text-sm font-bold text-[var(--color-muted)]">Recursos Humanos</p>
+            <h2 className="mt-1 text-2xl font-bold md:text-3xl">{adminFirstName}</h2>
             <p className="mt-1 text-sm text-[var(--color-muted)]">
               {isLoading
                 ? "Cargando…"
@@ -106,12 +102,12 @@ export function AdminDashboardScreen() {
 
           <section className="rounded-[24px] bg-[var(--card-muted)] p-4" aria-labelledby="admin-urgent-title">
             <div className="mb-4 flex items-center justify-between gap-4">
-              <h2 className="text-lg font-black md:text-xl" id="admin-urgent-title">
+              <h2 className="text-lg font-bold md:text-xl" id="admin-urgent-title">
                 Próximas 3 urgentes
               </h2>
               <NavLink
                 to="/admin/requests"
-                className="press inline-flex items-center gap-1 text-xs font-black text-[var(--color-muted)]"
+                className="press inline-flex items-center gap-1 text-xs font-bold text-[var(--color-muted)]"
               >
                 Ver todas ({pending.length})
                 <ArrowRight aria-hidden="true" className="size-4" />
@@ -132,7 +128,7 @@ export function AdminDashboardScreen() {
                       onClick={() => navigate(`/admin/requests/${request.id}`)}
                     >
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-black">
+                        <span className="block truncate text-sm font-bold">
                           {request.employee?.full_name ?? "Empleado"}
                         </span>
                         <span className="block truncate text-xs text-[var(--color-muted)]">
@@ -154,7 +150,6 @@ export function AdminDashboardScreen() {
           </div>
 
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            <StagnantRequestsWidget items={stagnant} />
             <RecentOnboardingsWidget items={onboardings} />
             <RecentTerminationsWidget items={terminations} />
             <InactiveEmployeesWidget items={inactive} />

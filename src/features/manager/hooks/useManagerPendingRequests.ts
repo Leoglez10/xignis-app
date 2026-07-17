@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  getManagerApprovalSlaHours,
   listManagerLeaveRequests,
   listTeamUpcomingAbsences,
   type LeaveRequestWithEmployee,
@@ -10,8 +9,6 @@ import { listMyTeam } from "../../profiles/services/profileService";
 import type { Profile } from "../../../lib/database.types";
 import { subscribeToLeaveRequests } from "../../leave-requests/services/leaveRequestProgressService";
 import { useAuth } from "../../session/AuthContext";
-
-export type SlaInfo = { avgHours: number | null; count: number };
 
 /**
  * Shared source for the manager pending-requests workload. Both the dashboard
@@ -32,13 +29,12 @@ export function useManagerPendingRequests() {
   const dashboardQuery = useQuery({
     queryKey: dashboardKey,
     queryFn: async () => {
-      const [pending, upcoming, members, sla] = await Promise.all([
+      const [pending, upcoming, members] = await Promise.all([
         listManagerLeaveRequests(),
         listTeamUpcomingAbsences(),
         listMyTeam().catch(() => [] as Profile[]),
-        getManagerApprovalSlaHours(30).catch(() => null),
       ]);
-      return { absences: upcoming, pending, sla, team: members };
+      return { absences: upcoming, pending, team: members };
     },
   });
 
@@ -49,7 +45,7 @@ export function useManagerPendingRequests() {
     return unsubscribe;
   }, [dashboardKey, queryClient]);
 
-  const { absences = [], pending = [], sla = null, team = [] } = dashboardQuery.data ?? {};
+  const { absences = [], pending = [], team = [] } = dashboardQuery.data ?? {};
   const error = dashboardQuery.error instanceof Error ? dashboardQuery.error.message : null;
 
   return {
@@ -60,7 +56,6 @@ export function useManagerPendingRequests() {
     refetch: async () => {
       await dashboardQuery.refetch();
     },
-    sla: sla as SlaInfo | null,
     team: team as Profile[],
   };
 }

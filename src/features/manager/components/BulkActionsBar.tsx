@@ -41,10 +41,10 @@ export function BulkActionsBar({ ids, onComplete, reviewerRole }: BulkActionsBar
       aria-label="Acciones en lote"
       className="animate-scale-in sticky bottom-3 z-30 mx-auto mt-4 flex max-w-md items-center gap-2 rounded-2xl bg-slate-950 p-2 text-white shadow-2xl ring-1 ring-slate-800"
     >
-      <span className="px-3 text-sm font-black">{ids.length} selecionadas</span>
+      <span className="px-3 text-sm font-bold">{ids.length} selecionadas</span>
       <div className="ml-auto flex gap-1">
         <button
-          className="press inline-flex h-10 items-center gap-1 rounded-full bg-emerald-500 px-3 text-xs font-black text-emerald-950 disabled:opacity-50"
+          className="press inline-flex h-10 items-center gap-1 rounded-full bg-emerald-500 px-3 text-xs font-bold text-emerald-950 disabled:opacity-50"
           disabled={busy !== null}
           type="button"
           onClick={() => handle("approved")}
@@ -53,7 +53,7 @@ export function BulkActionsBar({ ids, onComplete, reviewerRole }: BulkActionsBar
           {busy === "approve" ? "…" : "Aprobar"}
         </button>
         <button
-          className="press inline-flex h-10 items-center gap-1 rounded-full bg-rose-500 px-3 text-xs font-black text-rose-950 disabled:opacity-50"
+          className="press inline-flex h-10 items-center gap-1 rounded-full bg-rose-500 px-3 text-xs font-bold text-rose-950 disabled:opacity-50"
           disabled={busy !== null}
           type="button"
           onClick={() => handle("rejected")}

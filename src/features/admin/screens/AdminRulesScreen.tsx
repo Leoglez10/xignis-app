@@ -10,7 +10,7 @@ function Toggle({ checked, label, hint, onChange }: { checked: boolean; label: s
   return (
     <div className="flex items-center justify-between gap-3 rounded-[20px] bg-white p-4 ring-1 ring-slate-200">
       <div className="min-w-0 flex-1 pr-1">
-        <p className="text-sm font-black">{label}</p>
+        <p className="text-sm font-bold">{label}</p>
         <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">{hint}</p>
       </div>
       <button
@@ -69,8 +69,8 @@ export function AdminRulesScreen() {
     <AdminShell>
       <section className="p-4 md:p-6">
         <header className="animate-fade-up mb-5">
-          <p className="text-sm font-black text-[var(--color-muted)]">Recursos Humanos</p>
-          <h2 className="mt-1 text-2xl font-black md:text-3xl">Reglas</h2>
+          <p className="text-sm font-bold text-[var(--color-muted)]">Recursos Humanos</p>
+          <h2 className="mt-1 text-2xl font-bold md:text-3xl">Reglas</h2>
           <p className="mt-2 text-sm text-[var(--color-muted)]">Políticas operativas del flujo de permisos.</p>
         </header>
 
@@ -102,8 +102,8 @@ export function AdminRulesScreen() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-sm font-black">Vacaciones por colaborador</h2>
-                    <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-[11px] font-black text-indigo-800">Por persona</span>
+                    <h2 className="text-sm font-bold">Vacaciones por colaborador</h2>
+                    <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-[11px] font-bold text-indigo-800">Por persona</span>
                   </div>
                   <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">
                     Los días disponibles dependen de cada persona, contrato o antigüedad. Configúralos desde Empleados.
@@ -112,7 +112,7 @@ export function AdminRulesScreen() {
               </div>
               <div className="mt-4 flex justify-end">
                 <button
-                  className="press inline-flex min-h-9 items-center justify-center gap-2 rounded-full bg-slate-100 px-3.5 text-xs font-black text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-200"
+                  className="press inline-flex min-h-9 items-center justify-center gap-2 rounded-full bg-slate-100 px-3.5 text-xs font-bold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-200"
                   type="button"
                   onClick={() => navigate("/admin/employees")}
                 >

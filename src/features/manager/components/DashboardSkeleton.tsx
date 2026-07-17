@@ -1,15 +1,8 @@
-/** Skeleton del dashboard: 3 zonas (pendientes, agenda, equipo) con animate-pulse.
+/** Skeleton del dashboard: pendientes, agenda y equipo con animate-pulse.
  *  Evita layout shift durante el cold start en WKWebView — se siente nativo. */
 export function DashboardSkeleton() {
   return (
     <>
-      {/* Stats */}
-      <div className="mb-5 grid gap-3 md:grid-cols-3">
-        {[0, 1, 2].map((i) => (
-          <div className="h-20 rounded-[20px] bg-[var(--skeleton-base)] animate-pulse" key={`stat-${i}`} />
-        ))}
-      </div>
-
       {/* Pendientes */}
       <div className="rounded-[24px] bg-[var(--card-muted)] p-4">
         <div className="mb-4 h-6 w-44 rounded-full bg-[var(--skeleton-base)] animate-pulse" />

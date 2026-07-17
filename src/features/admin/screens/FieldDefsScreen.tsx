@@ -71,7 +71,7 @@ export function FieldDefsScreen() {
 
   return (
     <AdminShell>
-      <div className="mx-auto w-full max-w-3xl px-4 pb-10 pt-[calc(1.25rem+env(safe-area-inset-top))] md:px-8">
+      <div className="mx-auto w-full max-w-3xl px-4 pb-10 pt-5 md:px-8">
         <header className="animate-fade-up mb-6 flex items-center gap-3">
           <button
             aria-label="Regresar"
@@ -81,7 +81,7 @@ export function FieldDefsScreen() {
           >
             <ArrowLeft aria-hidden="true" className="size-5" />
           </button>
-          <h2 className="flex-1 truncate text-2xl font-black md:text-3xl">Campos personalizados</h2>
+          <h2 className="flex-1 truncate text-2xl font-bold md:text-3xl">Campos personalizados</h2>
           <button
             aria-label="Nuevo campo"
             className="press grid size-11 place-items-center rounded-full bg-[var(--color-primary)] text-[var(--color-primary-contrast)]"
@@ -113,10 +113,10 @@ export function FieldDefsScreen() {
                 key={def.id}
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-black">
+                  <p className="truncate font-bold">
                     {def.label} <span className="text-xs font-semibold text-[var(--color-muted)]">({def.key})</span>
                   </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-black">
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-bold">
                     <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">{TYPE_LABEL[def.field_type]}</span>
                     <span className="rounded-full bg-sky-100 px-2.5 py-1 text-sky-800">Ve: {VIS_LABEL[def.visibility]}</span>
                     <span className="rounded-full bg-violet-100 px-2.5 py-1 text-violet-800">Edita: {EDIT_LABEL[def.editable_by]}</span>

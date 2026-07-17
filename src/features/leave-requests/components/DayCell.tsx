@@ -28,21 +28,21 @@ export const DayCell = memo(function DayCell({ absences, day, isInMonth, isSelec
       onClick={() => onClick(day)}
       aria-label={`${day}, ${absences.length} ausencias`}
     >
-      <span className={`text-xs font-black ${isToday ? "text-[var(--color-primary)]" : "text-[var(--color-text)]"}`}>
+      <span className={`text-xs font-bold ${isToday ? "text-[var(--color-primary)]" : "text-[var(--color-text)]"}`}>
         {dayNum}
       </span>
       {absences.length > 0 ? (
         <span className="flex flex-wrap gap-0.5">
           {visible.map((a) => (
             <span
-              className={`grid size-5 place-items-center rounded-full text-[8px] font-black ${leaveTypeConfig[a.leave_type].avatarTone}`}
+              className={`grid size-5 place-items-center rounded-full text-[8px] font-bold ${leaveTypeConfig[a.leave_type].avatarTone}`}
               key={a.id}
               title={a.employee?.full_name ?? ""}
             >
               {initials(a.employee?.full_name ?? "X")}
             </span>
           ))}
-          {extra > 0 ? <span className="text-[9px] font-black text-[var(--color-muted)]">+{extra}</span> : null}
+          {extra > 0 ? <span className="text-[9px] font-bold text-[var(--color-muted)]">+{extra}</span> : null}
         </span>
       ) : null}
     </button>

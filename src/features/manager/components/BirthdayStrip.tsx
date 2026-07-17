@@ -52,7 +52,7 @@ export function BirthdayStrip({ members }: BirthdayStripProps) {
     >
       <div className="mb-3 flex items-center gap-2">
         <Cake aria-hidden="true" className="size-4 text-[var(--color-muted)]" />
-        <h2 className="font-black">Cumpleaños y aniversarios</h2>
+        <h2 className="font-bold">Cumpleaños y aniversarios</h2>
       </div>
       <ul className="space-y-2">
         {items.map(({ m, bday, anniv }) => (
@@ -60,11 +60,11 @@ export function BirthdayStrip({ members }: BirthdayStripProps) {
             className="flex items-center gap-3 rounded-2xl bg-[var(--card-muted)] p-3"
             key={`${m.id}-${bday ? "b" : "a"}`}
           >
-            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-emerald-100 text-[10px] font-black text-emerald-700">
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">
               {initials(m.full_name)}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-black">{m.full_name}</p>
+              <p className="truncate text-sm font-bold">{m.full_name}</p>
               <p className="truncate text-xs text-[var(--color-muted)]">
                 {bday
                   ? bday.days === 0
@@ -78,11 +78,11 @@ export function BirthdayStrip({ members }: BirthdayStripProps) {
               </p>
             </div>
             {bday ? (
-              <span className="shrink-0 rounded-full bg-pink-100 px-2.5 py-1 text-[10px] font-black text-pink-800">
+              <span className="shrink-0 rounded-full bg-pink-100 px-2.5 py-1 text-[10px] font-bold text-pink-800">
                 {bday.days === 0 ? "Hoy" : `en ${bday.days}d`}
               </span>
             ) : anniv ? (
-              <span className="shrink-0 rounded-full bg-indigo-100 px-2.5 py-1 text-[10px] font-black text-indigo-800">
+              <span className="shrink-0 rounded-full bg-indigo-100 px-2.5 py-1 text-[10px] font-bold text-indigo-800">
                 {anniv.days === 0 ? "Hoy" : `en ${anniv.days}d`}
               </span>
             ) : null}

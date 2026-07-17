@@ -49,11 +49,11 @@ export function ManagerTeamScreen() {
   }, [team, query, dept, status, sort, absentIds]);
 
   const selectCls =
-    "min-w-0 flex-1 rounded-full border-0 bg-white px-3 py-2 text-xs font-black text-[var(--color-text)] ring-1 ring-slate-200";
+    "min-w-0 flex-1 rounded-full border-0 bg-white px-3 py-2 text-xs font-bold text-[var(--color-text)] ring-1 ring-slate-200";
 
   return (
     <ManagerShell>
-      <div className="mx-auto w-full max-w-3xl px-4 pb-24 pt-[calc(1.25rem+env(safe-area-inset-top))] md:px-8">
+      <div className="mx-auto w-full max-w-3xl px-4 pb-24 pt-5 md:px-8">
         <header className="animate-fade-up mb-5 flex items-center gap-3">
           <button
             aria-label="Regresar al panel"
@@ -64,8 +64,8 @@ export function ManagerTeamScreen() {
             <ArrowLeft aria-hidden="true" className="size-5" />
           </button>
           <div>
-            <p className="text-sm font-black text-[var(--color-muted)]">Jefe</p>
-            <h2 className="text-2xl font-black md:text-3xl">Mi equipo</h2>
+            <p className="text-sm font-bold text-[var(--color-muted)]">Jefe</p>
+            <h2 className="text-2xl font-bold md:text-3xl">Mi equipo</h2>
           </div>
         </header>
 
@@ -135,18 +135,18 @@ export function ManagerTeamScreen() {
                         src={member.avatar_url}
                       />
                     ) : (
-                      <span className="grid size-12 shrink-0 place-items-center rounded-full bg-emerald-100 text-sm font-black text-emerald-700">
+                      <span className="grid size-12 shrink-0 place-items-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
                         {initials(member.full_name)}
                       </span>
                     )}
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-black">{member.full_name}</span>
+                      <span className="block truncate font-bold">{member.full_name}</span>
                       <span className="block truncate text-xs text-[var(--color-muted)]">
                         {member.job_title ?? "Sin puesto"}
                       </span>
                     </span>
                     <span
-                      className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-black ${
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${
                         absent ? "bg-rose-100 text-rose-800" : "bg-emerald-50 text-emerald-800"
                       }`}
                     >

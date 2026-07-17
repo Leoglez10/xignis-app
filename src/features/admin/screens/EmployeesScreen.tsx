@@ -111,8 +111,8 @@ export function EmployeesScreen() {
             <ArrowLeft aria-hidden="true" className="size-5" />
           </button>
           <div className="flex-1">
-            <p className="text-sm font-black text-[var(--color-muted)]">Recursos Humanos</p>
-            <h2 className="text-2xl font-black md:text-3xl">Empleados</h2>
+            <p className="text-sm font-bold text-[var(--color-muted)]">Recursos Humanos</p>
+            <h2 className="text-2xl font-bold md:text-3xl">Empleados</h2>
           </div>
           <Button className="min-h-12 px-4" onClick={() => setInviteOpen(true)}>
             <UserPlus aria-hidden="true" className="mr-2 size-4" />
@@ -142,7 +142,7 @@ export function EmployeesScreen() {
           {STATUS_FILTERS.map((f) => (
             <button
               aria-pressed={statusFilter === f.key}
-              className={`press rounded-full px-4 py-2 text-xs font-black transition ${
+              className={`press rounded-full px-4 py-2 text-xs font-bold transition ${
                 statusFilter === f.key ? "bg-slate-950 text-white" : "bg-white text-[var(--color-muted)] ring-1 ring-slate-200"
               }`}
               key={f.key}
@@ -174,26 +174,26 @@ export function EmployeesScreen() {
                   type="button"
                   onClick={() => navigate(`/admin/employees/${emp.id}`)}
                 >
-                  <p className="truncate font-black">{emp.full_name}</p>
+                  <p className="truncate font-bold">{emp.full_name}</p>
                   <p className="truncate text-xs text-[var(--color-muted)]">{emp.job_title ?? "Sin puesto"}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-black ${roleBadge[emp.role]}`}>
+                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${roleBadge[emp.role]}`}>
                       {roleLabel[emp.role]}
                     </span>
                     {emp.department?.name ? (
-                      <span className="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-black text-sky-800">
+                      <span className="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-800">
                         {emp.department.name}
                       </span>
                     ) : null}
                     {emp.employment_status === "terminated" || emp.employment_status === "archived" ? (
-                      <span className="rounded-full bg-slate-200 px-2.5 py-1 text-[11px] font-black text-slate-700">
+                      <span className="rounded-full bg-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-700">
                         Baja{emp.separation_type ? ` · ${separationLabel[emp.separation_type]}` : ""}
                       </span>
                     ) : null}
                     {emp.manager?.full_name ? (
                       <span className="text-[11px] text-[var(--color-muted)]">Jefe: {emp.manager.full_name}</span>
                     ) : null}
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-black ${
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
                       emp.annual_vacation_days === null ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
                     }`}>
                       <CalendarDays aria-hidden="true" className="size-3" />
@@ -512,7 +512,7 @@ function DeleteEmployeeSheet({
   return (
     <BottomSheet isOpen={Boolean(target)} title={`Dar de baja a ${target.full_name}`} onClose={onClose}>
       <div className="space-y-4">
-        <ol className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wide text-[var(--color-muted)]">
+        <ol className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-[var(--color-muted)]">
           {[1, 2, 3].map((current) => (
             <li
               className={`flex flex-1 items-center gap-2 rounded-full px-3 py-1.5 ring-1 ${
@@ -531,7 +531,7 @@ function DeleteEmployeeSheet({
         {step === 1 ? (
           <div className="space-y-4">
             <p className="text-sm leading-6 text-[var(--color-text)]">
-              Vas a dar de baja a <span className="font-black">{target.full_name}</span>.
+              Vas a dar de baja a <span className="font-bold">{target.full_name}</span>.
             </p>
             <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-[var(--color-muted)]">
               <li>Perderá el acceso a la app de inmediato.</li>
@@ -614,7 +614,7 @@ function DeleteEmployeeSheet({
                 onChange={(event) => setAckDelete(event.target.checked)}
               />
               <span className="text-sm leading-6 text-red-900">
-                Quiero dar de baja a <span className="font-black">{target.full_name}</span>.
+                Quiero dar de baja a <span className="font-bold">{target.full_name}</span>.
               </span>
             </label>
             {error ? (
@@ -627,7 +627,7 @@ function DeleteEmployeeSheet({
                 Atras
               </Button>
               <button
-                className="press inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-red-600 px-4 text-sm font-black text-white transition disabled:cursor-not-allowed disabled:bg-red-200"
+                className="press inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-red-600 px-4 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:bg-red-200"
                 disabled={!canDelete || saving}
                 type="button"
                 onClick={handleDelete}

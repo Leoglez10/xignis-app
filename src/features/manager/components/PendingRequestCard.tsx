@@ -44,7 +44,7 @@ export const PendingRequestCard = memo(function PendingRequestCard({
             />
           </label>
         ) : (
-          <span className={`grid size-12 shrink-0 place-items-center rounded-full text-xs font-black ${config.avatarTone}`}>
+          <span className={`grid size-12 shrink-0 place-items-center rounded-full text-xs font-bold ${config.avatarTone}`}>
             {initials(request.employee?.full_name ?? "X")}
           </span>
         )}
@@ -56,8 +56,8 @@ export const PendingRequestCard = memo(function PendingRequestCard({
         >
           <span className="min-w-0 flex-1">
             <span className="flex items-center justify-between gap-2">
-              <span className="truncate text-sm font-black">{request.employee?.full_name ?? "Empleado"}</span>
-              <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-black ${statusTone[request.status]}`}>
+              <span className="truncate text-sm font-bold">{request.employee?.full_name ?? "Empleado"}</span>
+              <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${statusTone[request.status]}`}>
                 {statusLabel[request.status]}
               </span>
             </span>

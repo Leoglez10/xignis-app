@@ -158,7 +158,7 @@ export function RequestDetailLayout({
             <LeaveIcon aria-hidden="true" className="size-7" />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-2xl font-black text-[var(--color-text)]">
+            <h2 className="truncate text-2xl font-bold text-[var(--color-text)]">
               {typeConfig.label}
             </h2>
             <p className="mt-0.5 truncate text-sm font-bold text-[var(--color-muted)]">
@@ -167,7 +167,7 @@ export function RequestDetailLayout({
           </div>
         </div>
 
-        <span className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-black ${statusTone[request.status]}`}>
+        <span className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-bold ${statusTone[request.status]}`}>
           {statusLabel[request.status]}
         </span>
 
@@ -179,7 +179,7 @@ export function RequestDetailLayout({
               style={{ width: `${(steps.filter((s) => s.state === "done").length / Math.max(steps.length, 1)) * 100}%` }}
             />
           </div>
-          <p className="mt-2 text-xs font-black text-[var(--color-muted)]">
+          <p className="mt-2 text-xs font-bold text-[var(--color-muted)]">
             {allDone
               ? "Permiso confirmado"
               : currentStep
@@ -198,7 +198,7 @@ export function RequestDetailLayout({
                 size="sm"
               />
               <div className="min-w-0">
-                <p className="truncate text-sm font-black text-[var(--color-text)]">
+                <p className="truncate text-sm font-bold text-[var(--color-text)]">
                   {emp?.full_name ?? "Empleado"}
                 </p>
                 {emp?.job_title ? (
@@ -211,7 +211,7 @@ export function RequestDetailLayout({
 
         {request.rejection_reason ? (
           <p className="mt-3 rounded-xl bg-red-50 p-3 text-xs font-semibold text-red-700">
-            <span className="font-black">Motivo: </span>
+            <span className="font-bold">Motivo: </span>
             {request.rejection_reason}
           </p>
         ) : null}
@@ -219,7 +219,7 @@ export function RequestDetailLayout({
 
       {/* Timeline */}
       <section className="mt-4 rounded-[24px] bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] shadow-sm" aria-labelledby="timeline-title">
-        <h2 id="timeline-title" className="mb-4 text-xs font-black uppercase tracking-wide text-[var(--color-muted)]">
+        <h2 id="timeline-title" className="mb-4 text-xs font-bold uppercase tracking-wide text-[var(--color-muted)]">
           Progreso de aprobación
         </h2>
         <ApprovalTimeline steps={steps} />
@@ -230,7 +230,7 @@ export function RequestDetailLayout({
         className="mt-4 rounded-[24px] bg-[var(--card-bg)] ring-1 ring-[var(--card-border)]"
         onToggle={(e) => setExpanded((e.currentTarget as HTMLDetailsElement).open)}
       >
-        <summary className="press flex cursor-pointer list-none items-center justify-between gap-3 p-5 text-sm font-black text-[var(--color-text)]">
+        <summary className="press flex cursor-pointer list-none items-center justify-between gap-3 p-5 text-sm font-bold text-[var(--color-text)]">
           <span className="flex items-center gap-2">
             <FileText aria-hidden="true" className="size-4 text-[var(--color-muted)]" />
             Más detalles
@@ -256,7 +256,7 @@ export function RequestDetailLayout({
           {request.coverage_contact ? <DetailRow icon={FileText} label="Responsable suplente" value={request.coverage_contact} /> : null}
           {request.pending_tasks ? (
             <div className="rounded-2xl bg-[var(--card-muted)] p-4">
-              <p className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-[var(--color-muted)]">
+              <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[var(--color-muted)]">
                 <FileText aria-hidden="true" className="size-3" />
                 Actividades pendientes
               </p>
@@ -310,7 +310,7 @@ function DetailShell({
 }) {
   return (
     <main className="mobile-screen" id="main-content" tabIndex={-1}>
-      <section className="flex min-h-dvh flex-col px-5 pb-7 pt-[calc(1.25rem+env(safe-area-inset-top))] lg:px-8">
+      <section className="flex min-h-dvh flex-col px-5 pb-7 pt-5 lg:px-8">
         <header className="mb-5 grid grid-cols-[44px_1fr_44px] items-center">
           <button
             aria-label="Volver"
@@ -320,7 +320,7 @@ function DetailShell({
           >
             <ChevronLeft aria-hidden="true" className="size-5" />
           </button>
-          <h2 className="text-center text-lg font-black text-[var(--color-text)]">{title}</h2>
+          <h2 className="text-center text-lg font-bold text-[var(--color-text)]">{title}</h2>
         </header>
         {children}
       </section>

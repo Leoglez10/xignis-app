@@ -44,7 +44,7 @@ export function ManagerRequestDetailScreen() {
             ) : null}
             {rejecting ? (
               <label className="mb-3 block">
-                <span className="text-sm font-black">Motivo del rechazo (requerido)</span>
+                <span className="text-sm font-bold">Motivo del rechazo (requerido)</span>
                 <textarea
                   className="mt-2 min-h-24 w-full resize-none rounded-2xl bg-[var(--card-bg)] p-4 text-sm outline-none ring-1 ring-[var(--card-border)] focus:ring-2 focus:ring-[var(--color-focus)]"
                   placeholder="Explica el motivo para el colaborador"

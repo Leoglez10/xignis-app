@@ -41,7 +41,7 @@ export function ForgotPasswordScreen() {
             <div className="mx-auto mb-5 grid size-16 place-items-center rounded-full bg-emerald-100 text-emerald-700">
               <MailCheck aria-hidden="true" className="size-8" />
             </div>
-            <h1 className="text-2xl font-black text-[var(--color-text)]">Correo enviado</h1>
+            <h1 className="text-2xl font-bold text-[var(--color-text)]">Correo enviado</h1>
             <p className="mt-3 text-sm leading-6 text-[var(--color-muted)]">
               Si el correo existe, recibirás un enlace para crear una nueva password.
             </p>
@@ -54,7 +54,7 @@ export function ForgotPasswordScreen() {
           </div>
         ) : (
           <>
-            <h1 className="text-3xl font-black text-[var(--color-text)]">Recuperar password</h1>
+            <h1 className="text-3xl font-bold text-[var(--color-text)]">Recuperar password</h1>
             <p className="mt-2 text-sm text-[var(--color-muted)]">Te enviaremos un enlace a tu correo.</p>
             <form className="mt-7 space-y-4" noValidate onSubmit={handleSubmit(onSubmit)}>
               <TextInput autoComplete="email" error={errors.email?.message} label="Correo" type="email" {...register("email")} />

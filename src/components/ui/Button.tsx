@@ -27,7 +27,7 @@ export function Button({
   return (
     <button
       aria-busy={loading || undefined}
-      className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-5 text-sm font-black transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-55 ${variantClassName[variant]} ${className}`}
+      className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-5 text-sm font-bold transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-55 ${variantClassName[variant]} ${className}`}
       disabled={loading || props.disabled}
       type={type}
       {...props}

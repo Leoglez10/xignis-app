@@ -102,7 +102,7 @@ export function AbsencesCalendar() {
 
 return (
       <>
-      <div className="mx-auto w-full max-w-3xl px-4 pb-24 pt-[calc(1.25rem+env(safe-area-inset-top))] md:px-8">
+      <div className="mx-auto w-full max-w-3xl px-4 pb-24 pt-5 md:px-8">
         <header className="animate-fade-up mb-5 flex items-center gap-3">
           <button
             aria-label="Regresar al panel"
@@ -113,8 +113,8 @@ return (
             <ArrowLeft aria-hidden="true" className="size-5" />
           </button>
           <div className="flex-1">
-            <p className="text-sm font-black text-[var(--color-muted)]">Agenda</p>
-            <h2 className="text-2xl font-black md:text-3xl">{monthLabel}</h2>
+            <p className="text-sm font-bold text-[var(--color-muted)]">Agenda</p>
+            <h2 className="text-2xl font-bold md:text-3xl">{monthLabel}</h2>
           </div>
         </header>
 
@@ -128,7 +128,7 @@ return (
             <ChevronLeft aria-hidden="true" className="size-5" />
           </button>
           <button
-            className="press rounded-full bg-white px-4 py-2 text-xs font-black text-[var(--color-muted)] ring-1 ring-slate-200"
+            className="press rounded-full bg-white px-4 py-2 text-xs font-bold text-[var(--color-muted)] ring-1 ring-slate-200"
             type="button"
             onClick={goToday}
           >
@@ -164,7 +164,7 @@ return (
             ) : null}
             <div className="mb-2 grid grid-cols-7 gap-1">
               {WEEKDAYS.map((d) => (
-                <div className="text-center text-[11px] font-black uppercase text-[var(--color-muted)]" key={d}>
+                <div className="text-center text-[11px] font-bold uppercase text-[var(--color-muted)]" key={d}>
                   {d}
                 </div>
               ))}

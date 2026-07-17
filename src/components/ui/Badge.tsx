@@ -7,6 +7,6 @@ const tones: Record<Tone, string> = {
 export function Badge({ className = "", ...props }: HTMLAttributes<HTMLSpanElement> & { tone?: Tone }) {
   const tone = props.tone ?? "neutral";
   const { tone: _tone, ...rest } = props;
-  return <span className={`inline-flex min-h-6 items-center rounded-full px-2.5 py-1 text-xs font-black ${tones[tone]} ${className}`} {...rest} />;
+  return <span className={`inline-flex min-h-6 items-center rounded-full px-2.5 py-1 text-xs font-bold ${tones[tone]} ${className}`} {...rest} />;
 }
 export const Chip = Badge;

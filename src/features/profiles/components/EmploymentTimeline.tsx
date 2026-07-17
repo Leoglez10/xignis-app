@@ -50,7 +50,7 @@ export function EmploymentTimeline({ events }: { events: EmploymentEvent[] }) {
               <Icon aria-hidden="true" className="size-4" />
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
-              <p className="text-sm font-black">{meta.label}</p>
+              <p className="text-sm font-bold">{meta.label}</p>
               <p className="text-xs text-[var(--color-muted)]">{formatDate(event.effective_date)}</p>
               {event.reason ? <p className="mt-1 text-xs leading-5 text-[var(--color-text)]">{event.reason}</p> : null}
               {describeMeta(event.event_type, event.metadata) ? (

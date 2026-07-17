@@ -86,7 +86,7 @@ export const RefreshBoundary = memo(function RefreshBoundary({ children, onRefre
       {showIndicator ? (
         <div
           aria-hidden="true"
-          className="grid place-items-center text-xs font-black text-[var(--color-muted)]"
+          className="grid place-items-center text-xs font-bold text-[var(--color-muted)]"
           style={{ height: refreshing ? THRESHOLD : pull, overflow: "hidden" }}
         >
           {refreshing ? "Actualizando…" : pull > THRESHOLD ? "Suelta para refrescar" : "Desliza para refrescar"}

@@ -8,13 +8,13 @@ export function NotFoundScreen() {
         <div className="mb-7 grid size-24 place-items-center rounded-[28px] bg-emerald-50 text-emerald-700">
           <Map aria-hidden="true" className="size-11" />
         </div>
-        <p className="text-6xl font-black leading-none">404</p>
-        <h1 className="mt-4 text-2xl font-black">No encontramos esta pantalla</h1>
+        <p className="text-6xl font-bold leading-none">404</p>
+        <h1 className="mt-4 text-2xl font-bold">No encontramos esta pantalla</h1>
         <p className="mt-3 max-w-sm text-sm leading-6 text-[var(--color-muted)]">
           Puede que el enlace haya cambiado o que no tengas acceso a esta ruta.
         </p>
         <Link
-          className="mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[var(--color-primary)] px-6 text-sm font-black text-[var(--color-primary-contrast)]"
+          className="mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[var(--color-primary)] px-6 text-sm font-bold text-[var(--color-primary-contrast)]"
           to="/login"
         >
           <Home aria-hidden="true" className="size-4" />

@@ -22,12 +22,12 @@ export function ActivePermitBanner({ request }: ActivePermitBannerProps) {
         <Sparkles aria-hidden="true" className="size-5" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-black text-emerald-900">Estás de permiso hoy</p>
+        <p className="text-sm font-bold text-emerald-900">Estás de permiso hoy</p>
         <p className="mt-0.5 truncate text-xs text-emerald-800">
           {leaveTypeLabel[request.leave_type]} · día {daysElapsed} de {request.start_date} a {request.end_date}
         </p>
       </div>
-      <p className="shrink-0 text-xs font-black text-emerald-700">
+      <p className="shrink-0 text-xs font-bold text-emerald-700">
         Vuelve {formatDateRangeEs(returnIso, returnIso)}
       </p>
     </div>

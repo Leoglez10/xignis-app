@@ -49,7 +49,7 @@ export function CustomFieldsEditor({ defs, onSaved, targetId, values }: CustomFi
 
   return (
     <section className="animate-fade-up rounded-[28px] bg-white p-6 ring-1 ring-slate-200" aria-label="Editar campos personalizados">
-      <h3 className="mb-4 text-base font-black">Campos personalizados</h3>
+      <h3 className="mb-4 text-base font-bold">Campos personalizados</h3>
       <div className="space-y-4">
         {editable.map((d) => {
           const value = draft[d.key] ?? "";

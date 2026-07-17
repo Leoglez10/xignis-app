@@ -51,12 +51,12 @@ export function KpiGrid({ stats }: KpiGridProps) {
     >
       {items.map((item) => (
         <article className={`rounded-[20px] p-4 ring-1 ring-[var(--card-border)] ${item.tone}`} key={item.key}>
-          <p className="text-[10px] font-black uppercase tracking-wide">{item.label}</p>
-          <p className="mt-1 text-2xl font-black text-[var(--color-text)]">{item.value}</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide">{item.label}</p>
+          <p className="mt-1 text-2xl font-bold text-[var(--color-text)]">{item.value}</p>
           {"delta" in item && item.delta !== undefined ? (
             <p
               aria-label={`${item.delta >= 0 ? "Subió" : "Bajó"} ${Math.abs(item.delta)} vs mes anterior`}
-              className={`mt-1 text-[10px] font-black ${item.delta >= 0 ? "text-emerald-700" : "text-rose-700"}`}
+              className={`mt-1 text-[10px] font-bold ${item.delta >= 0 ? "text-emerald-700" : "text-rose-700"}`}
             >
               {item.delta >= 0 ? "▲" : "▼"} {Math.abs(item.delta)} vs mes anterior
             </p>

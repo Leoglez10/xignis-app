@@ -68,10 +68,10 @@ export function ProfileScreen() {
 
   return (
     <main className="min-h-dvh bg-slate-100 text-[var(--color-text)]" id="main-content" tabIndex={-1}>
-      <div className="mx-auto w-full max-w-xl px-4 pb-5 pt-[calc(1.25rem+env(safe-area-inset-top))] md:py-8">
+      <div className="mx-auto w-full max-w-xl px-4 pb-5 pt-5 md:py-8">
         <header className="animate-fade-up mb-5 flex items-center justify-between gap-3">
           <button
-            className="press inline-flex h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-black ring-1 ring-slate-200"
+            className="press inline-flex h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-bold ring-1 ring-slate-200"
             onClick={() => navigate(routeForRole(profile.role))}
             type="button"
           >
@@ -98,15 +98,15 @@ export function ProfileScreen() {
               src={profile.avatar_url}
             />
             <div className="min-w-0">
-              <h2 className="truncate text-2xl font-black">{profile.full_name}</h2>
-              <span className="mt-1 inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-[var(--color-muted)]">
+              <h2 className="truncate text-2xl font-bold">{profile.full_name}</h2>
+              <span className="mt-1 inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-[var(--color-muted)]">
                 {roleLabel[profile.role]}
               </span>
             </div>
           </div>
         </section>
 
-        <button className="press mt-4 flex min-h-14 w-full items-center gap-3 rounded-[22px] bg-white px-5 text-left font-black ring-1 ring-slate-200" type="button" onClick={() => navigate("/settings")}><Settings aria-hidden="true" className="size-5" />Configuración</button>
+        <button className="press mt-4 flex min-h-14 w-full items-center gap-3 rounded-[22px] bg-white px-5 text-left font-bold ring-1 ring-slate-200" type="button" onClick={() => navigate("/settings")}><Settings aria-hidden="true" className="size-5" />Configuración</button>
 
         {sheetQuery.data?.sheet ? (
           <div className="mt-4">
@@ -165,7 +165,7 @@ export function ProfileScreen() {
           <section className="animate-fade-up mt-4 space-y-4 rounded-[28px] bg-white p-6 ring-1 ring-slate-200">
             <div className="mb-1 flex items-center gap-2">
               <History aria-hidden="true" className="size-5 text-[var(--color-muted)]" />
-              <h2 className="text-lg font-black">Historial laboral</h2>
+              <h2 className="text-lg font-bold">Historial laboral</h2>
             </div>
             <EmploymentTimeline events={events} />
           </section>

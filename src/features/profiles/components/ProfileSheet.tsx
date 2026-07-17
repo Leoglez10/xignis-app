@@ -49,14 +49,14 @@ export function ProfileSheet({ defs, email, sheet }: ProfileSheetProps) {
       <div className="space-y-5">
         {sections.map((s) => (
           <div key={s.title}>
-            <h3 className="mb-2 text-xs font-black uppercase tracking-wide text-[var(--color-muted)]">
+            <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--color-muted)]">
               {s.title}
             </h3>
             <dl className="divide-y divide-slate-100">
               {s.rows.map((r) => (
                 <div className="flex items-baseline justify-between gap-4 py-2" key={r.label}>
                   <dt className="shrink-0 text-sm text-[var(--color-muted)]">{r.label}</dt>
-                  <dd className="min-w-0 truncate text-right text-sm font-black text-[var(--color-text)]">
+                  <dd className="min-w-0 truncate text-right text-sm font-bold text-[var(--color-text)]">
                     {r.value}
                   </dd>
                 </div>

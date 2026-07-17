@@ -17,7 +17,7 @@ export function PeersStrip({ peers, absences }: PeersStripProps) {
       aria-label="Compañeros ausentes hoy"
       className="animate-fade-up mt-5"
     >
-      <h2 className="mb-3 text-lg font-black text-[var(--color-text)]">Compañeros hoy</h2>
+      <h2 className="mb-3 text-lg font-bold text-[var(--color-text)]">Compañeros hoy</h2>
       {absentPeers.length === 0 ? (
         <p className="rounded-2xl bg-[var(--color-surface)] p-4 text-sm font-semibold text-[var(--color-muted)]">
           Todos tus compañeros están disponibles.
@@ -29,7 +29,7 @@ export function PeersStrip({ peers, absences }: PeersStripProps) {
               key={peer.id}
               className="flex shrink-0 items-center gap-2 rounded-full bg-rose-50 px-3 py-2 ring-1 ring-rose-100"
             >
-              <span className="grid size-7 place-items-center rounded-full bg-rose-100 text-[10px] font-black text-rose-700">
+              <span className="grid size-7 place-items-center rounded-full bg-rose-100 text-[10px] font-bold text-rose-700">
                 {initials(peer.full_name)}
               </span>
               <span className="text-sm font-bold text-rose-900">{peer.full_name.split(" ")[0]}</span>

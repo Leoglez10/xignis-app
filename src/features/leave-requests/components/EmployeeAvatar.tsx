@@ -33,7 +33,7 @@ export function EmployeeAvatar({
 
   return (
     <span
-      className={`grid shrink-0 place-items-center rounded-full bg-[var(--card-muted)] font-black text-[var(--color-muted)] ring-1 ring-[var(--card-border)] ${sizeClass} ${className}`}
+      className={`grid shrink-0 place-items-center rounded-full bg-[var(--card-muted)] font-bold text-[var(--color-muted)] ring-1 ring-[var(--card-border)] ${sizeClass} ${className}`}
     >
       {initials(fullName)}
     </span>
