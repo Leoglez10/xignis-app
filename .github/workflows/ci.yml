@@ -3,13 +3,12 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 jobs:
   verify:
     runs-on: ubuntu-latest
     env:
-      # Dummy Supabase config so the production build wires up the auth guard.
-      # getSession() reads empty local storage (no network), so protected routes
-      # redirect to /login as the e2e smoke test expects.
+      # Dummy config keeps automated tests isolated from production.
       VITE_SUPABASE_URL: https://dummy.supabase.co
       VITE_SUPABASE_ANON_KEY: dummy-anon-key-for-ci
     steps:
@@ -23,3 +22,23 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+
+  production-build:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xignis-app-dist
+          path: dist
+          retention-days: 1
