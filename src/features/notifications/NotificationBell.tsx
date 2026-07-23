@@ -1,9 +1,10 @@
 import { relativeTimeEs } from "../../lib/relativeTime";
-import { Bell, CheckCheck, Trash2 } from "lucide-react";
+import { Bell, CheckCheck, Trash2, X } from "lucide-react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomSheet } from "../../components/ui/BottomSheet";
 import type { AppNotification } from "../../lib/database.types";
+import { useIsDesktop } from "../../lib/useIsDesktop";
 import { useAuth } from "../session/AuthContext";
 import {
   deleteNotification,
@@ -118,6 +119,7 @@ function NotificationRow({
 export const NotificationBell = memo(function NotificationBell({ className }: NotificationBellProps) {
   const { profile, session } = useAuth();
   const navigate = useNavigate();
+  const isDesktop = useIsDesktop();
   const userId = session?.user.id ?? null;
   const [isOpen, setIsOpen] = useState(false);
   const [items, setItems] = useState<AppNotification[]>([]);
@@ -184,8 +186,54 @@ export const NotificationBell = memo(function NotificationBell({ className }: No
     }
   }
 
-  return (
+  // Popover de escritorio: cerrar con Escape (el BottomSheet ya lo trae).
+  useEffect(() => {
+    if (!isOpen || !isDesktop) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, isDesktop]);
+
+  const markAllButton =
+    unread > 0 ? (
+      <button
+        className="press mb-3 inline-flex items-center gap-2 rounded-full bg-[var(--color-surface)] px-4 py-2 text-sm font-bold text-[var(--color-text)]"
+        type="button"
+        onClick={handleMarkAll}
+      >
+        <CheckCheck aria-hidden="true" className="size-4" />
+        Marcar todo como leído
+      </button>
+    ) : null;
+
+  const list = (
     <>
+      <ul className="stagger max-h-[60dvh] space-y-2 overflow-y-auto lg:max-h-[26rem]">
+        {items.length === 0 ? (
+          <li className="rounded-2xl bg-[var(--color-surface)] p-5 text-center text-sm font-semibold text-[var(--color-muted)]">
+            Sin notificaciones por ahora.
+          </li>
+        ) : null}
+        {items.map((item) => (
+          <NotificationRow key={item.id} item={item} onOpen={handleItemClick} onDelete={handleDelete} />
+        ))}
+      </ul>
+      {items.length >= limit ? (
+        <button
+          className="press mt-3 min-h-11 w-full rounded-full bg-[var(--color-surface)] px-4 text-sm font-bold"
+          type="button"
+          onClick={() => setLimit((current) => current + 30)}
+        >
+          Ver notificaciones anteriores
+        </button>
+      ) : null}
+    </>
+  );
+
+  return (
+    <div className="relative">
       <span aria-live="polite" className="sr-only">{announcement}</span>
       <button
         aria-label={unread > 0 ? `Notificaciones, ${unread} sin leer` : "Notificaciones"}
@@ -204,35 +252,38 @@ export const NotificationBell = memo(function NotificationBell({ className }: No
         ) : null}
       </button>
 
-      <BottomSheet isOpen={isOpen} title="Notificaciones" onClose={() => setIsOpen(false)}>
-        {unread > 0 ? (
-          <button
-            className="press mb-3 inline-flex items-center gap-2 rounded-full bg-[var(--color-surface)] px-4 py-2 text-sm font-bold text-[var(--color-text)]"
-            type="button"
-            onClick={handleMarkAll}
-          >
-            <CheckCheck aria-hidden="true" className="size-4" />
-            Marcar todo como leído
-          </button>
-        ) : null}
-
-        <ul className="stagger max-h-[60dvh] space-y-2 overflow-y-auto">
-          {items.length === 0 ? (
-            <li className="rounded-2xl bg-[var(--color-surface)] p-5 text-center text-sm font-semibold text-[var(--color-muted)]">
-              Sin notificaciones por ahora.
-            </li>
-          ) : null}
-          {items.map((item) => (
-            <NotificationRow
-              key={item.id}
-              item={item}
-              onOpen={handleItemClick}
-              onDelete={handleDelete}
-            />
-          ))}
-        </ul>
-        {items.length >= limit ? <button className="press mt-3 min-h-11 w-full rounded-full bg-[var(--color-surface)] px-4 text-sm font-bold" type="button" onClick={() => setLimit((current) => current + 30)}>Ver notificaciones anteriores</button> : null}
-      </BottomSheet>
-    </>
+      {isDesktop ? (
+        isOpen ? (
+          <>
+            {/* atrapa el clic fuera para cerrar */}
+            <div aria-hidden="true" className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+            <div
+              className="absolute right-0 top-full z-50 mt-2 w-[24rem] origin-top-right animate-scale-in overflow-hidden rounded-[24px] border border-[var(--card-border)] bg-[var(--card-bg)] p-4 shadow-2xl"
+              role="dialog"
+              aria-label="Notificaciones"
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-[var(--color-text)]">Notificaciones</h2>
+                <button
+                  aria-label="Cerrar"
+                  className="press grid size-9 place-items-center rounded-full bg-[var(--color-surface)] text-[var(--color-text)]"
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <X aria-hidden="true" className="size-4" />
+                </button>
+              </div>
+              {markAllButton}
+              {list}
+            </div>
+          </>
+        ) : null
+      ) : (
+        <BottomSheet isOpen={isOpen} title="Notificaciones" onClose={() => setIsOpen(false)}>
+          {markAllButton}
+          {list}
+        </BottomSheet>
+      )}
+    </div>
   );
 });

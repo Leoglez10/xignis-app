@@ -15,7 +15,7 @@ export function DashboardSkeleton() {
 
       {/* Aside */}
       <div className="flex flex-col gap-5">
-        <div className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px]">
+        <div className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] rounded-2xl md:rounded-[20px]">
           <div className="mb-4 h-6 w-36 rounded-full bg-[var(--skeleton-base)] animate-pulse" />
           <div className="space-y-2">
             {[0, 1, 2].map((i) => (
@@ -23,7 +23,7 @@ export function DashboardSkeleton() {
             ))}
           </div>
         </div>
-        <div className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px]">
+        <div className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] rounded-2xl md:rounded-[20px]">
           <div className="mb-4 h-6 w-28 rounded-full bg-[var(--skeleton-base)] animate-pulse" />
           <div className="space-y-2">
             {[0, 1, 2].map((i) => (

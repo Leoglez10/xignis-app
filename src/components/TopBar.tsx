@@ -1,4 +1,4 @@
-import { Search, Grid2x2 } from "lucide-react";
+import { Search, Grid2x2, Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { NotificationBell } from "../features/notifications/NotificationBell";
@@ -76,18 +76,20 @@ export function TopBar() {
         </div>
       </div>
 
-      {/* Fila 2: pills de contexto */}
+      {/* Fila 2: wordmark de marca */}
       <div className="flex items-center gap-2 px-4 pb-2">
-        <span className="rounded-full bg-[var(--color-primary)] px-4 py-1.5 text-sm font-bold text-[var(--color-primary-contrast)]">
-          Mi espacio
-        </span>
-        <button
-          className="press rounded-full bg-[var(--color-surface)] px-4 py-1.5 text-sm font-bold text-[var(--color-muted)]"
-          type="button"
-          onClick={() => navigate("/organizacion")}
+        <span
+          className="grid size-7 place-items-center rounded-lg bg-[var(--color-primary)]"
+          aria-hidden="true"
         >
-          Organización
-        </button>
+          <Check className="size-4 text-white" strokeWidth={3} />
+        </span>
+        <span
+          className="text-lg font-bold tracking-tight text-[var(--color-text)]"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          xig<span className="text-[var(--color-primary)]">nis</span>
+        </span>
       </div>
 
       {/* Fila 3: tabs horizontales (mismo diseño en mobile y desktop, estilo iOS) */}

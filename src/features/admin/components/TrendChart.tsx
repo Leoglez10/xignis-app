@@ -34,7 +34,7 @@ export function TrendChart({ data }: TrendChartProps) {
   return (
     <section
       aria-label="Tendencia mensual"
-      className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px] md:p-6"
+      className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] rounded-2xl md:rounded-[20px] md:p-6"
     >
       <header className="mb-3 flex items-center justify-between">
         <h2 className="font-bold">Tendencia 12 meses</h2>

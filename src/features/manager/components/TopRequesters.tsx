@@ -30,7 +30,7 @@ export function TopRequesters({ members, requests, months = 6 }: TopRequestersPr
   return (
     <section
       aria-label="Top solicitantes"
-      className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px] md:p-6"
+      className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] rounded-2xl md:rounded-[20px] md:p-6"
     >
       <div className="mb-3 flex items-center gap-2">
         <TrendingUp aria-hidden="true" className="size-4 text-[var(--color-muted)]" />

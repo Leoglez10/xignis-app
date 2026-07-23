@@ -42,7 +42,7 @@ export function CoverageHeatmap({ members, absences, days = 14 }: CoverageHeatma
   return (
     <section
       aria-label="Mapa de cobertura proxima"
-      className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px] md:p-6"
+      className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] rounded-2xl md:rounded-[20px] md:p-6"
     >
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="font-bold">

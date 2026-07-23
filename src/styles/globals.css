@@ -1,15 +1,27 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
+@import "@fontsource/bricolage-grotesque/400.css";
+@import "@fontsource/bricolage-grotesque/600.css";
+@import "@fontsource/bricolage-grotesque/700.css";
+@import "@fontsource/bricolage-grotesque/800.css";
+@import "@fontsource-variable/jetbrains-mono";
 
 :root {
   color-scheme: light;
-  font-family:
+  --font-body:
     "Inter Variable", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
-  --color-primary: #0DEC0D;
-  --color-primary-strong: #0ab80a;
-  --color-field-focus: #078a07;
-  --color-primary-contrast: #062314;
+  --font-display: "Bricolage Grotesque", var(--font-body);
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", monospace;
+  font-family: var(--font-body);
+  /* Verde de marca refinado: acción con blanco encima cumple AA (primary ≈ emerald-700),
+     el verde vibrante vive en --brand-bright para acentos y superficies oscuras. */
+  --color-primary: #0A7D4E;
+  --color-primary-strong: #075A38;
+  --color-field-focus: #075A38;
+  --color-primary-contrast: #ffffff;
+  --brand-ground: #06251B;
+  --brand-bright: #35E29B;
   --color-background: #ffffff;
   --color-surface: #f3f4f6;
   --color-text: #111827;
@@ -47,10 +59,11 @@
   --color-muted: #aebbb4;
   --color-border: #304039;
   --color-ink: #f4f7f5;
-  --color-primary: #24e824;
-  --color-primary-strong: #53f153;
-  --color-field-focus: #53f153;
-  --color-primary-contrast: #041208;
+  --color-primary: #16B473;
+  --color-primary-strong: #34D488;
+  --color-field-focus: #34D488;
+  --color-primary-contrast: #04140C;
+  --brand-bright: #45EBA2;
   --card-bg: #0e1913;
   --card-muted: #142019;
   --card-border: #293a32;
@@ -88,6 +101,13 @@ body {
   color: var(--color-text);
   overscroll-behavior: none; /* sin rubber-band de la página en iOS */
   -webkit-tap-highlight-color: transparent; /* sin flash gris al tocar */
+}
+
+/* Titulares en la fuente display (Bricolage). Aplica a los <h1>/<h2>/<h3> de
+   toda la app sin tocar cada componente; el cuerpo sigue en Inter. */
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
 }
 
 button,
@@ -317,8 +337,11 @@ button {
 .stagger > *:nth-child(8)[data-mount="true"] { animation-delay: 390ms; }
 
 /* feedback táctil al presionar (suave, no exagerado) */
-.press { transition: transform 140ms var(--ease-ios), box-shadow 140ms ease; }
-.press:active { transform: scale(0.97); }
+.press { transition: transform 140ms var(--ease-ios), box-shadow 140ms ease, filter 140ms ease; }
+@media (hover: hover) {
+  .press:hover { transform: translateY(-1px); filter: brightness(0.97); }
+}
+.press:active { transform: scale(0.97); filter: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *,

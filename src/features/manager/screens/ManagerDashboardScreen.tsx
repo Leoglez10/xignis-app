@@ -71,7 +71,7 @@ export function ManagerDashboardScreen() {
     <ManagerShell>
       <RefreshBoundary onRefresh={refetch}>
         <section className="grid min-h-dvh gap-5 p-4 pb-24 pt-4 md:p-6 md:pb-24 lg:grid-cols-[1fr_var(--aside-width)]">
-          <div className="min-w-0 bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px] md:p-6">
+          <div className="min-w-0 bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] rounded-2xl md:rounded-[20px] md:p-6">
             <header className="animate-fade-up mb-6">
               <p className="text-sm font-bold text-[var(--color-muted)]">{roleBadge}</p>
               <h2 className="mt-1 text-2xl font-bold md:text-3xl">{managerFirstName}</h2>
@@ -185,7 +185,7 @@ export function ManagerDashboardScreen() {
             <aside className="flex flex-col gap-5">
               <section
                 aria-labelledby="agenda-title"
-                className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px] md:p-6"
+                className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] rounded-2xl md:rounded-[20px] md:p-6"
               >
                 <button
                   className="press mb-4 flex w-full items-start justify-between gap-4 text-left"
@@ -223,7 +223,7 @@ export function ManagerDashboardScreen() {
               {prefs.showTeamWidget ? (
                 <section
                   aria-labelledby="team-title"
-                  className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px] md:p-6"
+                  className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] rounded-2xl md:rounded-[20px] md:p-6"
                 >
                   <button
                     className="press mb-3 flex w-full items-center justify-between gap-2 text-left"

@@ -11,7 +11,7 @@ export function TypeDistributionChart({ data }: TypeDistributionChartProps) {
     return (
       <section
         aria-label="Distribucion por tipo"
-        className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px] md:p-6"
+        className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] rounded-2xl md:rounded-[20px] md:p-6"
       >
         <h2 className="font-bold">Por tipo de permiso</h2>
         <p className="mt-2 text-sm text-[var(--color-muted)]">Sin datos suficientes.</p>
@@ -22,7 +22,7 @@ export function TypeDistributionChart({ data }: TypeDistributionChartProps) {
   return (
     <section
       aria-label="Distribucion por tipo"
-      className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px] md:p-6"
+      className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] rounded-2xl md:rounded-[20px] md:p-6"
     >
       <h2 className="font-bold">Por tipo de permiso</h2>
       <ul className="mt-3 space-y-2">

@@ -51,7 +51,7 @@ export function ManagerRequestsScreen() {
     <ManagerShell>
       <RefreshBoundary onRefresh={refetch}>
         <section className="grid min-h-dvh gap-5 p-4 pb-24 pt-4 md:p-6 md:pb-24">
-          <div className="min-w-0 bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px] md:p-6">
+          <div className="min-w-0 bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] rounded-2xl md:rounded-[20px] md:p-6">
             <header className="animate-fade-up mb-6">
               <p className="text-sm font-bold text-[var(--color-muted)]">Jefe</p>
               <h2 className="mt-1 text-2xl font-bold md:text-3xl">Solicitudes</h2>

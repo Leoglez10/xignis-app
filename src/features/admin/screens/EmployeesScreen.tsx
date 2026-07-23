@@ -19,6 +19,10 @@ import {
   type ProfileWithManager,
 } from "../../profiles/services/profileService";
 import { listActiveDepartments } from "../services/departmentService";
+import { areaColor } from "../areaColor";
+
+/** Bucket key for employees with no department assigned. */
+const NO_AREA = "__no_area__";
 
 const separationLabel: Record<SeparationType, string> = {
   voluntary: "Renuncia voluntaria",
@@ -58,6 +62,7 @@ export function EmployeesScreen() {
   const [managers, setManagers] = useState<Pick<Profile, "id" | "full_name" | "role">[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
+  const [areaFilter, setAreaFilter] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,14 +70,58 @@ export function EmployeesScreen() {
   const [editTarget, setEditTarget] = useState<ProfileWithManager | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ProfileWithManager | null>(null);
 
-  const filtered = useMemo(() => {
+  const byStatus = useMemo(
+    () => employees.filter((e) => matchesStatus(e.employment_status, statusFilter)),
+    [employees, statusFilter],
+  );
+
+  const bySearch = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return employees.filter((e) => {
-      if (!matchesStatus(e.employment_status, statusFilter)) return false;
-      if (q && !(e.full_name.toLowerCase().includes(q) || (e.job_title ?? "").toLowerCase().includes(q))) return false;
-      return true;
+    if (!q) return byStatus;
+    return byStatus.filter(
+      (e) => e.full_name.toLowerCase().includes(q) || (e.job_title ?? "").toLowerCase().includes(q),
+    );
+  }, [byStatus, query]);
+
+  // Chips come from byStatus so the rail stays stable while typing; counts come
+  // from bySearch so they reflect what is actually on screen.
+  const areas = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; count: number }>();
+    for (const e of byStatus) {
+      const id = e.department_id ?? NO_AREA;
+      if (!map.has(id)) map.set(id, { id, name: e.department?.name ?? "Sin área", count: 0 });
+    }
+    for (const e of bySearch) {
+      const area = map.get(e.department_id ?? NO_AREA);
+      if (area) area.count += 1;
+    }
+    return [...map.values()].sort((a, b) => {
+      if (a.id === NO_AREA) return 1;
+      if (b.id === NO_AREA) return -1;
+      return a.name.localeCompare(b.name);
     });
-  }, [employees, query, statusFilter]);
+  }, [byStatus, bySearch]);
+
+  const filtered = useMemo(
+    () => (areaFilter ? bySearch.filter((e) => (e.department_id ?? NO_AREA) === areaFilter) : bySearch),
+    [bySearch, areaFilter],
+  );
+
+  // Group the visible employees under their area so the list reads as
+  // "Sistemas → gente → Sin área → gente" instead of one flat wall of cards.
+  const groups = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; members: ProfileWithManager[] }>();
+    for (const e of filtered) {
+      const id = e.department_id ?? NO_AREA;
+      if (!map.has(id)) map.set(id, { id, name: e.department?.name ?? "Sin área", members: [] });
+      map.get(id)!.members.push(e);
+    }
+    return [...map.values()].sort((a, b) => {
+      if (a.id === NO_AREA) return 1;
+      if (b.id === NO_AREA) return -1;
+      return a.name.localeCompare(b.name);
+    });
+  }, [filtered]);
 
   async function load() {
     try {
@@ -147,80 +196,123 @@ export function EmployeesScreen() {
               }`}
               key={f.key}
               type="button"
-              onClick={() => setStatusFilter(f.key)}
+              onClick={() => {
+                setStatusFilter(f.key);
+                setAreaFilter(null);
+              }}
             >
               {f.label}
             </button>
           ))}
         </div>
 
+        {areas.length > 1 ? (
+          <div
+            aria-label="Filtro por área"
+            className="-mx-4 mb-5 flex snap-x gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0"
+            role="group"
+          >
+            {areas.map((area) => {
+              const color = areaColor(area.id === NO_AREA ? null : area.id);
+              const isActive = areaFilter === area.id;
+              return (
+                <button
+                  aria-pressed={isActive}
+                  className={`press flex min-h-11 shrink-0 snap-start items-center gap-2 rounded-full px-4 text-xs font-bold ring-1 transition-colors ${
+                    isActive ? color.active : "bg-white text-[var(--color-text)] ring-slate-200"
+                  } ${area.count === 0 && !isActive ? "opacity-40" : ""}`}
+                  key={area.id}
+                  type="button"
+                  onClick={() => setAreaFilter(isActive ? null : area.id)}
+                >
+                  <span aria-hidden="true" className={`size-2 rounded-full ${color.dot}`} />
+                  {area.name}
+                  <span className="tabular-nums opacity-60">{area.count}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+
         {isLoading ? (
           <p className="text-sm font-semibold text-[var(--color-muted)]">Cargando directorio…</p>
+        ) : filtered.length === 0 ? (
+          <p className="rounded-2xl bg-white p-6 text-center text-sm font-semibold text-[var(--color-muted)] ring-1 ring-slate-200">
+            Sin empleados que coincidan.
+          </p>
         ) : (
-          <ul className="stagger grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filtered.length === 0 ? (
-              <li className="rounded-2xl bg-white p-6 text-center text-sm font-semibold text-[var(--color-muted)] ring-1 ring-slate-200 sm:col-span-2">
-                Sin empleados que coincidan.
-              </li>
-            ) : null}
-            {filtered.map((emp) => (
-              <li
-                className="flex items-center gap-4 rounded-[20px] bg-white p-4 shadow-sm ring-1 ring-slate-200"
-                key={emp.id}
-              >
-                <Avatar className="text-sm text-emerald-700" name={emp.full_name} size="size-12" src={emp.avatar_url} />
-                <button
-                  className="press min-w-0 flex-1 text-left"
-                  type="button"
-                  onClick={() => navigate(`/admin/employees/${emp.id}`)}
-                >
-                  <p className="truncate font-bold">{emp.full_name}</p>
-                  <p className="truncate text-xs text-[var(--color-muted)]">{emp.job_title ?? "Sin puesto"}</p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${roleBadge[emp.role]}`}>
-                      {roleLabel[emp.role]}
-                    </span>
-                    {emp.department?.name ? (
-                      <span className="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-800">
-                        {emp.department.name}
-                      </span>
-                    ) : null}
-                    {emp.employment_status === "terminated" || emp.employment_status === "archived" ? (
-                      <span className="rounded-full bg-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-700">
-                        Baja{emp.separation_type ? ` · ${separationLabel[emp.separation_type]}` : ""}
-                      </span>
-                    ) : null}
-                    {emp.manager?.full_name ? (
-                      <span className="text-[11px] text-[var(--color-muted)]">Jefe: {emp.manager.full_name}</span>
-                    ) : null}
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                      emp.annual_vacation_days === null ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
-                    }`}>
-                      <CalendarDays aria-hidden="true" className="size-3" />
-                      {emp.annual_vacation_days === null ? "Vacaciones no configuradas" : `${emp.annual_vacation_days} días/año`}
-                    </span>
+          <div className="space-y-8">
+            {groups.map((group) => {
+              const color = areaColor(group.id === NO_AREA ? null : group.id);
+              return (
+                <section key={group.id}>
+                  <div className="mb-3 flex items-center gap-2">
+                    <span aria-hidden="true" className={`size-2.5 rounded-full ${color.dot}`} />
+                    <h3 className="text-sm font-bold">{group.name}</h3>
+                    <span className="tabular-nums text-xs text-[var(--color-muted)]">{group.members.length}</span>
                   </div>
-                </button>
-                <button
-                  aria-label={`Editar a ${emp.full_name}`}
-                  className="press grid size-10 place-items-center rounded-full bg-slate-100 text-[var(--color-text)]"
-                  type="button"
-                  onClick={() => setEditTarget(emp)}
-                >
-                  <Pencil aria-hidden="true" className="size-4" />
-                </button>
-                <button
-                  aria-label={`Dar de baja a ${emp.full_name}`}
-                  className="press grid size-10 place-items-center rounded-full bg-red-50 text-red-700 ring-1 ring-red-100 disabled:opacity-40"
-                  disabled={emp.employment_status === "terminated" || emp.employment_status === "archived"}
-                  type="button"
-                  onClick={() => setDeleteTarget(emp)}
-                >
-                  <Trash2 aria-hidden="true" className="size-4" />
-                </button>
-              </li>
-            ))}
-          </ul>
+                  <ul className="stagger grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {group.members.map((emp) => (
+                      <li
+                        className="relative flex items-center gap-4 overflow-hidden rounded-[20px] bg-white p-4 pl-5 shadow-sm ring-1 ring-slate-200"
+                        key={emp.id}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={`absolute inset-y-0 left-0 w-1.5 ${areaColor(emp.department_id).bar}`}
+                        />
+                        <Avatar className="text-sm text-emerald-700" name={emp.full_name} size="size-12" src={emp.avatar_url} />
+                        <button
+                          className="press min-w-0 flex-1 text-left"
+                          type="button"
+                          onClick={() => navigate(`/admin/employees/${emp.id}`)}
+                        >
+                          <p className="truncate font-bold">{emp.full_name}</p>
+                          <p className="truncate text-xs text-[var(--color-muted)]">{emp.job_title ?? "Sin puesto"}</p>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${roleBadge[emp.role]}`}>
+                              {roleLabel[emp.role]}
+                            </span>
+                            {emp.employment_status === "terminated" || emp.employment_status === "archived" ? (
+                              <span className="rounded-full bg-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-700">
+                                Baja{emp.separation_type ? ` · ${separationLabel[emp.separation_type]}` : ""}
+                              </span>
+                            ) : null}
+                            {emp.manager?.full_name ? (
+                              <span className="text-[11px] text-[var(--color-muted)]">Jefe: {emp.manager.full_name}</span>
+                            ) : null}
+                            <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                              emp.annual_vacation_days === null ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
+                            }`}>
+                              <CalendarDays aria-hidden="true" className="size-3" />
+                              {emp.annual_vacation_days === null ? "Vacaciones no configuradas" : `${emp.annual_vacation_days} días/año`}
+                            </span>
+                          </div>
+                        </button>
+                        <button
+                          aria-label={`Editar a ${emp.full_name}`}
+                          className="press grid size-10 place-items-center rounded-full bg-slate-100 text-[var(--color-text)]"
+                          type="button"
+                          onClick={() => setEditTarget(emp)}
+                        >
+                          <Pencil aria-hidden="true" className="size-4" />
+                        </button>
+                        <button
+                          aria-label={`Dar de baja a ${emp.full_name}`}
+                          className="press grid size-10 place-items-center rounded-full bg-red-50 text-red-700 ring-1 ring-red-100 disabled:opacity-40"
+                          disabled={emp.employment_status === "terminated" || emp.employment_status === "archived"}
+                          type="button"
+                          onClick={() => setDeleteTarget(emp)}
+                        >
+                          <Trash2 aria-hidden="true" className="size-4" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              );
+            })}
+          </div>
         )}
       </div>
 
