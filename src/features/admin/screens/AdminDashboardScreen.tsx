@@ -9,6 +9,10 @@ import { KpiGrid } from "../components/KpiGrid";
 import { RecentOnboardingsWidget } from "../components/RecentOnboardingsWidget";
 import { RecentTerminationsWidget } from "../components/RecentTerminationsWidget";
 import { AgingBadge } from "../../../components/ui/AgingBadge";
+import { BirthdayHero } from "../../../components/BirthdayHero";
+import { BirthdayStrip } from "../../../components/BirthdayStrip";
+import { usePreferences } from "../../settings/PreferencesContext";
+import { listEmployees } from "../../profiles/services/profileService";
 import { TrendChart } from "../components/TrendChart";
 import { TypeDistributionChart } from "../components/TypeDistributionChart";
 import { leaveTypeLabel, type LeaveRequestWithEmployee } from "../../leave-requests/services/leaveRequestService";
@@ -42,6 +46,15 @@ export function AdminDashboardScreen() {
   // "Solicitudes" screen) so the summary preview stays light and the list is
   // fetched once. The heavy analytics live in the query below.
   const { requests } = useHrLeaveRequests();
+  const { preferences } = usePreferences();
+
+  // Org birthdays for the strip — only fetched when the preference is on.
+  const birthdaysQuery = useQuery({
+    enabled: preferences.birthdayVisibility,
+    queryKey: ["dashboard", "admin", "birthdays"],
+    queryFn: () => listEmployees().catch(() => []),
+  });
+  const birthdayMembers = birthdaysQuery.data ?? [];
 
   const dashboardKey = ["dashboard", "admin"] as const;
   const dashboardQuery = useQuery({
@@ -81,8 +94,8 @@ export function AdminDashboardScreen() {
 
   return (
     <AdminShell>
-      <div className="min-h-dvh">
-        <section className="flex flex-col gap-5 bg-slate-50 p-4 pb-24 pt-4 md:p-6 md:pb-24">
+      <div className="min-h-dvh bg-slate-50">
+        <section className="page-wrap flex flex-col gap-5 pb-24 pt-4 md:pt-6">
 
           <header className="animate-fade-up">
             <p className="text-sm font-bold text-[var(--color-muted)]">Recursos Humanos</p>
@@ -96,9 +109,15 @@ export function AdminDashboardScreen() {
             </p>
           </header>
 
+          <BirthdayHero />
+
           <AdminQuickActions />
 
           {stats ? <KpiGrid stats={stats} /> : null}
+
+          {preferences.birthdayVisibility && birthdayMembers.length > 0 ? (
+            <BirthdayStrip members={birthdayMembers} />
+          ) : null}
 
           <section className="rounded-[24px] bg-[var(--card-muted)] p-4" aria-labelledby="admin-urgent-title">
             <div className="mb-4 flex items-center justify-between gap-4">

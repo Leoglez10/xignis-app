@@ -21,14 +21,14 @@ export const DayCell = memo(function DayCell({ absences, day, isInMonth, isSelec
 
   return (
     <button
-      className={`press relative flex min-h-16 flex-col gap-1 rounded-2xl p-2 text-left ring-1 ring-[var(--card-border)] transition ${
+      className={`press relative flex min-h-16 flex-col gap-1 rounded-2xl p-2 text-left ring-1 ring-[var(--card-border)] transition md:min-h-24 md:p-3 lg:min-h-28 ${
         isInMonth ? "bg-[var(--card-bg)]" : "bg-[var(--card-muted)] opacity-50"
       } ${isSelected ? "ring-2 ring-[var(--color-primary)] ring-offset-2" : isToday ? "ring-2 ring-[var(--color-primary)]" : ""}`}
       type="button"
       onClick={() => onClick(day)}
       aria-label={`${day}, ${absences.length} ausencias`}
     >
-      <span className={`text-xs font-bold ${isToday ? "text-[var(--color-primary)]" : "text-[var(--color-text)]"}`}>
+      <span className={`text-xs font-bold md:text-sm ${isToday ? "text-[var(--color-primary)]" : "text-[var(--color-text)]"}`}>
         {dayNum}
       </span>
       {absences.length > 0 ? (

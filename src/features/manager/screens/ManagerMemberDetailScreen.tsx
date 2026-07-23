@@ -124,7 +124,7 @@ export function ManagerMemberDetailScreen() {
 
   return (
     <ManagerShell>
-      <div className="mx-auto w-full max-w-3xl px-4 pb-10 pt-5 md:px-8">
+      <div className="mx-auto w-full max-w-3xl px-4 pb-10 pt-5 md:px-8 lg:max-w-5xl">
         <header className="animate-fade-up mb-6 flex items-center gap-3">
           <button
             aria-label="Regresar a Mi equipo"
@@ -146,6 +146,8 @@ export function ManagerMemberDetailScreen() {
           </div>
         </header>
 
+        <div className="lg:grid lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] lg:items-start lg:gap-6">
+        <div className="lg:sticky lg:top-8">
         <section className="mb-5 grid grid-cols-3 gap-3" aria-label="Resumen">
           <article className="rounded-2xl bg-white p-3 text-center ring-1 ring-slate-200">
             <p className="text-xs font-bold text-[var(--color-muted)]">Aprobadas</p>
@@ -189,6 +191,9 @@ export function ManagerMemberDetailScreen() {
           </section>
         ) : null}
 
+        </div>
+
+        <div>
         {upcoming.length > 0 ? (
           <section className="mb-5" aria-labelledby="upcoming-title">
             <div className="mb-3 flex items-center gap-2">
@@ -244,6 +249,8 @@ export function ManagerMemberDetailScreen() {
             ))}
           </ul>
         </section>
+        </div>
+        </div>
       </div>
     </ManagerShell>
   );

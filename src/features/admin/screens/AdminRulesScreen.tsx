@@ -67,15 +67,15 @@ export function AdminRulesScreen() {
 
   return (
     <AdminShell>
-      <section className="p-4 md:p-6">
+      <section className="page-wrap py-4 md:py-6">
         <header className="animate-fade-up mb-5">
           <p className="text-sm font-bold text-[var(--color-muted)]">Recursos Humanos</p>
           <h2 className="mt-1 text-2xl font-bold md:text-3xl">Reglas</h2>
           <p className="mt-2 text-sm text-[var(--color-muted)]">Políticas operativas del flujo de permisos.</p>
         </header>
 
-        <div className="mx-auto max-w-2xl">
-          <section className="animate-fade-up stagger space-y-3 rounded-[24px] bg-[var(--card-muted)] p-4 ring-1 ring-[var(--card-border)]">
+        <div className="mx-auto max-w-2xl lg:max-w-4xl">
+          <section className="animate-fade-up stagger space-y-3 rounded-[24px] bg-[var(--card-muted)] p-4 ring-1 ring-[var(--card-border)] lg:grid lg:grid-cols-2 lg:items-start lg:gap-3 lg:space-y-0">
             <Toggle
               checked={rules.requireManagerApproval}
               hint="Las solicitudes pasan primero por el jefe directo antes de RH."

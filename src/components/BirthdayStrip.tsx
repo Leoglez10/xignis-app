@@ -1,13 +1,19 @@
-import { initials } from "../../../lib/avatar";
+import { initials } from "../lib/avatar";
 import { Cake } from "lucide-react";
-import type { Profile } from "../../../lib/database.types";
+import type { Profile } from "../lib/database.types";
 
 type BirthdayStripProps = {
   members: Profile[];
 };
 
+// Parse date-only ISO as local midnight so a "YYYY-MM-DD" value doesn't shift a
+// day in negative-UTC timezones.
+function localDate(iso: string): Date {
+  return new Date(`${iso}T00:00:00`);
+}
+
 function upcomingBirthday(birthISO: string, now: Date = new Date()): { date: Date; days: number } | null {
-  const b = new Date(birthISO);
+  const b = localDate(birthISO);
   if (Number.isNaN(b.getTime())) return null;
   const thisYear = new Date(now.getFullYear(), b.getMonth(), b.getDate());
   const next = thisYear < now ? new Date(now.getFullYear() + 1, b.getMonth(), b.getDate()) : thisYear;
@@ -16,7 +22,7 @@ function upcomingBirthday(birthISO: string, now: Date = new Date()): { date: Dat
 }
 
 function upcomingAnniversary(hireISO: string, now: Date = new Date()): { date: Date; years: number; days: number } | null {
-  const h = new Date(hireISO);
+  const h = localDate(hireISO);
   if (Number.isNaN(h.getTime())) return null;
   const yearsBase = now.getFullYear() - h.getFullYear();
   const thisYear = new Date(now.getFullYear(), h.getMonth(), h.getDate());

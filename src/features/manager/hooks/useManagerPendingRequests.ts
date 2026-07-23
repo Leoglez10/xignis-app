@@ -1,8 +1,9 @@
 import { useEffect, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listManagerLeaveRequests,
   listTeamUpcomingAbsences,
+  reviewLeaveRequest,
   type LeaveRequestWithEmployee,
 } from "../../leave-requests/services/leaveRequestService";
 import { listMyTeam } from "../../profiles/services/profileService";
@@ -48,6 +49,14 @@ export function useManagerPendingRequests() {
   const { absences = [], pending = [], team = [] } = dashboardQuery.data ?? {};
   const error = dashboardQuery.error instanceof Error ? dashboardQuery.error.message : null;
 
+  // Inline approve/reject from the dashboard. Invalidates the shared cache so
+  // the count shortcuts, urgent list and coverage all refresh at once.
+  const reviewMutation = useMutation({
+    mutationFn: (input: { id: string; decision: "approved" | "rejected"; comment?: string }) =>
+      reviewLeaveRequest({ ...input, reviewerRole: "manager" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: dashboardKey }),
+  });
+
   return {
     absences: absences as LeaveRequestWithEmployee[],
     error,
@@ -56,6 +65,7 @@ export function useManagerPendingRequests() {
     refetch: async () => {
       await dashboardQuery.refetch();
     },
+    reviewRequest: reviewMutation.mutateAsync,
     team: team as Profile[],
   };
 }

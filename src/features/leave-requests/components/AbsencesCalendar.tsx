@@ -102,7 +102,7 @@ export function AbsencesCalendar() {
 
 return (
       <>
-      <div className="mx-auto w-full max-w-3xl px-4 pb-24 pt-5 md:px-8">
+      <div className="page-wrap pb-24 pt-5">
         <header className="animate-fade-up mb-5 flex items-center gap-3">
           <button
             aria-label="Regresar al panel"
@@ -118,7 +118,7 @@ return (
           </div>
         </header>
 
-        <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="mb-4 flex items-center justify-between gap-3 md:justify-end">
           <button
             aria-label="Mes anterior"
             className="press grid size-11 place-items-center rounded-full bg-white ring-1 ring-slate-200"
@@ -155,21 +155,21 @@ return (
             Cargando ausencias…
           </p>
         ) : (
-          <section className="rounded-2xl bg-white p-3 ring-1 ring-slate-200">
+          <section className="rounded-2xl bg-white p-3 ring-1 ring-slate-200 md:p-4">
             {absences.length === 0 ? (
               <p className="mb-2 flex items-center justify-center gap-2 rounded-xl bg-[var(--card-muted)] p-2 text-xs font-semibold text-[var(--color-muted)]">
                 <CalendarDays aria-hidden="true" className="size-4" />
                 Sin ausencias aprobadas en {monthLabel}.
               </p>
             ) : null}
-            <div className="mb-2 grid grid-cols-7 gap-1">
+            <div className="mb-2 grid grid-cols-7 gap-1 md:gap-2">
               {WEEKDAYS.map((d) => (
                 <div className="text-center text-[11px] font-bold uppercase text-[var(--color-muted)]" key={d}>
                   {d}
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-1 md:gap-2">
               {cells.map((cell) => (
                 <DayCell
                   absences={byDay.get(cell.iso) ?? []}

@@ -25,10 +25,11 @@ function describeMeta(eventType: string, metadata: unknown): string {
     return `${from ? String(from) : "—"} → ${to ? String(to) : "—"}${sep ? ` · ${String(sep)}` : ""}`;
   }
   if (eventType === "department_change") {
-    return `${meta.from ? String(meta.from) : "Sin área"} → ${meta.to ? String(meta.to) : "Sin área"}`;
+    // metadata.from/to are ids; only the resolved names are safe to display
+    return `${meta.from_name ? String(meta.from_name) : "Sin área"} → ${meta.to_name ? String(meta.to_name) : "Sin área"}`;
   }
   if (eventType === "manager_change") {
-    return `${meta.from ? String(meta.from) : "Sin jefe"} → ${meta.to ? String(meta.to) : "Sin jefe"}`;
+    return `${meta.from_name ? String(meta.from_name) : "Sin jefe"} → ${meta.to_name ? String(meta.to_name) : "Sin jefe"}`;
   }
   return "";
 }

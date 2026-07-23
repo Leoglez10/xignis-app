@@ -3,7 +3,6 @@ import { formatDateEs } from "../../../lib/date";
 
 type ProfileSheetProps = {
   defs: ProfileFieldDef[];
-  email?: string | null;
   sheet: ProfileSheetData;
 };
 
@@ -12,7 +11,7 @@ type Section = { rows: Row[]; title: string };
 
 /** Ficha de datos (solo lectura). Muestra campos fijos + campos custom agrupados
  *  por sección. El RPC ya filtró qué campos custom puede ver el caller. */
-export function ProfileSheet({ defs, email, sheet }: ProfileSheetProps) {
+export function ProfileSheet({ defs, sheet }: ProfileSheetProps) {
   const sections: Section[] = [];
 
   const trabajo: Row[] = [
@@ -24,9 +23,9 @@ export function ProfileSheet({ defs, email, sheet }: ProfileSheetProps) {
   sections.push({ rows: trabajo, title: "Trabajo" });
 
   const personal: Row[] = [
+    { label: "Correo", value: sheet.email ?? "—" },
     { label: "Cumpleaños", value: sheet.birth_date ? formatDateEs(sheet.birth_date) : "—" },
   ];
-  if (email !== undefined) personal.push({ label: "Correo", value: email ?? "—" });
   personal.push({
     label: "Vacaciones/año",
     value: sheet.annual_vacation_days != null ? `${sheet.annual_vacation_days} días` : "—",

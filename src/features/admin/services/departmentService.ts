@@ -30,18 +30,21 @@ export async function listActiveDepartments(): Promise<Department[]> {
   return data ?? [];
 }
 
-export async function createDepartment(name: string, description?: string): Promise<Department> {
+export async function createDepartment(name: string, description?: string, color?: string | null): Promise<Department> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("departments")
-    .insert({ name: name.trim(), description: description?.trim() || null })
+    .insert({ name: name.trim(), description: description?.trim() || null, color: color ?? null })
     .select("*")
     .single();
   if (error) throw error;
   return data;
 }
 
-export async function updateDepartment(id: string, patch: { name?: string; description?: string | null }): Promise<void> {
+export async function updateDepartment(
+  id: string,
+  patch: { name?: string; description?: string | null; color?: string | null },
+): Promise<void> {
   const supabase = getSupabaseClient();
   const { error } = await supabase.from("departments").update(patch).eq("id", id);
   if (error) throw error;

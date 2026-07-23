@@ -78,8 +78,8 @@ export function AdminRequestsScreen() {
 
   return (
     <AdminShell>
-      <div className="min-h-dvh">
-        <section className="flex flex-col gap-5 bg-slate-50 p-4 pb-24 pt-4 md:p-6 md:pb-24">
+      <div className="min-h-dvh bg-slate-50">
+        <section className="page-wrap flex flex-col gap-5 pb-24 pt-4 md:pt-6">
 
           <header className="animate-fade-up">
             <p className="text-sm font-bold text-[var(--color-muted)]">Recursos Humanos</p>
@@ -146,15 +146,15 @@ export function AdminRequestsScreen() {
             </h2>
 
             {isLoading ? (
-              <div className="space-y-3">
+              <div className="grid gap-3 xl:grid-cols-2">
                 {[0, 1, 2].map((i) => (
                   <div className="h-20 rounded-[20px] bg-[var(--skeleton-base)] animate-pulse" key={i} />
                 ))}
               </div>
             ) : (
-              <ul className="stagger space-y-3">
+              <ul className="stagger grid gap-3 xl:grid-cols-2">
                 {filtered.length === 0 ? (
-                  <li className="flex flex-col items-center gap-2 rounded-[20px] bg-white p-10 text-center ring-1 ring-slate-200">
+                  <li className="col-span-full flex flex-col items-center gap-2 rounded-[20px] bg-white p-10 text-center ring-1 ring-slate-200">
                     <CheckCircle2 aria-hidden="true" className="size-10 text-[var(--color-muted)]" />
                     <p className="text-sm font-semibold text-[var(--color-muted)]">
                       No hay solicitudes para este filtro.

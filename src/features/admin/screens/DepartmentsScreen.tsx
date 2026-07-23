@@ -1,11 +1,12 @@
-import { Archive, ArchiveRestore, Building2, Pencil, Plus, Users } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Archive, ArchiveRestore, Building2, ChevronDown, Pencil, Plus, Users } from "lucide-react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/Button";
 import { BottomSheet } from "../../../components/ui/BottomSheet";
 import { TextInput } from "../../../components/ui/TextInput";
 import { Avatar } from "../../../components/ui/Avatar";
 import { AdminShell } from "../components/adminNav";
+import { AREA_PALETTE, areaColor } from "../areaColor";
 import {
   createDepartment,
   listDepartments,
@@ -20,6 +21,77 @@ import type { Profile } from "../../../lib/database.types";
 
 type Member = Pick<Profile, "id" | "full_name" | "job_title" | "avatar_url">;
 
+/** Icon-only action with a tooltip that slides in on hover or keyboard focus. */
+function IconAction({
+  disabled,
+  label,
+  onClick,
+  children,
+}: {
+  disabled?: boolean;
+  label: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <span className="group relative inline-flex">
+      <button
+        aria-label={label}
+        className="press grid size-9 place-items-center rounded-full bg-slate-100 text-slate-700 ring-1 ring-slate-200 transition-colors hover:bg-slate-900 hover:text-white disabled:opacity-50"
+        disabled={disabled}
+        type="button"
+        onClick={onClick}
+      >
+        {children}
+      </button>
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-1 left-1/2 z-20 origin-bottom -translate-x-1/2 scale-90 whitespace-nowrap rounded-lg bg-slate-900 px-2 py-1 text-[11px] font-bold text-white opacity-0 shadow-lg transition-all duration-200 group-hover:-translate-y-full group-hover:scale-100 group-hover:opacity-100 group-focus-within:-translate-y-full group-focus-within:scale-100 group-focus-within:opacity-100"
+      >
+        {label}
+      </span>
+    </span>
+  );
+}
+
+function ColorPicker({ value, onChange }: { value: string | null; onChange: (color: string | null) => void }) {
+  return (
+    <div>
+      <span className="text-sm font-bold">Color del área</span>
+      <div aria-label="Color del área" className="mt-2 flex flex-wrap gap-2" role="radiogroup">
+        <button
+          aria-checked={value === null}
+          className={`press grid size-9 place-items-center rounded-full bg-white text-[10px] font-bold text-[var(--color-muted)] ring-1 transition ${
+            value === null ? "ring-2 ring-slate-900" : "ring-slate-200"
+          }`}
+          role="radio"
+          title="Automático"
+          type="button"
+          onClick={() => onChange(null)}
+        >
+          Auto
+        </button>
+        {AREA_PALETTE.map((tone) => (
+          <button
+            aria-checked={value === tone.key}
+            aria-label={tone.label}
+            className={`press grid size-9 place-items-center rounded-full transition ${
+              value === tone.key ? "ring-2 ring-slate-900 ring-offset-2" : "ring-1 ring-slate-200"
+            }`}
+            key={tone.key}
+            role="radio"
+            title={tone.label}
+            type="button"
+            onClick={() => onChange(tone.key)}
+          >
+            <span aria-hidden="true" className={`size-5 rounded-full ${tone.bar}`} />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function DepartmentSheet({
   department,
   isOpen,
@@ -33,6 +105,7 @@ function DepartmentSheet({
 }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [color, setColor] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,6 +113,7 @@ function DepartmentSheet({
     if (isOpen) {
       setName(department?.name ?? "");
       setDescription(department?.description ?? "");
+      setColor(department?.color ?? null);
       setError(null);
     }
   }, [isOpen, department]);
@@ -53,9 +127,9 @@ function DepartmentSheet({
       setSaving(true);
       setError(null);
       if (department) {
-        await updateDepartment(department.id, { name: name.trim(), description: description.trim() || null });
+        await updateDepartment(department.id, { name: name.trim(), description: description.trim() || null, color });
       } else {
-        await createDepartment(name, description);
+        await createDepartment(name, description, color);
       }
       void successHaptic();
       onSaved();
@@ -84,6 +158,7 @@ function DepartmentSheet({
             onChange={(e) => setDescription(e.target.value)}
           />
         </label>
+        <ColorPicker value={color} onChange={setColor} />
         {error ? (
           <p className="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700" role="alert">
             {error}
@@ -97,41 +172,47 @@ function DepartmentSheet({
   );
 }
 
-function MembersSheet({
-  department,
-  onClose,
-}: {
-  department: DepartmentWithCount | null;
-  onClose: () => void;
-}) {
-  const membersQuery = useQuery<Member[]>({ enabled: Boolean(department), queryKey: ["department-members", department?.id], queryFn: () => listDepartmentMembers(department!.id) });
+/** Members list that expands under the area card. Fetches only once opened. */
+function MembersAccordion({ department, isOpen }: { department: DepartmentWithCount; isOpen: boolean }) {
+  const membersQuery = useQuery<Member[]>({
+    enabled: isOpen,
+    queryKey: ["department-members", department.id],
+    queryFn: () => listDepartmentMembers(department.id),
+  });
   const members = membersQuery.data ?? [];
-  const isLoading = membersQuery.isLoading;
 
   return (
-    <BottomSheet isOpen={department !== null} title={department ? `Miembros de ${department.name}` : "Miembros"} onClose={onClose}>
-      {isLoading ? (
-        <div className="space-y-3 pb-2">
-          {[0, 1].map((i) => (
-            <div className="h-14 rounded-2xl bg-[var(--skeleton-base)] animate-pulse" key={i} />
-          ))}
-        </div>
-      ) : members.length === 0 ? (
-        <p className="pb-4 text-sm font-semibold text-[var(--color-muted)]">Sin miembros asignados todavía.</p>
-      ) : (
-        <ul className="space-y-2 pb-2">
-          {members.map((m) => (
-            <li className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-200" key={m.id}>
-              <Avatar className="size-10" name={m.full_name} src={m.avatar_url} />
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold">{m.full_name}</p>
-                {m.job_title ? <p className="truncate text-xs text-[var(--color-muted)]">{m.job_title}</p> : null}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </BottomSheet>
+    <div
+      className={`grid transition-all duration-300 ease-out ${
+        isOpen ? "mt-3 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+      }`}
+    >
+      <div className="overflow-hidden">
+        {membersQuery.isLoading ? (
+          <div className="space-y-2">
+            {[0, 1].map((i) => (
+              <div className="h-12 rounded-2xl bg-[var(--skeleton-base)] animate-pulse" key={i} />
+            ))}
+          </div>
+        ) : members.length === 0 ? (
+          <p className="rounded-2xl bg-slate-50 p-3 text-xs font-semibold text-[var(--color-muted)]">
+            Sin miembros asignados todavía.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {members.map((m) => (
+              <li className="flex items-center gap-3 rounded-2xl bg-slate-50 p-2.5 ring-1 ring-slate-200" key={m.id}>
+                <Avatar name={m.full_name} size="size-9" src={m.avatar_url} />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold">{m.full_name}</p>
+                  {m.job_title ? <p className="truncate text-xs text-[var(--color-muted)]">{m.job_title}</p> : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -141,7 +222,7 @@ export function DepartmentsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<DepartmentWithCount | null>(null);
-  const [viewingMembers, setViewingMembers] = useState<DepartmentWithCount | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [workingId, setWorkingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -175,7 +256,7 @@ export function DepartmentsScreen() {
 
   return (
     <AdminShell>
-      <section className="p-4 md:p-6">
+      <section className="page-wrap pb-24 pt-4 md:pt-6">
         <header className="animate-fade-up mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-sm font-bold text-[var(--color-muted)]">Recursos Humanos</p>
@@ -213,63 +294,75 @@ export function DepartmentsScreen() {
             </p>
           </div>
         ) : (
-          <ul className="stagger grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {departments.map((dept) => (
-              <li
-                className={`rounded-[20px] bg-white p-4 ring-1 ring-slate-200 ${dept.archived_at ? "opacity-60" : ""}`}
-                key={dept.id}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="truncate text-base font-bold">{dept.name}</h2>
-                      {dept.archived_at ? (
-                        <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">
-                          Archivada
-                        </span>
+          <ul className="stagger grid items-start gap-3 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+            {departments.map((dept) => {
+              const tone = areaColor(dept.id, dept.color);
+              const isExpanded = expandedId === dept.id;
+              return (
+                <li
+                  className={`relative overflow-hidden rounded-[20px] bg-white p-4 pl-5 ring-1 ring-slate-200 ${
+                    dept.archived_at ? "opacity-60" : ""
+                  }`}
+                  key={dept.id}
+                >
+                  <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-1.5 ${tone.bar}`} />
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="truncate text-base font-bold">{dept.name}</h2>
+                        {dept.archived_at ? (
+                          <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">
+                            Archivada
+                          </span>
+                        ) : null}
+                      </div>
+                      {dept.description ? (
+                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-[var(--color-muted)]">
+                          {dept.description}
+                        </p>
                       ) : null}
                     </div>
-                    {dept.description ? (
-                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-[var(--color-muted)]">{dept.description}</p>
-                    ) : null}
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <IconAction
+                        label="Editar"
+                        onClick={() => {
+                          setEditing(dept);
+                          setEditorOpen(true);
+                        }}
+                      >
+                        <Pencil aria-hidden="true" className="size-4" />
+                      </IconAction>
+                      <IconAction
+                        disabled={workingId === dept.id}
+                        label={dept.archived_at ? "Restaurar" : "Archivar"}
+                        onClick={() => void toggleArchived(dept)}
+                      >
+                        {dept.archived_at ? (
+                          <ArchiveRestore aria-hidden="true" className="size-4" />
+                        ) : (
+                          <Archive aria-hidden="true" className="size-4" />
+                        )}
+                      </IconAction>
+                    </div>
                   </div>
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
+
                   <button
-                    className="press inline-flex min-h-9 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-bold text-slate-700 ring-1 ring-slate-200"
+                    aria-expanded={isExpanded}
+                    className="press mt-3 flex min-h-10 w-full items-center gap-2 rounded-full bg-slate-100 px-3 text-xs font-bold text-slate-700 ring-1 ring-slate-200"
                     type="button"
-                    onClick={() => setViewingMembers(dept)}
+                    onClick={() => setExpandedId(isExpanded ? null : dept.id)}
                   >
                     <Users aria-hidden="true" className="size-3.5" />
                     {dept.memberCount} {dept.memberCount === 1 ? "miembro" : "miembros"}
+                    <ChevronDown
+                      aria-hidden="true"
+                      className={`ml-auto size-4 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
+                    />
                   </button>
-                  <button
-                    className="press inline-flex min-h-9 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-bold text-slate-700 ring-1 ring-slate-200"
-                    type="button"
-                    onClick={() => {
-                      setEditing(dept);
-                      setEditorOpen(true);
-                    }}
-                  >
-                    <Pencil aria-hidden="true" className="size-3.5" />
-                    Editar
-                  </button>
-                  <button
-                    className="press inline-flex min-h-9 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-bold text-slate-700 ring-1 ring-slate-200 disabled:opacity-50"
-                    disabled={workingId === dept.id}
-                    type="button"
-                    onClick={() => void toggleArchived(dept)}
-                  >
-                    {dept.archived_at ? (
-                      <ArchiveRestore aria-hidden="true" className="size-3.5" />
-                    ) : (
-                      <Archive aria-hidden="true" className="size-3.5" />
-                    )}
-                    {dept.archived_at ? "Restaurar" : "Archivar"}
-                  </button>
-                </div>
-              </li>
-            ))}
+                  <MembersAccordion department={dept} isOpen={isExpanded} />
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
@@ -280,7 +373,6 @@ export function DepartmentsScreen() {
         onClose={() => setEditorOpen(false)}
         onSaved={() => void load()}
       />
-      <MembersSheet department={viewingMembers} onClose={() => setViewingMembers(null)} />
     </AdminShell>
   );
 }

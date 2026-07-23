@@ -53,7 +53,7 @@ export function ManagerTeamScreen() {
 
   return (
     <ManagerShell>
-      <div className="mx-auto w-full max-w-3xl px-4 pb-24 pt-5 md:px-8">
+      <div className="page-wrap pb-24 pt-5">
         <header className="animate-fade-up mb-5 flex items-center gap-3">
           <button
             aria-label="Regresar al panel"
@@ -69,8 +69,8 @@ export function ManagerTeamScreen() {
           </div>
         </header>
 
-        <div className="mb-4 space-y-2">
-          <label className="flex items-center gap-2 rounded-full bg-white px-4 py-2.5 ring-1 ring-slate-200">
+        <div className="mb-4 space-y-2 md:flex md:items-center md:gap-3 md:space-y-0">
+          <label className="flex items-center gap-2 rounded-full bg-white px-4 py-2.5 ring-1 ring-slate-200 md:min-w-0 md:flex-1">
             <Search aria-hidden="true" className="size-4 shrink-0 text-[var(--color-muted)]" />
             <input
               className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:text-[var(--color-muted)]"
@@ -80,7 +80,7 @@ export function ManagerTeamScreen() {
               onChange={(e) => setQuery(e.target.value)}
             />
           </label>
-          <div className="flex gap-2">
+          <div className="flex gap-2 md:shrink-0 md:basis-auto">
             <select aria-label="Departamento" className={selectCls} value={dept} onChange={(e) => setDept(e.target.value)}>
               <option value="all">Depto: todos</option>
               {departments.map((d) => (
@@ -113,9 +113,9 @@ export function ManagerTeamScreen() {
         {isLoading ? (
           <p className="text-sm font-semibold text-[var(--color-muted)]">Cargando equipo…</p>
         ) : (
-          <ul className="stagger space-y-3">
+          <ul className="stagger grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {visible.length === 0 ? (
-              <li className="rounded-2xl bg-white p-6 text-center text-sm font-semibold text-[var(--color-muted)] ring-1 ring-slate-200">
+              <li className="col-span-full rounded-2xl bg-white p-6 text-center text-sm font-semibold text-[var(--color-muted)] ring-1 ring-slate-200">
                 {team.length === 0 ? "Aún no tienes empleados asignados." : "Sin resultados para tu búsqueda."}
               </li>
             ) : null}
@@ -124,7 +124,7 @@ export function ManagerTeamScreen() {
               return (
                 <li key={member.id}>
                   <button
-                    className="press flex w-full items-center gap-4 rounded-[20px] bg-white p-4 text-left shadow-sm ring-1 ring-slate-200"
+                    className="press flex h-full w-full items-center gap-4 rounded-[20px] bg-white p-4 text-left shadow-sm ring-1 ring-slate-200"
                     type="button"
                     onClick={() => navigate(`/manager/member/${member.id}`)}
                   >

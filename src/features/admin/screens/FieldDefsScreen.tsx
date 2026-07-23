@@ -71,7 +71,7 @@ export function FieldDefsScreen() {
 
   return (
     <AdminShell>
-      <div className="mx-auto w-full max-w-3xl px-4 pb-10 pt-5 md:px-8">
+      <div className="page-wrap pb-10 pt-5">
         <header className="animate-fade-up mb-6 flex items-center gap-3">
           <button
             aria-label="Regresar"
@@ -101,9 +101,9 @@ export function FieldDefsScreen() {
         {loading ? (
           <p className="text-sm font-semibold text-[var(--color-muted)]">Cargando…</p>
         ) : (
-          <ul className="stagger space-y-2">
+          <ul className="stagger grid gap-2 lg:grid-cols-2 2xl:grid-cols-3">
             {defs.length === 0 ? (
-              <li className="rounded-2xl bg-white p-6 text-center text-sm font-semibold text-[var(--color-muted)] ring-1 ring-slate-200">
+              <li className="col-span-full rounded-2xl bg-white p-6 text-center text-sm font-semibold text-[var(--color-muted)] ring-1 ring-slate-200">
                 Todavía no hay campos. Creá el primero con el botón +.
               </li>
             ) : null}

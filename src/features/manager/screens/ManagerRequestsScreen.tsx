@@ -50,7 +50,7 @@ export function ManagerRequestsScreen() {
   return (
     <ManagerShell>
       <RefreshBoundary onRefresh={refetch}>
-        <section className="grid min-h-dvh gap-5 p-4 pb-24 pt-4 md:p-6 md:pb-24">
+        <section className="page-wrap grid min-h-dvh gap-5 pb-24 pt-4 md:pt-6">
           <div className="min-w-0 bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] rounded-2xl md:rounded-[20px] md:p-6">
             <header className="animate-fade-up mb-6">
               <p className="text-sm font-bold text-[var(--color-muted)]">Jefe</p>
@@ -91,9 +91,9 @@ export function ManagerRequestsScreen() {
                     </span>
                   </div>
 
-                  <ul className="stagger space-y-3">
+                  <ul className="stagger grid gap-3 xl:grid-cols-2">
                     {pending.length === 0 ? (
-                      <li className="flex flex-col items-center gap-2 rounded-[20px] bg-[var(--card-bg)] p-8 text-center ring-1 ring-[var(--card-border)]">
+                      <li className="col-span-full flex flex-col items-center gap-2 rounded-[20px] bg-[var(--card-bg)] p-8 text-center ring-1 ring-[var(--card-border)]">
                         <CheckCircle2 aria-hidden="true" className="size-8 text-emerald-500" />
                         <p className="text-sm font-semibold text-[var(--color-muted)]">
                           No hay solicitudes pendientes para tu equipo.

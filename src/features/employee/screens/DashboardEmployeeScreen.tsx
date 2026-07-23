@@ -24,6 +24,9 @@ import { useAuth } from "../../session/AuthContext";
 import { isInFlight } from "../../leave-requests/services/leaveRequestProgressService";
 import { InProgressRequestCard } from "../../leave-requests/components/InProgressRequestCard";
 import { listMyPeers } from "../../profiles/services/profileService";
+import { BirthdayHero } from "../../../components/BirthdayHero";
+import { BirthdayStrip } from "../../../components/BirthdayStrip";
+import { usePreferences } from "../../settings/PreferencesContext";
 import { statusTone } from "../../leave-requests/config";
 import { overlapsToday, todayIso } from "../../../lib/date";
 import { ActivePermitBanner } from "../components/ActivePermitBanner";
@@ -36,6 +39,7 @@ import { useLeaveRequests } from "../../leave-requests/hooks/useLeaveRequests";
 export function DashboardEmployeeScreen() {
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { preferences } = usePreferences();
   const [today] = useState(todayIso);
   const requestsQuery = useLeaveRequests("mine", profile?.id);
   const balanceQuery = useQuery<VacationBalance | null>({ queryKey: ["vacation-balance", profile?.id], queryFn: () => getMyVacationBalance().catch(() => null) });
@@ -91,6 +95,7 @@ export function DashboardEmployeeScreen() {
   return (
     <main className="mobile-screen" id="main-content" tabIndex={-1}>
       <section className="flex min-h-dvh flex-col px-5 pb-28 pt-6 lg:px-8">
+        <BirthdayHero />
         <button
           aria-label="Crear nuevo permiso"
           className="group press animate-fade-up relative overflow-hidden rounded-[24px] bg-slate-950 p-5 text-left text-white shadow-xl shadow-slate-200 lg:p-7"
@@ -186,6 +191,12 @@ export function DashboardEmployeeScreen() {
 
             {peers.length > 0 ? (
               <PeersStrip absences={peerAbsences} peers={peers} />
+            ) : null}
+
+            {preferences.birthdayVisibility && peers.length > 0 ? (
+              <div className="mt-5">
+                <BirthdayStrip members={peers} />
+              </div>
             ) : null}
 
             {error ? (

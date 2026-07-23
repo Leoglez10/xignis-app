@@ -1,4 +1,4 @@
-import { Search, Grid2x2, Check } from "lucide-react";
+import { Search, Grid2x2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { NotificationBell } from "../features/notifications/NotificationBell";
@@ -45,7 +45,7 @@ export function TopBar() {
       }`}
     >
       {/* Fila 1: avatar · título · búsqueda · campana · módulos */}
-      <div className="flex h-14 items-center gap-3 px-4">
+      <div className="page-wrap flex h-14 items-center gap-3">
         <button
           aria-label="Mi perfil"
           className="press grid size-10 shrink-0 place-items-center rounded-full bg-[var(--color-surface)] text-sm font-bold text-[var(--color-text)]"
@@ -77,13 +77,7 @@ export function TopBar() {
       </div>
 
       {/* Fila 2: wordmark de marca */}
-      <div className="flex items-center gap-2 px-4 pb-2">
-        <span
-          className="grid size-7 place-items-center rounded-lg bg-[var(--color-primary)]"
-          aria-hidden="true"
-        >
-          <Check className="size-4 text-white" strokeWidth={3} />
-        </span>
+      <div className="page-wrap flex items-center gap-2 pb-2">
         <span
           className="text-lg font-bold tracking-tight text-[var(--color-text)]"
           style={{ fontFamily: "var(--font-display)" }}
@@ -94,7 +88,7 @@ export function TopBar() {
 
       {/* Fila 3: tabs horizontales (mismo diseño en mobile y desktop, estilo iOS) */}
       {tabs.length > 0 ? (
-        <nav aria-label="Secciones" className="flex gap-5 overflow-x-auto px-4">
+        <nav aria-label="Secciones" className="page-wrap flex gap-5 overflow-x-auto">
           {tabs.map(({ to, label, end }) => (
             <NavLink
               key={to}

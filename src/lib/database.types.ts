@@ -41,6 +41,8 @@ export type Department = {
   id: string;
   name: string;
   description: string | null;
+  /** Palette key for the area accent color; null derives it from the id. */
+  color: string | null;
   archived_at: string | null;
   created_at: string;
   updated_at: string;
@@ -140,6 +142,7 @@ export type ProfileSheet = {
   avatar_url: string | null;
   job_title: string | null;
   role: UserRole;
+  email: string | null;
   manager_id: string | null;
   manager_name: string | null;
   department_id: string | null;
@@ -234,9 +237,10 @@ export type Database = {
         Insert: {
           name: string;
           description?: string | null;
+          color?: string | null;
           archived_at?: string | null;
         };
-        Update: Partial<Pick<Department, "name" | "description" | "archived_at">>;
+        Update: Partial<Pick<Department, "name" | "description" | "color" | "archived_at">>;
         Relationships: [];
       };
       employment_events: {

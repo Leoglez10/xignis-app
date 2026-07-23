@@ -84,7 +84,7 @@ export function EmployeeDetailScreen() {
 
   return (
     <AdminShell>
-      <div className="mx-auto w-full max-w-3xl px-4 pb-10 pt-5 md:px-8">
+      <div className="mx-auto w-full max-w-3xl px-4 pb-10 pt-5 md:px-8 lg:max-w-5xl">
         <header className="animate-fade-up mb-6 flex items-center gap-3">
           <button
             aria-label="Regresar a Empleados"
@@ -124,12 +124,19 @@ export function EmployeeDetailScreen() {
           </p>
         ) : null}
 
-        <div className="space-y-4">
+        <div className="lg:grid lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] lg:items-start lg:gap-6">
+          <div className="space-y-4 lg:sticky lg:top-8">
+            {sheet ? <ProfileSheet defs={defs} sheet={sheet} /> : null}
+            {employee ? (
+              <Button className="w-full" type="button" onClick={() => setEditing(true)}>
+                Editar datos base
+              </Button>
+            ) : null}
+          </div>
+
+          <div className="mt-4 space-y-4 lg:mt-0">
           {sheet ? (
-            <>
-              <ProfileSheet defs={defs} sheet={sheet} />
-              <CustomFieldsEditor defs={defs} targetId={sheet.id} values={sheet.custom} onSaved={handleSaved} />
-            </>
+            <CustomFieldsEditor defs={defs} targetId={sheet.id} values={sheet.custom} onSaved={handleSaved} />
           ) : null}
 
           <section
@@ -198,12 +205,7 @@ export function EmployeeDetailScreen() {
               <EmploymentTimeline events={employmentEventsQuery.data ?? []} />
             )}
           </section>
-
-          {employee ? (
-            <Button className="w-full" type="button" onClick={() => setEditing(true)}>
-              Editar datos base
-            </Button>
-          ) : null}
+          </div>
         </div>
       </div>
 

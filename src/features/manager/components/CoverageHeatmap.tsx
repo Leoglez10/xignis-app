@@ -1,7 +1,10 @@
+import { Users } from "lucide-react";
+import { useMemo, useState } from "react";
 import { initials } from "../../../lib/avatar";
 import { eachDayIso, todayIso } from "../../../lib/date";
+import { leaveTypeConfig } from "../../leave-requests/config";
 import type { LeaveRequestWithEmployee } from "../../leave-requests/services/leaveRequestService";
-import type { Profile } from "../../../lib/database.types";
+import type { LeaveType, Profile } from "../../../lib/database.types";
 
 type CoverageHeatmapProps = {
   members: Profile[];
@@ -9,128 +12,186 @@ type CoverageHeatmapProps = {
   days?: number;
 };
 
+type AbsentEntry = { id: string; name: string; leaveType: LeaveType };
+type DayInfo = {
+  iso: string;
+  weekday: string;
+  dayNum: number;
+  present: number;
+  absent: AbsentEntry[];
+  ratio: number;
+};
+
 const WEEKDAY = ["L", "M", "X", "J", "V", "S", "D"];
 
+// Present-ratio → visual tone. Green = fully covered, rose = understaffed.
+function tone(ratio: number) {
+  if (ratio >= 1) return { bar: "bg-emerald-400", chip: "bg-emerald-100 text-emerald-800", label: "Completo" };
+  if (ratio >= 0.8) return { bar: "bg-lime-400", chip: "bg-lime-100 text-lime-800", label: "Buena" };
+  if (ratio >= 0.6) return { bar: "bg-amber-400", chip: "bg-amber-100 text-amber-800", label: "Ajustada" };
+  if (ratio >= 0.4) return { bar: "bg-orange-400", chip: "bg-orange-100 text-orange-900", label: "Baja" };
+  return { bar: "bg-rose-400", chip: "bg-rose-100 text-rose-800", label: "Crítica" };
+}
+
 export function CoverageHeatmap({ members, absences, days = 14 }: CoverageHeatmapProps) {
-  if (members.length === 0) return null;
   const start = todayIso();
-  const startDate = new Date(`${start}T00:00:00`);
-  const dateList: string[] = [];
-  for (let i = 0; i < days; i += 1) {
-    const d = new Date(startDate);
-    d.setDate(d.getDate() + i);
-    dateList.push(d.toISOString().slice(0, 10));
-  }
 
-  const coverageByDate = new Map<string, number>();
-  for (const a of absences) {
-    for (const iso of eachDayIso(a.start_date, a.end_date)) {
-      if (iso < start) continue;
-      coverageByDate.set(iso, (coverageByDate.get(iso) ?? 0) + 1);
+  const dayInfos = useMemo<DayInfo[]>(() => {
+    const nameById = new Map(members.map((m) => [m.id, m.full_name]));
+    const startDate = new Date(`${start}T00:00:00`);
+
+    // date → list of absent members that day
+    const absentByDate = new Map<string, AbsentEntry[]>();
+    for (const a of absences) {
+      if (!a.employee_id) continue;
+      const name = nameById.get(a.employee_id) ?? a.employee?.full_name ?? "—";
+      for (const iso of eachDayIso(a.start_date, a.end_date)) {
+        if (iso < start) continue;
+        const list = absentByDate.get(iso) ?? [];
+        if (!list.some((e) => e.id === a.employee_id)) {
+          list.push({ id: a.employee_id, name, leaveType: a.leave_type });
+        }
+        absentByDate.set(iso, list);
+      }
     }
+
+    const total = members.length || 1;
+    return Array.from({ length: days }, (_, i) => {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + i);
+      const iso = d.toISOString().slice(0, 10);
+      const absent = absentByDate.get(iso) ?? [];
+      const present = Math.max(0, members.length - absent.length);
+      return {
+        iso,
+        weekday: WEEKDAY[(d.getDay() + 6) % 7],
+        dayNum: d.getDate(),
+        present,
+        absent,
+        ratio: present / total,
+      };
+    });
+  }, [members, absences, days, start]);
+
+  // Default focus = the most understaffed upcoming day (that's the one worth acting on).
+  const worst = useMemo(
+    () => dayInfos.reduce((w, d) => (d.ratio < w.ratio ? d : w), dayInfos[0]),
+    [dayInfos],
+  );
+  const [selectedIso, setSelectedIso] = useState<string | null>(null);
+  const selected = dayInfos.find((d) => d.iso === selectedIso) ?? worst;
+
+  if (members.length === 0) {
+    return (
+      <section
+        aria-label="Cobertura del equipo"
+        className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] rounded-2xl md:rounded-[20px] md:p-6"
+      >
+        <h2 className="font-bold">Cobertura del equipo</h2>
+        <div className="mt-4 flex flex-col items-center gap-2 rounded-2xl bg-[var(--card-muted)] p-8 text-center">
+          <Users aria-hidden="true" className="size-8 text-[var(--color-muted)]" />
+          <p className="text-sm font-semibold text-[var(--color-muted)]">
+            Aún no tienes equipo asignado.
+          </p>
+        </div>
+      </section>
+    );
   }
 
-  function tone(count: number, total: number) {
-    if (count === 0) return "bg-emerald-100 text-emerald-800";
-    const ratio = count / total;
-    if (ratio < 0.2) return "bg-emerald-200 text-emerald-900";
-    if (ratio < 0.5) return "bg-amber-200 text-amber-900";
-    if (ratio < 0.8) return "bg-orange-300 text-orange-900";
-    return "bg-rose-400 text-white";
-  }
+  const total = members.length;
+  const anyAbsence = dayInfos.some((d) => d.absent.length > 0);
+  const worstTone = tone(worst.ratio);
 
   return (
     <section
-      aria-label="Mapa de cobertura proxima"
+      aria-label="Cobertura del equipo"
       className="bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] rounded-2xl md:rounded-[20px] md:p-6"
     >
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="font-bold">
-          Cobertura <span className="md:hidden">7 días</span><span className="hidden md:inline">{days} días</span>
-        </h2>
-        <p className="text-xs text-[var(--color-muted)]">
-          Verde = disponible · Rojo = alta ausencia
-        </p>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full table-fixed text-[11px]">
-          <thead>
-            <tr>
-              <th className="w-20 px-1 py-1 text-left font-bold text-[var(--color-muted)]">Persona</th>
-              {dateList.map((iso, i) => {
-                const d = new Date(`${iso}T00:00:00`);
-                return (
-                  <th
-                    className={`px-1 py-1 text-center font-bold text-[var(--color-muted)] ${i >= 7 ? "hidden md:table-cell" : ""}`}
-                    key={iso}
-                    title={iso}
-                  >
-                    <div className="flex flex-col items-center">
-                      <span>{WEEKDAY[(d.getDay() + 6) % 7]}</span>
-                      <span className="text-[9px]">{d.getDate()}</span>
-                    </div>
-                  </th>
-                );
-              })}
-            </tr>
-          </thead>
-          <tbody>
-            {members.map((m) => {
-              const memberAbsences = absences.filter((a) => a.employee_id === m.id);
-              const set = new Set<string>();
-              for (const a of memberAbsences) {
-                for (const iso of eachDayIso(a.start_date, a.end_date)) {
-                  if (iso >= start) set.add(iso);
-                }
-              }
-              return (
-                <tr key={m.id}>
-                  <td className="px-1 py-1 text-left">
-                    <div className="flex items-center gap-2">
-                      <span className="grid size-6 place-items-center rounded-full bg-emerald-100 text-[9px] font-bold text-emerald-700">
-                        {initials(m.full_name)}
-                      </span>
-                      <span className="truncate text-xs font-bold">{m.full_name.split(" ")[0]}</span>
-                    </div>
-                  </td>
-                  {dateList.map((iso, i) => {
-                    const isAbsent = set.has(iso);
-                    return (
-                      <td className={`px-0.5 py-0.5 ${i >= 7 ? "hidden md:table-cell" : ""}`} key={iso}>
-                        <span
-                          aria-label={isAbsent ? `Ausente el ${iso}` : `Disponible el ${iso}`}
-                          className={`block size-full min-h-5 rounded-md text-center text-[9px] font-bold leading-5 ${
-                            isAbsent ? "bg-rose-300 text-rose-900" : "bg-emerald-50 text-emerald-700"
-                          }`}
-                        >
-                          {isAbsent ? "✕" : "•"}
-                        </span>
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        <div className="mt-3 flex items-center gap-2 text-[10px] text-[var(--color-muted)]">
-          <span>Cobertura global por día:</span>
-          <div className="flex flex-wrap gap-1">
-            {dateList.map((iso) => {
-              const count = coverageByDate.get(iso) ?? 0;
-              return (
-                <span
-                  aria-label={`${iso}: ${count} ausencias`}
-                  className={`grid size-5 place-items-center rounded font-bold ${tone(count, members.length)}`}
-                  key={iso}
-                  title={`${iso} · ${count} ausencias`}
-                >
-                  {count}
-                </span>
-              );
-            })}
-          </div>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h2 className="font-bold">Cobertura del equipo</h2>
+          <p className="mt-0.5 text-xs text-[var(--color-muted)]">
+            Próximos <span className="md:hidden">7</span><span className="hidden md:inline">{days}</span> días · {total} personas
+          </p>
         </div>
+        {anyAbsence ? (
+          <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${worstTone.chip}`}>
+            Día más ajustado: {worst.present}/{total}
+          </span>
+        ) : (
+          <span className="shrink-0 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
+            Equipo completo ✓
+          </span>
+        )}
+      </div>
+
+      {/* Interactive day strip — tap a day to see who's out. */}
+      <div className="grid grid-cols-7 gap-1.5 md:grid-cols-14">
+        {dayInfos.map((d, i) => {
+          const t = tone(d.ratio);
+          const isSel = d.iso === selected.iso;
+          const isToday = d.iso === start;
+          return (
+            <button
+              aria-label={`${d.weekday} ${d.dayNum}: ${d.present} de ${total} disponibles`}
+              aria-pressed={isSel}
+              className={`press flex flex-col items-center gap-1 rounded-xl py-1.5 transition ${
+                i >= 7 ? "hidden md:flex" : ""
+              } ${isSel ? "bg-[var(--card-muted)] ring-2 ring-emerald-500" : "hover:bg-[var(--card-muted)]"}`}
+              key={d.iso}
+              onClick={() => setSelectedIso(d.iso)}
+              type="button"
+            >
+              <span className={`text-[10px] font-bold ${isToday ? "text-emerald-600" : "text-[var(--color-muted)]"}`}>
+                {d.weekday}
+              </span>
+              <span className="text-xs font-bold">{d.dayNum}</span>
+              <span className="flex h-10 w-2.5 items-end overflow-hidden rounded-full bg-[var(--card-muted)]">
+                <span
+                  className={`w-full rounded-full ${t.bar}`}
+                  style={{ height: `${Math.max(8, d.ratio * 100)}%` }}
+                />
+              </span>
+              <span className={`min-h-4 text-[10px] font-bold ${d.absent.length ? "text-rose-500" : "text-transparent"}`}>
+                {d.absent.length ? `−${d.absent.length}` : "·"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Detail for the selected day. */}
+      <div className="mt-4 border-t border-[var(--card-border)] pt-4">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="text-sm font-bold capitalize">
+            {selected.weekday} {selected.dayNum}
+          </p>
+          <span className="text-xs font-bold text-[var(--color-muted)]">
+            {selected.present} de {total} disponibles
+          </span>
+        </div>
+        {selected.absent.length === 0 ? (
+          <p className="rounded-xl bg-emerald-50 px-3 py-3 text-center text-sm font-semibold text-emerald-700">
+            Todo el equipo disponible este día.
+          </p>
+        ) : (
+          <ul className="space-y-1.5">
+            {selected.absent.map((a) => {
+              const cfg = leaveTypeConfig[a.leaveType];
+              return (
+                <li className="flex items-center gap-2.5" key={a.id}>
+                  <span className={`grid size-7 shrink-0 place-items-center rounded-full text-[10px] font-bold ${cfg.avatarTone}`}>
+                    {initials(a.name)}
+                  </span>
+                  <span className="flex-1 truncate text-sm font-semibold">{a.name}</span>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${cfg.chipTone}`}>
+                    {cfg.label}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </section>
   );

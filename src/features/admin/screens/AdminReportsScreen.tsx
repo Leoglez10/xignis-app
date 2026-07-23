@@ -182,7 +182,7 @@ export function AdminReportsScreen() {
 
   return (
     <AdminShell>
-      <section className="p-4 md:p-6">
+      <section className="page-wrap pb-24 pt-4 md:pt-6">
         <header className="animate-fade-up mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-bold text-[var(--color-muted)]">Recursos Humanos</p>

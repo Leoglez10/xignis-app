@@ -107,6 +107,9 @@ export function EmployeesScreen() {
     [bySearch, areaFilter],
   );
 
+  // Colors picked by HR win over the derived tone, so the rail matches Áreas.
+  const colorByArea = useMemo(() => new Map(departments.map((d) => [d.id, d.color])), [departments]);
+
   // Group the visible employees under their area so the list reads as
   // "Sistemas → gente → Sin área → gente" instead of one flat wall of cards.
   const groups = useMemo(() => {
@@ -149,7 +152,7 @@ export function EmployeesScreen() {
 
   return (
     <AdminShell>
-      <div className="mx-auto w-full max-w-5xl px-4 py-5 md:px-8 md:py-8">
+      <div className="page-wrap py-5 md:py-8">
         <header className="animate-fade-up mb-6 flex items-center gap-3">
           <button
             aria-label="Regresar al panel"
@@ -169,7 +172,7 @@ export function EmployeesScreen() {
           </Button>
         </header>
 
-        <label className="animate-fade-up relative mb-5 block">
+        <label className="animate-fade-up relative mb-5 block md:max-w-md">
           <span className="sr-only">Buscar empleado</span>
           <Search aria-hidden="true" className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[var(--color-muted)]" />
           <input
@@ -213,7 +216,7 @@ export function EmployeesScreen() {
             role="group"
           >
             {areas.map((area) => {
-              const color = areaColor(area.id === NO_AREA ? null : area.id);
+              const color = areaColor(area.id === NO_AREA ? null : area.id, colorByArea.get(area.id));
               const isActive = areaFilter === area.id;
               return (
                 <button
@@ -243,7 +246,7 @@ export function EmployeesScreen() {
         ) : (
           <div className="space-y-8">
             {groups.map((group) => {
-              const color = areaColor(group.id === NO_AREA ? null : group.id);
+              const color = areaColor(group.id === NO_AREA ? null : group.id, colorByArea.get(group.id));
               return (
                 <section key={group.id}>
                   <div className="mb-3 flex items-center gap-2">
@@ -251,7 +254,7 @@ export function EmployeesScreen() {
                     <h3 className="text-sm font-bold">{group.name}</h3>
                     <span className="tabular-nums text-xs text-[var(--color-muted)]">{group.members.length}</span>
                   </div>
-                  <ul className="stagger grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  <ul className="stagger grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                     {group.members.map((emp) => (
                       <li
                         className="relative flex items-center gap-4 overflow-hidden rounded-[20px] bg-white p-4 pl-5 shadow-sm ring-1 ring-slate-200"
@@ -259,7 +262,9 @@ export function EmployeesScreen() {
                       >
                         <span
                           aria-hidden="true"
-                          className={`absolute inset-y-0 left-0 w-1.5 ${areaColor(emp.department_id).bar}`}
+                          className={`absolute inset-y-0 left-0 w-1.5 ${
+                            areaColor(emp.department_id, emp.department_id ? colorByArea.get(emp.department_id) : null).bar
+                          }`}
                         />
                         <Avatar className="text-sm text-emerald-700" name={emp.full_name} size="size-12" src={emp.avatar_url} />
                         <button

@@ -1,5 +1,6 @@
 import type { CustomFieldType, Department, EmploymentEvent, FieldEditable, FieldVisibility, Json, Profile, ProfileFieldDef, ProfileSheet, SeparationType, UserRole } from "../../../lib/database.types";
 import { getSupabaseClient } from "../../../lib/supabase";
+import type { AvatarCrop } from "../avatarCrop";
 
 export type ProfileWithManager = Profile & {
   manager?: Pick<Profile, "id" | "full_name"> | null;
@@ -30,15 +31,6 @@ export async function getCurrentProfile() {
   return data;
 }
 
-/** Correo de la sesion actual (vive en auth.users, no en profiles). */
-export async function getCurrentEmail() {
-  const supabase = getSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user?.email ?? null;
-}
-
 /** Edita el perfil propio. El trigger guard_profile_privileged_fields evita que
  *  un usuario sin rol RH/admin cambie su role, manager_id o job_title. */
 export async function updateMyProfile(changes: { full_name?: string; avatar_url?: string | null }) {
@@ -52,6 +44,75 @@ export async function updateMyProfile(changes: { full_name?: string; avatar_url?
 
   const { error } = await supabase.from("profiles").update(changes).eq("id", user.id);
   if (error) throw new Error(error.message);
+}
+
+const AVATAR_BUCKET = "xignis-profiles";
+const AVATAR_SIZE = 512;
+
+/** El limite NO es por peso de subida: el original nunca se sube, se re-encodea a
+ *  WebP de ~40 KB. Es por memoria de decodificacion — una foto de 48 MP ocupa
+ *  ~195 MB en RAM al abrirla y puede tumbar un celular. Los bytes son el unico
+ *  proxy del tamano en pixeles que tenemos antes de decodificar. */
+export const AVATAR_MAX_MB = 25;
+
+/** Valida el archivo elegido antes de tocar el canvas o la red. */
+export function avatarFileError(file: File): string | null {
+  if (!file.type.startsWith("image/")) return "El archivo debe ser una imagen.";
+  if (file.size > AVATAR_MAX_MB * 1024 * 1024) return `La imagen no puede pesar mas de ${AVATAR_MAX_MB} MB.`;
+  return null;
+}
+
+/** Aplica el encuadre elegido y exporta WebP: una foto de celular termina en
+ *  ~40 KB en vez de 4 MB. */
+export async function cropToWebp(file: File, crop: AvatarCrop): Promise<Blob> {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  const size = Math.min(AVATAR_SIZE, Math.round(crop.size));
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    bitmap.close();
+    throw new Error("No se pudo procesar la imagen.");
+  }
+  ctx.drawImage(bitmap, crop.sx, crop.sy, crop.size, crop.size, 0, 0, size, size);
+  bitmap.close();
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("No se pudo procesar la imagen."))),
+      "image/webp",
+      0.85,
+    );
+  });
+}
+
+/** Sube la foto de perfil propia y deja la URL publica en profiles.avatar_url.
+ *  La ruta es fija ({uid}/avatar.webp) para que cada usuario tenga un solo archivo. */
+export async function uploadMyAvatar(image: Blob): Promise<string> {
+  const supabase = getSupabaseClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError) throw userError;
+  if (!user) throw new Error("Necesitas iniciar sesion.");
+
+  const path = `${user.id}/avatar.webp`;
+  const { error: uploadError } = await supabase.storage
+    .from(AVATAR_BUCKET)
+    .upload(path, image, { contentType: "image/webp", upsert: true });
+  if (uploadError) throw new Error(uploadError.message);
+
+  // La ruta es fija, asi que versionamos la URL para saltar el cache del CDN.
+  const publicUrl = `${supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path).data.publicUrl}?v=${Date.now()}`;
+  await updateMyProfile({ avatar_url: publicUrl });
+  return publicUrl;
+}
+
+/** Quita la foto del perfil. ponytail: deja el objeto en el bucket (el proximo
+ *  upload lo pisa), asi no hace falta una policy de DELETE en storage.objects. */
+export async function removeMyAvatar(): Promise<void> {
+  await updateMyProfile({ avatar_url: null });
 }
 
 /** Empleados visibles para el rol actual (RH/admin: todos; jefe: su equipo). */

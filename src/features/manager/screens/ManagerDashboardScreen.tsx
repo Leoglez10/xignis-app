@@ -1,15 +1,16 @@
-import { AlertTriangle, ArrowRight, CalendarDays, ChevronRight, Inbox, UserX, Users } from "lucide-react";
+import { AlertTriangle, ArrowRight, CalendarDays, Inbox, UserX, Users } from "lucide-react";
 import { useMemo } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { formatDateRangeEs, eachDayIso, overlapsToday } from "../../../lib/date";
 import { roleLabel } from "../../profiles/services/profileService";
 import { ManagerShell } from "../components/managerNav";
 import { useAuth } from "../../session/AuthContext";
-import { leaveTypeConfig } from "../../leave-requests/config";
 import { useDashboardPrefs } from "../useDashboardPrefs";
 import { AgendaItem } from "../components/AgendaItem";
-import { AgingBadge } from "../../../components/ui/AgingBadge";
-import { BirthdayStrip } from "../components/BirthdayStrip";
+import { BirthdayHero } from "../../../components/BirthdayHero";
+import { BirthdayStrip } from "../../../components/BirthdayStrip";
+import { PendingSummary } from "../components/PendingSummary";
+import { UrgentRequestItem } from "../components/UrgentRequestItem";
 import { usePreferences } from "../../settings/PreferencesContext";
 import { CoverageHeatmap } from "../components/CoverageHeatmap";
 import { DashboardSkeleton } from "../components/DashboardSkeleton";
@@ -23,7 +24,7 @@ export function ManagerDashboardScreen() {
   const { profile } = useAuth();
   const { prefs } = useDashboardPrefs();
 
-  const { absences, error, isLoading, pending, refetch, team } = useManagerPendingRequests();
+  const { absences, error, isLoading, pending, refetch, reviewRequest, team } = useManagerPendingRequests();
 
   const absentEmployeeIds = useMemo(
     () => new Set(absences.filter((a) => overlapsToday(a.start_date, a.end_date)).map((a) => a.employee_id)),
@@ -70,7 +71,7 @@ export function ManagerDashboardScreen() {
   return (
     <ManagerShell>
       <RefreshBoundary onRefresh={refetch}>
-        <section className="grid min-h-dvh gap-5 p-4 pb-24 pt-4 md:p-6 md:pb-24 lg:grid-cols-[1fr_var(--aside-width)]">
+        <section className="page-wrap grid min-h-dvh gap-5 pb-24 pt-4 md:pt-6 lg:grid-cols-[minmax(0,1fr)_var(--aside-width)]">
           <div className="min-w-0 bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] rounded-2xl md:rounded-[20px] md:p-6">
             <header className="animate-fade-up mb-6">
               <p className="text-sm font-bold text-[var(--color-muted)]">{roleBadge}</p>
@@ -83,6 +84,8 @@ export function ManagerDashboardScreen() {
                     : `${pending.length} solicitudes pendientes`}
               </p>
             </header>
+
+            <BirthdayHero />
 
             {isLoading ? (
               <DashboardSkeleton />
@@ -134,6 +137,8 @@ export function ManagerDashboardScreen() {
                   </p>
                 ) : null}
 
+                <PendingSummary pending={pending} />
+
                 <section className="rounded-[24px] bg-[var(--card-muted)] p-4" aria-labelledby="manager-urgent-title">
                   <div className="mb-4 flex items-center justify-between gap-4">
                     <h2 className="text-lg font-bold md:text-xl" id="manager-urgent-title">
@@ -155,24 +160,12 @@ export function ManagerDashboardScreen() {
                   ) : (
                     <ul className="space-y-2">
                       {topUrgent.map((request) => (
-                        <li key={request.id}>
-                          <button
-                            className="press flex w-full items-center gap-3 rounded-[20px] bg-[var(--card-bg)] p-3 text-left ring-1 ring-[var(--card-border)]"
-                            type="button"
-                            onClick={() => navigate(`/manager/requests/${request.id}`)}
-                          >
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-sm font-bold">
-                                {request.employee?.full_name ?? "Empleado"}
-                              </span>
-                              <span className="block truncate text-xs text-[var(--color-muted)]">
-                                {leaveTypeConfig[request.leave_type].label}
-                              </span>
-                            </span>
-                            <AgingBadge request={request} />
-                            <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-[var(--color-muted)]" />
-                          </button>
-                        </li>
+                        <UrgentRequestItem
+                          key={request.id}
+                          onDetail={() => navigate(`/manager/requests/${request.id}`)}
+                          onReview={reviewRequest}
+                          request={request}
+                        />
                       ))}
                     </ul>
                   )}
