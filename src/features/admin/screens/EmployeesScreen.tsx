@@ -433,7 +433,7 @@ export function InviteSheet({
       <div className="min-w-0 space-y-4">
         <TextInput required label="Nombre completo" value={fullName} onChange={(e) => setFullName(e.target.value)} />
         <TextInput
-          hint="Puedes omitirlo por ahora. Sin correo, la persona se registra sin cuenta (no recibe invitación); le das acceso después desde su perfil."
+          hint="Puedes omitirlo por ahora. Sin correo, la persona queda registrada sin cuenta y no puede entrar; le das acceso después desde su perfil."
           label="Correo"
           type="email"
           value={email}
@@ -461,12 +461,12 @@ export function InviteSheet({
 
         {email.trim() ? (
           <p className="text-xs leading-5 text-[var(--color-muted)]">
-            Se enviará un correo de invitación. Al abrirlo, la persona define su password y entra a la app.
+            No se envía ningún correo: la persona entra a la app con esa dirección y ahí mismo crea su contraseña.
           </p>
         ) : null}
 
         <Button className="w-full" disabled={saving} onClick={handleSubmit}>
-          {saving ? "Guardando…" : email.trim() ? "Enviar invitación" : "Agregar empleado"}
+          {saving ? "Guardando…" : "Agregar empleado"}
         </Button>
       </div>
     </BottomSheet>

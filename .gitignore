@@ -60,3 +60,6 @@ skills-lock.json
 !ios/App/App/Assets.xcassets/**
 !ios/App/App/Base.lproj/**
 !capacitor.config.ts
+
+# Video skill scratch projects (no app code)
+videos/

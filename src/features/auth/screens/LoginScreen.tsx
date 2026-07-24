@@ -1,12 +1,12 @@
 import { ArrowRight, Lock, Mail } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { Button } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/TextInput";
 import { PasswordField } from "../../../components/ui/PasswordField";
-import { login, routeForRole } from "../services/authService";
+import { activateAccount, getAccountStatus, login, routeForRole } from "../services/authService";
 import { useAuth } from "../../session/AuthContext";
 import { useTranslation } from "react-i18next";
 
@@ -15,22 +15,39 @@ const loginSchema = z.object({
   password: z.string().min(1, "Ingresa tu password."),
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+/** Alta sin correo de invitación: si el correo corresponde a una cuenta creada por RH
+ *  que todavía no tiene contraseña, el formulario pide crearla en vez de pedirla. */
+const activationSchema = z
+  .object({
+    email: z.string().trim().email("Ingresa un correo valido."),
+    password: z.string().min(8, "La contraseña necesita al menos 8 caracteres."),
+    passwordConfirm: z.string(),
+  })
+  .refine((values) => values.password === values.passwordConfirm, {
+    message: "Las contraseñas no coinciden.",
+    path: ["passwordConfirm"],
+  });
+
+type LoginFormValues = z.infer<typeof loginSchema> & { passwordConfirm: string };
 
 export function LoginScreen() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { isConfigured, profile, refreshProfile, session } = useAuth();
+  const [activating, setActivating] = useState(false);
   const {
+    clearErrors,
     formState: { errors, isSubmitting },
     handleSubmit,
     register,
+    resetField,
     setError,
     setFocus,
   } = useForm<LoginFormValues>({
     defaultValues: {
       email: "",
       password: "",
+      passwordConfirm: "",
     },
     mode: "onSubmit",
     reValidateMode: "onBlur",
@@ -40,31 +57,69 @@ export function LoginScreen() {
     if (session && profile) navigate(routeForRole(profile.role), { replace: true });
   }, [navigate, profile, session]);
 
-  async function onSubmit(values: LoginFormValues) {
-    const result = loginSchema.safeParse(values);
+  function applyIssues(issues: z.ZodIssue[]) {
+    const fields = new Set(["email", "password", "passwordConfirm"]);
+    for (const issue of issues) {
+      const fieldName = String(issue.path[0]);
+      if (fields.has(fieldName)) setError(fieldName as keyof LoginFormValues, { message: issue.message });
+    }
+    const first = String(issues[0]?.path[0] ?? "");
+    if (fields.has(first)) setFocus(first as keyof LoginFormValues);
+  }
 
-    if (!result.success) {
-      for (const issue of result.error.issues) {
-        const fieldName = issue.path[0];
-        if (fieldName === "email" || fieldName === "password") {
-          setError(fieldName, { message: issue.message });
-        }
+  async function onSubmit(values: LoginFormValues) {
+    if (activating) {
+      const result = activationSchema.safeParse(values);
+      if (!result.success) {
+        applyIssues(result.error.issues);
+        return;
       }
-      const firstIssue = result.error.issues[0]?.path[0];
-      if (firstIssue === "email" || firstIssue === "password") setFocus(firstIssue);
-      return;
+    } else {
+      // El password se valida DESPUÉS de saber si la cuenta ya tiene una: quien fue
+      // dado de alta por RH todavía no tiene contraseña que escribir.
+      const email = loginSchema.shape.email.safeParse(values.email);
+      if (!email.success) {
+        applyIssues(email.error.issues.map((issue) => ({ ...issue, path: ["email"] })));
+        return;
+      }
     }
 
     try {
-      const { redirectTo } = await login(result.data);
+      if (!activating) {
+        const status = await getAccountStatus(values.email);
+        if (status === "pending") {
+          setActivating(true);
+          resetField("password");
+          clearErrors();
+          setFocus("password");
+          return;
+        }
+        if (!values.password) {
+          setError("password", { message: "Ingresa tu password." });
+          setFocus("password");
+          return;
+        }
+      }
+
+      const { redirectTo } = activating
+        ? await activateAccount({ email: values.email, password: values.password })
+        : await login({ email: values.email, password: values.password });
       await refreshProfile();
       navigate(redirectTo, { replace: true });
     } catch (error) {
       setError("root", {
         message: error instanceof Error ? error.message : "No se pudo iniciar sesion.",
       });
-      setFocus("email");
+      setFocus(activating ? "password" : "email");
     }
+  }
+
+  function cancelActivation() {
+    setActivating(false);
+    resetField("password");
+    resetField("passwordConfirm");
+    clearErrors();
+    setFocus("email");
   }
 
   return (
@@ -119,33 +174,59 @@ export function LoginScreen() {
                     {t("auth.notConfigured")}
                   </p>
                 ) : null}
+                {activating ? (
+                  <p className="rounded-2xl bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-800" role="status">
+                    Tu cuenta ya está dada de alta. Crea una contraseña para entrar.
+                  </p>
+                ) : null}
+
                 <TextInput
                   autoComplete="email"
                   error={errors.email?.message}
                   label={t("auth.email")}
                   placeholder={t("auth.emailPlaceholder")}
+                  readOnly={activating}
                   type="email"
                   {...register("email")}
                 />
                 <PasswordField
-                  autoComplete="current-password"
+                  autoComplete={activating ? "new-password" : "current-password"}
                   error={errors.password?.message}
-                  label={t("auth.password")}
-                  placeholder={t("auth.passwordPlaceholder")}
+                  label={activating ? "Nueva contraseña" : t("auth.password")}
+                  placeholder={activating ? "Mínimo 8 caracteres" : t("auth.passwordPlaceholder")}
                   {...register("password")}
                 />
+                {activating ? (
+                  <PasswordField
+                    autoComplete="new-password"
+                    error={errors.passwordConfirm?.message}
+                    label="Repite la contraseña"
+                    placeholder="Repite la contraseña"
+                    {...register("passwordConfirm")}
+                  />
+                ) : null}
 
                 <div className="flex flex-col gap-3 text-sm min-[390px]:flex-row min-[390px]:items-center min-[390px]:justify-between">
                   <span className="inline-flex items-center gap-2 text-[var(--color-muted)]">
                     <Mail aria-hidden="true" className="size-4" />
                     {t("auth.corporate")}
                   </span>
-                  <Link
-                    className="w-fit rounded-md font-bold text-[var(--color-text)] underline decoration-slate-300 underline-offset-4 transition-colors hover:text-[var(--color-primary-strong)]"
-                    to="/forgot-password"
-                  >
-                    {t("auth.forgot")}
-                  </Link>
+                  {activating ? (
+                    <button
+                      className="w-fit rounded-md font-bold text-[var(--color-text)] underline decoration-slate-300 underline-offset-4 transition-colors hover:text-[var(--color-primary-strong)]"
+                      type="button"
+                      onClick={cancelActivation}
+                    >
+                      Usar otro correo
+                    </button>
+                  ) : (
+                    <Link
+                      className="w-fit rounded-md font-bold text-[var(--color-text)] underline decoration-slate-300 underline-offset-4 transition-colors hover:text-[var(--color-primary-strong)]"
+                      to="/forgot-password"
+                    >
+                      {t("auth.forgot")}
+                    </Link>
+                  )}
                 </div>
 
                 {errors.root?.message ? (
@@ -161,7 +242,11 @@ export function LoginScreen() {
                 type="submit"
               >
                 <Lock aria-hidden="true" className="size-4" />
-                {isSubmitting ? t("auth.entering") : t("auth.enter")}
+                {isSubmitting
+                  ? t("auth.entering")
+                  : activating
+                    ? "Crear contraseña y entrar"
+                    : t("auth.enter")}
                 {!isSubmitting ? <ArrowRight aria-hidden="true" className="size-4" /> : null}
               </Button>
             </form>

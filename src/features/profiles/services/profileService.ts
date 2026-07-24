@@ -287,6 +287,22 @@ export function hasRealEmail(email: string | null | undefined): email is string 
   return Boolean(email) && !email!.endsWith(PLACEHOLDER_EMAIL_DOMAIN);
 }
 
+/** supabase-js deja `data = null` en errores !=2xx y expone el Response real en
+ *  `error.context`. Leemos ese body para recuperar el `{ error }` de la Edge Function
+ *  en vez del genérico "Edge Function returned a non-2xx status code". */
+async function edgeErrorMessage(error: { message: string; context?: unknown }): Promise<string> {
+  const res = (error as { context?: Response }).context;
+  if (res instanceof Response) {
+    try {
+      const body = await res.clone().json();
+      if (body?.error) return body.error as string;
+    } catch {
+      // body no-JSON: caemos al mensaje genérico
+    }
+  }
+  return error.message;
+}
+
 export async function inviteUser(input: {
   annual_vacation_days?: number | null;
   /** Vacío = empleado sin cuenta (no puede iniciar sesión hasta que RH le dé acceso). */
@@ -303,24 +319,35 @@ export async function inviteUser(input: {
   });
 
   if (error) {
-    // la Edge Function devuelve { error } en el body con status !=2xx
-    const message = (data as { error?: string } | null)?.error ?? error.message;
-    throw new Error(message);
+    throw new Error(await edgeErrorMessage(error));
   }
   return data as { ok: true; user_id: string; email: string; has_email: boolean };
 }
 
-/** Asigna un correo real a un empleado creado sin cuenta y le envía el enlace para
- *  definir su password (RH/admin). */
+/** Asigna un correo real a un empleado creado sin cuenta (RH/admin). No manda correo:
+ *  la persona define su password la primera vez que entra con ese correo. */
 export async function grantAccess(input: { user_id: string; email: string }) {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase.functions.invoke("admin-grant-access", {
-    body: { ...input, redirect_to: `${window.location.origin}/set-password` },
+    body: input,
   });
 
   if (error) {
-    const message = (data as { error?: string } | null)?.error ?? error.message;
-    throw new Error(message);
+    throw new Error(await edgeErrorMessage(error));
+  }
+  return data as { ok: true; user_id: string; email: string };
+}
+
+/** Corta el acceso de una cuenta (RH/admin): cierra sus sesiones y la deja pendiente
+ *  de activación, así la persona vuelve a crear su contraseña al entrar. */
+export async function resetAccess(input: { user_id: string }) {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.functions.invoke("admin-reset-access", {
+    body: input,
+  });
+
+  if (error) {
+    throw new Error(await edgeErrorMessage(error));
   }
   return data as { ok: true; user_id: string; email: string };
 }
@@ -339,8 +366,7 @@ export async function deleteEmployee(input: {
   });
 
   if (error) {
-    const message = (data as { error?: string } | null)?.error ?? error.message;
-    throw new Error(message);
+    throw new Error(await edgeErrorMessage(error));
   }
   return data as { ok: true; user_id: string };
 }

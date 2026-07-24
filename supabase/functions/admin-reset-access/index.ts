@@ -13,9 +13,9 @@ function json(body: unknown, status = 200) {
   });
 }
 
-// Asigna un correo real a un empleado creado sin cuenta. No manda correo: la cuenta
-// queda pendiente de activación y la persona define su password al entrar a la app.
-// Solo RH/admin. Contraparte de admin-create-user sin correo.
+/** RH corta el acceso de una cuenta: cierra sus sesiones, invalida la contraseña
+ *  actual y la deja pendiente de activación otra vez, de modo que la persona vuelve
+ *  a crear su contraseña la próxima vez que entre con su correo. */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -34,31 +34,31 @@ Deno.serve(async (req) => {
   const { data: callerProfile } = await admin
     .from("profiles").select("role").eq("id", userData.user.id).single();
   if (!callerProfile || !["hr_admin", "admin"].includes(callerProfile.role)) {
-    return json({ error: "Solo RH o admin pueden dar acceso." }, 403);
+    return json({ error: "Solo RH o admin pueden restablecer el acceso." }, 403);
   }
 
   let payload: any;
   try { payload = await req.json(); } catch { return json({ error: "JSON inválido." }, 400); }
 
   const userId = String(payload.user_id ?? "").trim();
-  const email = String(payload.email ?? "").trim().toLowerCase();
-
   if (!userId) return json({ error: "Falta el empleado." }, 400);
-  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: "Correo inválido." }, 400);
-  if (email.endsWith("@xignis.local")) return json({ error: "Usa un correo real." }, 400);
 
-  // Setea el correo confirmado (sin doble opt-in) sobre el usuario placeholder y lo
-  // deja pendiente de activación: define su password al entrar a la app.
-  const { error: updErr } = await admin.auth.admin.updateUserById(userId, {
-    email,
-    email_confirm: true,
-    password: crypto.randomUUID() + crypto.randomUUID(),
-    user_metadata: { no_email: false, must_set_password: true },
-  });
-  if (updErr) {
-    const dup = /already|registered|exists/i.test(updErr.message);
-    return json({ error: dup ? "Ese correo ya está en uso por otra cuenta." : updErr.message }, 400);
+  const { data: target, error: targetErr } = await admin.auth.admin.getUserById(userId);
+  if (targetErr || !target.user) return json({ error: "No se encontró la cuenta." }, 404);
+  if (!target.user.email || target.user.email.endsWith("@xignis.local")) {
+    return json({ error: "Este empleado todavía no tiene correo asignado." }, 400);
   }
 
-  return json({ ok: true, user_id: userId, email });
+  // Contraseña aleatoria que nadie conoce + flag de activación: el login por correo
+  // vuelve a pedirle que cree una contraseña nueva.
+  const { error: updErr } = await admin.auth.admin.updateUserById(userId, {
+    password: crypto.randomUUID() + crypto.randomUUID(),
+    user_metadata: { must_set_password: true },
+  });
+  if (updErr) return json({ error: updErr.message }, 400);
+
+  const { error: sessErr } = await admin.rpc("revoke_user_sessions", { p_user_id: userId });
+  if (sessErr) return json({ error: "Se restableció la contraseña, pero no se pudieron cerrar las sesiones." }, 500);
+
+  return json({ ok: true, user_id: userId, email: target.user.email });
 });

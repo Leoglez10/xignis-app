@@ -22,6 +22,28 @@ function parseVacationDays(value: unknown) {
   return parsed;
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// La migración de JWT signing keys de Supabase deja, en ráfaga, algunas instancias
+// de GoTrue con el JWKS viejo -> rechaza el token con "unrecognized JWT kid ... ES256".
+// Es transitorio: la verificación falla ANTES de crear nada, así que reintentar es
+// seguro (no genera usuarios duplicados).
+function isTransientJwtError(err: unknown): boolean {
+  const msg = (err && typeof err === "object" && "message" in err)
+    ? String((err as { message: unknown }).message)
+    : String(err ?? "");
+  return /unverifiable|unrecognized JWT kid|keyfunc|invalid JWT/i.test(msg);
+}
+
+async function withJwtRetry<T extends { error: unknown }>(fn: () => Promise<T>): Promise<T> {
+  let last: T = await fn();
+  for (let attempt = 1; attempt <= 4 && last.error && isTransientJwtError(last.error); attempt++) {
+    await sleep(200 * attempt);
+    last = await fn();
+  }
+  return last;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -34,7 +56,7 @@ Deno.serve(async (req) => {
 
   const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
 
-  const { data: userData, error: userErr } = await admin.auth.getUser(token);
+  const { data: userData, error: userErr } = await withJwtRetry(() => admin.auth.getUser(token));
   if (userErr || !userData.user) return json({ error: "Sesión inválida." }, 401);
 
   const { data: callerProfile } = await admin
@@ -52,7 +74,6 @@ Deno.serve(async (req) => {
   const jobTitle = payload.job_title ? String(payload.job_title).trim() : null;
   const managerId = payload.manager_id ? String(payload.manager_id) : null;
   const departmentId = payload.department_id ? String(payload.department_id) : null;
-  const redirectTo = payload.redirect_to ? String(payload.redirect_to) : undefined;
   const annualVacationDays = parseVacationDays(payload.annual_vacation_days);
 
   // El correo es opcional: sin correo se crea un empleado "sin cuenta" (no puede
@@ -67,27 +88,36 @@ Deno.serve(async (req) => {
   let resolvedEmail: string;
 
   if (hasEmail) {
-    // Con correo: se invita por email y define su password al abrir el enlace.
-    const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(rawEmail, {
-      data: { full_name: fullName },
-      redirectTo,
-    });
-    if (inviteErr || !invited.user) {
-      return json({ error: inviteErr?.message ?? "No se pudo invitar." }, 400);
+    // Con correo: alta inmediata SIN correo de invitación. La cuenta queda marcada
+    // con must_set_password, así la persona entra a la app, escribe su correo y
+    // define ahí mismo su contraseña (ver la Edge Function account-access).
+    const { data: created, error: createErr } = await withJwtRetry(() =>
+      admin.auth.admin.createUser({
+        email: rawEmail,
+        password: crypto.randomUUID() + crypto.randomUUID(),
+        email_confirm: true,
+        user_metadata: { full_name: fullName, must_set_password: true },
+      })
+    );
+    if (createErr || !created.user) {
+      const dup = /already|registered|exists/i.test(createErr?.message ?? "");
+      return json({ error: dup ? "Ese correo ya está en uso por otra cuenta." : (createErr?.message ?? "No se pudo crear el empleado.") }, 400);
     }
-    userId = invited.user.id;
+    userId = created.user.id;
     resolvedEmail = rawEmail;
   } else {
     // Sin correo: cuenta placeholder confirmada, con password aleatorio que nadie
-    // conoce → inerte, no hay login posible hasta que RH le asigne un correo real.
+    // conoce -> inerte, no hay login posible hasta que RH le asigne un correo real.
     const placeholderEmail = `noreply+${crypto.randomUUID()}@xignis.local`;
     const randomPassword = crypto.randomUUID() + crypto.randomUUID();
-    const { data: created, error: createErr } = await admin.auth.admin.createUser({
-      email: placeholderEmail,
-      password: randomPassword,
-      email_confirm: true,
-      user_metadata: { full_name: fullName, no_email: true },
-    });
+    const { data: created, error: createErr } = await withJwtRetry(() =>
+      admin.auth.admin.createUser({
+        email: placeholderEmail,
+        password: randomPassword,
+        email_confirm: true,
+        user_metadata: { full_name: fullName, no_email: true },
+      })
+    );
     if (createErr || !created.user) {
       return json({ error: createErr?.message ?? "No se pudo crear el empleado." }, 400);
     }

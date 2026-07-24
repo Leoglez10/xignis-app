@@ -20,6 +20,7 @@ import {
   hasRealEmail,
   listEmploymentEvents,
   listManagers,
+  resetAccess,
   roleLabel,
   type ProfileWithManager,
 } from "../../profiles/services/profileService";
@@ -43,6 +44,7 @@ export function EmployeeDetailScreen() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [editing, setEditing] = useState(false);
   const [granting, setGranting] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestsQuery = useQuery({
     enabled: Boolean(id),
@@ -142,6 +144,11 @@ export function EmployeeDetailScreen() {
                 Dar acceso a la app
               </Button>
             ) : null}
+            {sheet && hasRealEmail(sheet.email) ? (
+              <Button className="w-full" type="button" variant="secondary" onClick={() => setResetting(true)}>
+                Restablecer acceso
+              </Button>
+            ) : null}
           </div>
 
           <div className="mt-4 space-y-4 lg:mt-0">
@@ -236,6 +243,16 @@ export function EmployeeDetailScreen() {
           onSaved={handleSaved}
         />
       ) : null}
+
+      {sheet ? (
+        <ResetAccessSheet
+          email={sheet.email}
+          isOpen={resetting}
+          name={sheet.full_name}
+          userId={sheet.id}
+          onClose={() => setResetting(false)}
+        />
+      ) : null}
     </AdminShell>
   );
 }
@@ -290,7 +307,7 @@ function GrantAccessSheet({
         {done ? (
           <>
             <p className="rounded-2xl bg-emerald-50 p-4 text-sm font-semibold text-emerald-700">
-              Listo. Se envió a {email} un correo para definir su password y entrar a la app.
+              Listo. {name} ya puede entrar con {email}: la app le pedirá crear su contraseña la primera vez.
             </p>
             <Button className="w-full" type="button" onClick={handleClose}>
               Cerrar
@@ -299,8 +316,8 @@ function GrantAccessSheet({
         ) : (
           <>
             <p className="text-sm text-[var(--color-muted)]">
-              Asigna un correo a <span className="font-bold text-[var(--color-text)]">{name}</span>. Se le enviará un
-              enlace para definir su password y acceder.
+              Asigna un correo a <span className="font-bold text-[var(--color-text)]">{name}</span>. No se envía ningún
+              correo: entra a la app con esa dirección y ahí mismo crea su contraseña.
             </p>
             <TextInput label="Correo" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
 
@@ -311,7 +328,80 @@ function GrantAccessSheet({
             ) : null}
 
             <Button className="w-full" disabled={saving} onClick={handleSubmit}>
-              {saving ? "Enviando…" : "Enviar acceso"}
+              {saving ? "Guardando…" : "Dar acceso"}
+            </Button>
+          </>
+        )}
+      </div>
+    </BottomSheet>
+  );
+}
+
+/** Cierra las sesiones de una cuenta y la deja pendiente de activación otra vez. */
+function ResetAccessSheet({
+  email,
+  isOpen,
+  name,
+  userId,
+  onClose,
+}: {
+  email: string | null;
+  isOpen: boolean;
+  name: string;
+  userId: string;
+  onClose: () => void;
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+
+  async function handleSubmit() {
+    setError(null);
+    try {
+      setSaving(true);
+      await resetAccess({ user_id: userId });
+      setDone(true);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "No se pudo restablecer el acceso.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleClose() {
+    setError(null);
+    setDone(false);
+    onClose();
+  }
+
+  return (
+    <BottomSheet isOpen={isOpen} title="Restablecer acceso" onClose={handleClose}>
+      <div className="min-w-0 space-y-4">
+        {done ? (
+          <>
+            <p className="rounded-2xl bg-emerald-50 p-4 text-sm font-semibold text-emerald-700">
+              Listo. Se cerraron las sesiones de {name}. La próxima vez que entre con {email} tendrá que crear una
+              contraseña nueva.
+            </p>
+            <Button className="w-full" type="button" onClick={handleClose}>
+              Cerrar
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-[var(--color-muted)]">
+              Se cerrará la sesión de <span className="font-bold text-[var(--color-text)]">{name}</span> en todos sus
+              dispositivos y su contraseña actual dejará de servir. Vuelve a entrar con {email} y crea una nueva.
+            </p>
+
+            {error ? (
+              <p className="rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-700" role="alert">
+                {error}
+              </p>
+            ) : null}
+
+            <Button className="w-full" disabled={saving} onClick={handleSubmit}>
+              {saving ? "Restableciendo…" : "Restablecer acceso"}
             </Button>
           </>
         )}
