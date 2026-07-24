@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { Suspense, useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode, TouchEvent } from "react";
 import type { Location } from "react-router-dom";
 import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
@@ -51,6 +51,10 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
   const x = useMotionValue(0);
   // "back" = arrastre desde el borde (volver). "tab" = swipe libre entre pestañas.
   const [drag, setDrag] = useState<null | "back" | "tab">(null);
+  // Pestaña vecina renderizada debajo del dedo durante el swipe → se monta y
+  // carga su chunk mientras arrastras, así al soltar ya está en pantalla.
+  // `base` = +w si entra por la derecha (tab siguiente), -w si por la izquierda.
+  const [peek, setPeek] = useState<{ loc: Location; base: number; to: string } | null>(null);
   const reducedMotion = useReducedMotion();
 
   // Página de la que venimos = destino del gesto "atrás".
@@ -105,10 +109,14 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
     return -0.25 * (w - v);
   });
 
+  // La pestaña vecina se mueve pegada al dedo: parte de su borde (`base`) y
+  // acompaña el arrastre 1:1, como un carrusel.
+  const peekBase = peek?.base ?? 0;
+  const peekX = useTransform(x, (v) => peekBase + v);
+
   const startX = useRef(0);
   const startY = useRef(0);
   const armed = useRef<null | "back" | "tab">(null);
-  const tabTarget = useRef<string | null>(null);
 
   function onTouchStart(e: TouchEvent) {
     if (drag || reducedMotion) return;
@@ -143,11 +151,20 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
       x.set(Math.max(0, dx));
       return;
     }
-    // Sin pestaña vecina en esa dirección → resistencia, no arrastre.
+    // Pestaña vecina según dirección del arrastre (izq → siguiente, der → anterior).
     const i = exactTabIndex(tabs, location.pathname);
     const neighbour = tabs[dx < 0 ? i + 1 : i - 1];
-    tabTarget.current = neighbour?.to ?? null;
-    x.set(neighbour ? dx : dx * 0.2);
+    if (neighbour) {
+      const base = dx < 0 ? window.innerWidth : -window.innerWidth;
+      if (peek?.to !== neighbour.to) {
+        setPeek({ loc: { ...location, pathname: neighbour.to, key: `peek-${neighbour.to}` }, base, to: neighbour.to });
+      }
+      x.set(dx);
+    } else {
+      // Sin vecino en esa dirección (primera/última tab) → resistencia.
+      if (peek) setPeek(null);
+      x.set(dx * 0.2);
+    }
   }
 
   function onTouchEnd() {
@@ -171,25 +188,32 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
         });
         return;
       }
-    } else {
-      const to = tabTarget.current;
-      tabTarget.current = null;
-      if (to && Math.abs(dx) > w * TAB_COMMIT) {
-        bumpHaptic();
-        // Sale hacia el lado del swipe; la nueva pestaña entra desde el opuesto
-        // gracias a la animación de orden de tabs del efecto de arriba.
-        animate(x, dx < 0 ? -w : w, {
-          duration: 0.2,
-          ease,
-          onComplete: () => {
-            navigate(to);
-            setDrag(null);
-          },
-        });
-        return;
-      }
+    } else if (peek && Math.abs(dx) > w * TAB_COMMIT) {
+      const { to, base } = peek;
+      bumpHaptic();
+      // El vecino (en `base`) se desliza hasta 0 → x va a -base. La página
+      // actual sale hacia el lado opuesto. Al completar navegamos: el árbol de
+      // la nueva ruta ya está montado en la capa peek, así que no hay salto.
+      animate(x, -base, {
+        duration: 0.2,
+        ease,
+        onComplete: () => {
+          fromDrag.current = true; // salta la animación de entrada del efecto
+          navigate(to);
+          setDrag(null);
+          setPeek(null);
+        },
+      });
+      return;
     }
-    animate(x, 0, { duration: 0.2, ease, onComplete: () => setDrag(null) });
+    animate(x, 0, {
+      duration: 0.2,
+      ease,
+      onComplete: () => {
+        setDrag(null);
+        setPeek(null);
+      },
+    });
   }
 
   return (
@@ -207,6 +231,15 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
       <motion.div className="relative min-h-dvh w-full" style={{ x }}>
         {children(location)}
       </motion.div>
+      {drag === "tab" && peek ? (
+        // Suspense propio: si el chunk del vecino aún no cargó, solo esta capa
+        // queda vacía (no toda la pantalla, cuyo Suspense vive en App.tsx).
+        <Suspense fallback={null}>
+          <motion.div className="absolute inset-0 min-h-dvh w-full" style={{ x: peekX }}>
+            {children(peek.loc)}
+          </motion.div>
+        </Suspense>
+      ) : null}
     </div>
   );
 }
