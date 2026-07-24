@@ -9,11 +9,32 @@ import { tabsByRole, type NavTab } from "./navConfig";
 
 const EDGE = 28; // px desde el borde izquierdo donde arranca el gesto
 const COMMIT = 0.4; // fracción de ancho arrastrada para confirmar "atrás"
+const TAB_COMMIT = 0.3; // fracción de ancho para confirmar cambio de pestaña
 const ease = [0.32, 0.72, 0, 1] as const;
 
 /** Índice de la pestaña activa para un pathname (mismo criterio que titleForPath). */
 function tabIndexFor(tabs: NavTab[], pathname: string): number {
   return tabs.findIndex((t) => (t.end ? pathname === t.to : pathname.startsWith(t.to)));
+}
+
+/** Índice exacto: el swipe entre pestañas solo aplica en la raíz de cada tab,
+ *  no en sus pantallas de detalle (ahí el gesto sigue siendo "atrás"). */
+function exactTabIndex(tabs: NavTab[], pathname: string): number {
+  return tabs.findIndex((t) => t.to === pathname);
+}
+
+/** ¿El gesto nace dentro de un carrusel horizontal (strips, nav scrollable)?
+ *  Entonces el scroll es de ese elemento, no del router. */
+function insideHorizontalScroller(target: EventTarget | null): boolean {
+  let node = target instanceof Element ? target : null;
+  while (node && node !== document.body) {
+    if (node.scrollWidth > node.clientWidth + 1) {
+      const overflowX = getComputedStyle(node).overflowX;
+      if (overflowX === "auto" || overflowX === "scroll") return true;
+    }
+    node = node.parentElement;
+  }
+  return false;
 }
 
 /** Transición deslizante entre rutas + arrastre interactivo tipo iOS.
@@ -28,7 +49,8 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
   const tabs = profile?.role ? tabsByRole[profile.role] : [];
 
   const x = useMotionValue(0);
-  const [dragging, setDragging] = useState(false);
+  // "back" = arrastre desde el borde (volver). "tab" = swipe libre entre pestañas.
+  const [drag, setDrag] = useState<null | "back" | "tab">(null);
   const reducedMotion = useReducedMotion();
 
   // Página de la que venimos = destino del gesto "atrás".
@@ -85,52 +107,89 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
 
   const startX = useRef(0);
   const startY = useRef(0);
-  const armed = useRef(false);
+  const armed = useRef<null | "back" | "tab">(null);
+  const tabTarget = useRef<string | null>(null);
 
   function onTouchStart(e: TouchEvent) {
-    if (!prevRef.current || dragging || reducedMotion) return;
+    if (drag || reducedMotion) return;
     const t = e.touches[0];
-    if (t.clientX > EDGE) return;
     startX.current = t.clientX;
     startY.current = t.clientY;
-    armed.current = true;
+    armed.current = null;
+    if (prevRef.current && t.clientX <= EDGE) {
+      armed.current = "back";
+      return;
+    }
+    if (exactTabIndex(tabs, location.pathname) !== -1 && !insideHorizontalScroller(e.target)) {
+      armed.current = "tab";
+    }
   }
 
   function onTouchMove(e: TouchEvent) {
-    if (!armed.current) return;
+    const mode = armed.current;
+    if (!mode) return;
     const t = e.touches[0];
     const dx = t.clientX - startX.current;
     const dy = t.clientY - startY.current;
-    if (!dragging) {
+    if (!drag) {
       if (Math.abs(dy) > Math.abs(dx)) {
-        armed.current = false; // gesto vertical → es scroll, abortar
+        armed.current = null; // gesto vertical → es scroll, abortar
         return;
       }
-      if (dx < 6) return;
-      setDragging(true);
+      if (mode === "back" ? dx < 6 : Math.abs(dx) < 6) return;
+      setDrag(mode);
     }
-    x.set(Math.max(0, dx));
+    if (mode === "back") {
+      x.set(Math.max(0, dx));
+      return;
+    }
+    // Sin pestaña vecina en esa dirección → resistencia, no arrastre.
+    const i = exactTabIndex(tabs, location.pathname);
+    const neighbour = tabs[dx < 0 ? i + 1 : i - 1];
+    tabTarget.current = neighbour?.to ?? null;
+    x.set(neighbour ? dx : dx * 0.2);
   }
 
   function onTouchEnd() {
-    if (!armed.current) return;
-    armed.current = false;
-    if (!dragging) return;
+    const mode = armed.current;
+    armed.current = null;
+    if (!mode || !drag) return;
     const w = window.innerWidth;
-    if (x.get() > w * COMMIT) {
-      bumpHaptic();
-      animate(x, w, {
-        duration: 0.2,
-        ease,
-        onComplete: () => {
-          fromDrag.current = true;
-          navigate(-1);
-          setDragging(false);
-        },
-      });
+    const dx = x.get();
+
+    if (mode === "back") {
+      if (dx > w * COMMIT) {
+        bumpHaptic();
+        animate(x, w, {
+          duration: 0.2,
+          ease,
+          onComplete: () => {
+            fromDrag.current = true;
+            navigate(-1);
+            setDrag(null);
+          },
+        });
+        return;
+      }
     } else {
-      animate(x, 0, { duration: 0.2, ease, onComplete: () => setDragging(false) });
+      const to = tabTarget.current;
+      tabTarget.current = null;
+      if (to && Math.abs(dx) > w * TAB_COMMIT) {
+        bumpHaptic();
+        // Sale hacia el lado del swipe; la nueva pestaña entra desde el opuesto
+        // gracias a la animación de orden de tabs del efecto de arriba.
+        animate(x, dx < 0 ? -w : w, {
+          duration: 0.2,
+          ease,
+          onComplete: () => {
+            navigate(to);
+            setDrag(null);
+          },
+        });
+        return;
+      }
     }
+    animate(x, 0, { duration: 0.2, ease, onComplete: () => setDrag(null) });
   }
 
   return (
@@ -140,7 +199,7 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {dragging && prevRef.current ? (
+      {drag === "back" && prevRef.current ? (
         <motion.div className="absolute inset-0" style={{ x: underX }}>
           {children(prevRef.current)}
         </motion.div>
