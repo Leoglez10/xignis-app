@@ -76,19 +76,15 @@ export function TopBar() {
         </div>
       </div>
 
-      {/* Fila 2: wordmark de marca */}
-      <div className="page-wrap flex items-center gap-2 pb-2">
-        <span
-          className="text-lg font-bold tracking-tight text-[var(--color-text)]"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          xig<span className="text-[var(--color-primary)]">nis</span>
-        </span>
-      </div>
-
-      {/* Fila 3: tabs horizontales (mismo diseño en mobile y desktop, estilo iOS) */}
+      {/* Fila 2: wordmark de marca inline con las tabs */}
       {tabs.length > 0 ? (
-        <nav aria-label="Secciones" className="page-wrap flex gap-5 overflow-x-auto">
+        <nav aria-label="Secciones" className="page-wrap flex items-center gap-5 overflow-x-auto pb-0">
+          <span
+            className="shrink-0 pb-2 text-lg font-bold tracking-tight text-[var(--color-text)]"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            xig<span className="text-[var(--color-primary)]">nis</span>
+          </span>
           {tabs.map(({ to, label, end }) => (
             <NavLink
               key={to}

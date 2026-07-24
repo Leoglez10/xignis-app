@@ -71,6 +71,33 @@ export async function listDepartmentMembers(id: string): Promise<Pick<Profile, "
   return data ?? [];
 }
 
+export type AssignableEmployee = Pick<
+  Profile,
+  "id" | "full_name" | "job_title" | "avatar_url" | "department_id"
+> & { department: { id: string; name: string } | null };
+
+/** Empleados activos con su área actual, para el asignador de un área. */
+export async function listAssignableEmployees(): Promise<AssignableEmployee[]> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, full_name, job_title, avatar_url, department_id, department:departments(id, name)")
+    .in("employment_status", ["active", "on_leave"])
+    .order("full_name");
+  if (error) throw error;
+  return (data ?? []) as unknown as AssignableEmployee[];
+}
+
+/** Mueve gente a un área. Solo toca profiles.department_id: el trigger
+ *  log_employment_event escribe un department_change por persona, así que el
+ *  historial se arma solo y nunca se escribe a mano. */
+export async function assignToDepartment(userIds: string[], departmentId: string): Promise<void> {
+  if (userIds.length === 0) return;
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.from("profiles").update({ department_id: departmentId }).in("id", userIds);
+  if (error) throw error;
+}
+
 /** Realtime: refresca lista de áreas al cambiar en otro dispositivo. */
 export function subscribeToDepartments(onChange: () => void): () => void {
   return subscribeShared<void>(

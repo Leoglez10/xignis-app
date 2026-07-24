@@ -1,5 +1,6 @@
 import type { Json, ProfileFieldDef, ProfileSheet as ProfileSheetData } from "../../../lib/database.types";
 import { formatDateEs } from "../../../lib/date";
+import { hasRealEmail } from "../services/profileService";
 
 type ProfileSheetProps = {
   defs: ProfileFieldDef[];
@@ -23,7 +24,7 @@ export function ProfileSheet({ defs, sheet }: ProfileSheetProps) {
   sections.push({ rows: trabajo, title: "Trabajo" });
 
   const personal: Row[] = [
-    { label: "Correo", value: sheet.email ?? "—" },
+    { label: "Correo", value: hasRealEmail(sheet.email) ? sheet.email : "Sin cuenta" },
     { label: "Cumpleaños", value: sheet.birth_date ? formatDateEs(sheet.birth_date) : "—" },
   ];
   personal.push({

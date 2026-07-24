@@ -357,16 +357,19 @@ export function EmployeesScreen() {
 
 type ManagerOption = Pick<Profile, "id" | "full_name" | "role">;
 
-function InviteSheet({
+export function InviteSheet({
   isOpen,
   managers,
   departments,
+  defaultDepartmentId,
   onClose,
   onSaved,
 }: {
   isOpen: boolean;
   managers: ManagerOption[];
   departments: Department[];
+  /** Preselecciona el área al abrir desde la pantalla de Áreas. */
+  defaultDepartmentId?: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -376,14 +379,22 @@ function InviteSheet({
   const [annualVacationDays, setAnnualVacationDays] = useState("");
   const [role, setRole] = useState<UserRole>("employee");
   const [managerId, setManagerId] = useState("");
-  const [departmentId, setDepartmentId] = useState("");
+  const [departmentId, setDepartmentId] = useState(defaultDepartmentId ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    if (isOpen) setDepartmentId(defaultDepartmentId ?? "");
+  }, [isOpen, defaultDepartmentId]);
+
   async function handleSubmit() {
     setError(null);
-    if (!fullName.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      setError("Revisa nombre y correo.");
+    if (!fullName.trim()) {
+      setError("Falta el nombre.");
+      return;
+    }
+    if (email.trim() && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) {
+      setError("El correo no es válido.");
       return;
     }
     const parsedVacationDays = annualVacationDays.trim() === "" ? null : Number(annualVacationDays);
@@ -408,7 +419,7 @@ function InviteSheet({
       setAnnualVacationDays("");
       setRole("employee");
       setManagerId("");
-      setDepartmentId("");
+      setDepartmentId(defaultDepartmentId ?? "");
       onSaved();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "No se pudo invitar.");
@@ -420,8 +431,14 @@ function InviteSheet({
   return (
     <BottomSheet isOpen={isOpen} title="Agregar empleado" onClose={onClose}>
       <div className="min-w-0 space-y-4">
-        <TextInput label="Nombre completo" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-        <TextInput label="Correo" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <TextInput required label="Nombre completo" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+        <TextInput
+          hint="Puedes omitirlo por ahora. Sin correo, la persona se registra sin cuenta (no recibe invitación); le das acceso después desde su perfil."
+          label="Correo"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
         <TextInput label="Puesto" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} />
         <TextInput
           label="Días de vacaciones al año"
@@ -442,12 +459,14 @@ function InviteSheet({
           </p>
         ) : null}
 
-        <p className="text-xs leading-5 text-[var(--color-muted)]">
-          Se enviará un correo de invitación. Al abrirlo, la persona define su password y entra a la app.
-        </p>
+        {email.trim() ? (
+          <p className="text-xs leading-5 text-[var(--color-muted)]">
+            Se enviará un correo de invitación. Al abrirlo, la persona define su password y entra a la app.
+          </p>
+        ) : null}
 
         <Button className="w-full" disabled={saving} onClick={handleSubmit}>
-          {saving ? "Enviando invitación…" : "Enviar invitación"}
+          {saving ? "Guardando…" : email.trim() ? "Enviar invitación" : "Agregar empleado"}
         </Button>
       </div>
     </BottomSheet>

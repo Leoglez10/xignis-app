@@ -279,8 +279,17 @@ export async function updateProfileAssignment(
 }
 
 /** Invita un usuario nuevo (RH/admin). Crea auth user + perfil y envía correo. */
+/** Dominio de los correos placeholder de empleados creados sin cuenta. */
+export const PLACEHOLDER_EMAIL_DOMAIN = "@xignis.local";
+
+/** True si el correo es real (no un placeholder de empleado sin cuenta). */
+export function hasRealEmail(email: string | null | undefined): email is string {
+  return Boolean(email) && !email!.endsWith(PLACEHOLDER_EMAIL_DOMAIN);
+}
+
 export async function inviteUser(input: {
   annual_vacation_days?: number | null;
+  /** Vacío = empleado sin cuenta (no puede iniciar sesión hasta que RH le dé acceso). */
   email: string;
   full_name: string;
   role: UserRole;
@@ -295,6 +304,21 @@ export async function inviteUser(input: {
 
   if (error) {
     // la Edge Function devuelve { error } en el body con status !=2xx
+    const message = (data as { error?: string } | null)?.error ?? error.message;
+    throw new Error(message);
+  }
+  return data as { ok: true; user_id: string; email: string; has_email: boolean };
+}
+
+/** Asigna un correo real a un empleado creado sin cuenta y le envía el enlace para
+ *  definir su password (RH/admin). */
+export async function grantAccess(input: { user_id: string; email: string }) {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.functions.invoke("admin-grant-access", {
+    body: { ...input, redirect_to: `${window.location.origin}/set-password` },
+  });
+
+  if (error) {
     const message = (data as { error?: string } | null)?.error ?? error.message;
     throw new Error(message);
   }

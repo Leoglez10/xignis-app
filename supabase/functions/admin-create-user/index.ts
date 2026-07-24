@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
   let payload: any;
   try { payload = await req.json(); } catch { return json({ error: "JSON inválido." }, 400); }
 
-  const email = String(payload.email ?? "").trim().toLowerCase();
+  const rawEmail = String(payload.email ?? "").trim().toLowerCase();
   const fullName = String(payload.full_name ?? "").trim();
   const role = String(payload.role ?? "employee");
   const jobTitle = payload.job_title ? String(payload.job_title).trim() : null;
@@ -55,21 +55,48 @@ Deno.serve(async (req) => {
   const redirectTo = payload.redirect_to ? String(payload.redirect_to) : undefined;
   const annualVacationDays = parseVacationDays(payload.annual_vacation_days);
 
-  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: "Correo inválido." }, 400);
+  // El correo es opcional: sin correo se crea un empleado "sin cuenta" (no puede
+  // iniciar sesión) que RH puede activar después con admin-grant-access.
+  const hasEmail = rawEmail.length > 0;
+  if (hasEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(rawEmail)) return json({ error: "Correo inválido." }, 400);
   if (!fullName) return json({ error: "Falta el nombre." }, 400);
   if (!ALLOWED_ROLES.includes(role)) return json({ error: "Rol inválido." }, 400);
   if (Number.isNaN(annualVacationDays)) return json({ error: "Días de vacaciones inválidos." }, 400);
 
-  const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { full_name: fullName },
-    redirectTo,
-  });
-  if (inviteErr || !invited.user) {
-    return json({ error: inviteErr?.message ?? "No se pudo invitar." }, 400);
+  let userId: string;
+  let resolvedEmail: string;
+
+  if (hasEmail) {
+    // Con correo: se invita por email y define su password al abrir el enlace.
+    const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(rawEmail, {
+      data: { full_name: fullName },
+      redirectTo,
+    });
+    if (inviteErr || !invited.user) {
+      return json({ error: inviteErr?.message ?? "No se pudo invitar." }, 400);
+    }
+    userId = invited.user.id;
+    resolvedEmail = rawEmail;
+  } else {
+    // Sin correo: cuenta placeholder confirmada, con password aleatorio que nadie
+    // conoce → inerte, no hay login posible hasta que RH le asigne un correo real.
+    const placeholderEmail = `noreply+${crypto.randomUUID()}@xignis.local`;
+    const randomPassword = crypto.randomUUID() + crypto.randomUUID();
+    const { data: created, error: createErr } = await admin.auth.admin.createUser({
+      email: placeholderEmail,
+      password: randomPassword,
+      email_confirm: true,
+      user_metadata: { full_name: fullName, no_email: true },
+    });
+    if (createErr || !created.user) {
+      return json({ error: createErr?.message ?? "No se pudo crear el empleado." }, 400);
+    }
+    userId = created.user.id;
+    resolvedEmail = placeholderEmail;
   }
 
   const { error: profErr } = await admin.from("profiles").upsert({
-    id: invited.user.id,
+    id: userId,
     full_name: fullName,
     role,
     job_title: jobTitle,
@@ -79,5 +106,5 @@ Deno.serve(async (req) => {
   }, { onConflict: "id" });
   if (profErr) return json({ error: profErr.message }, 400);
 
-  return json({ ok: true, user_id: invited.user.id, email });
+  return json({ ok: true, user_id: userId, email: resolvedEmail, has_email: hasEmail });
 });

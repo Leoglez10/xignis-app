@@ -1,6 +1,6 @@
-import { Archive, ArchiveRestore, Building2, ChevronDown, Pencil, Plus, Users } from "lucide-react";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { Archive, ArchiveRestore, Building2, ChevronDown, Pencil, Plus, UserPlus, Users } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/Button";
 import { BottomSheet } from "../../../components/ui/BottomSheet";
 import { TextInput } from "../../../components/ui/TextInput";
@@ -8,14 +8,19 @@ import { Avatar } from "../../../components/ui/Avatar";
 import { AdminShell } from "../components/adminNav";
 import { AREA_PALETTE, areaColor } from "../areaColor";
 import {
+  assignToDepartment,
   createDepartment,
+  listAssignableEmployees,
   listDepartments,
   listDepartmentMembers,
   setDepartmentArchived,
   subscribeToDepartments,
   updateDepartment,
+  type AssignableEmployee,
   type DepartmentWithCount,
 } from "../services/departmentService";
+import { listManagers } from "../../profiles/services/profileService";
+import { InviteSheet } from "./EmployeesScreen";
 import { successHaptic } from "../../../lib/haptics";
 import type { Profile } from "../../../lib/database.types";
 
@@ -216,6 +221,182 @@ function MembersAccordion({ department, isOpen }: { department: DepartmentWithCo
   );
 }
 
+/** Asignador de gente a un área. Dos pasos: elegir y confirmar el resumen.
+ *  Una sola confirmación a propósito: mover de área es reversible y queda
+ *  registrado en el historial; la ceremonia pesada se reserva para las bajas. */
+function AssignMembersSheet({
+  department,
+  onClose,
+  onSaved,
+  onCreateNew,
+}: {
+  department: DepartmentWithCount | null;
+  onClose: () => void;
+  onSaved: () => void;
+  onCreateNew: () => void;
+}) {
+  const [step, setStep] = useState<1 | 2>(1);
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const isOpen = Boolean(department);
+  const peopleQuery = useQuery<AssignableEmployee[]>({
+    enabled: isOpen,
+    queryKey: ["assignable-employees"],
+    queryFn: listAssignableEmployees,
+  });
+
+  useEffect(() => {
+    if (department) {
+      setStep(1);
+      setQuery("");
+      setSelected([]);
+      setError(null);
+    }
+  }, [department]);
+
+  const candidates = useMemo(() => {
+    const people = (peopleQuery.data ?? []).filter((p) => p.department_id !== department?.id);
+    const q = query.trim().toLowerCase();
+    if (!q) return people;
+    return people.filter(
+      (p) => p.full_name.toLowerCase().includes(q) || (p.job_title ?? "").toLowerCase().includes(q),
+    );
+  }, [peopleQuery.data, department?.id, query]);
+
+  const chosen = useMemo(
+    () => (peopleQuery.data ?? []).filter((p) => selected.includes(p.id)),
+    [peopleQuery.data, selected],
+  );
+  const transfers = chosen.filter((p) => p.department);
+
+  if (!department) return null;
+
+  function toggle(id: string) {
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
+  async function handleConfirm() {
+    if (!department) return;
+    try {
+      setSaving(true);
+      setError(null);
+      await assignToDepartment(selected, department.id);
+      void successHaptic();
+      onSaved();
+      onClose();
+    } catch (assignError) {
+      setError(assignError instanceof Error ? assignError.message : "No se pudo asignar.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <BottomSheet isOpen={isOpen} title={`Agregar a ${department.name}`} onClose={onClose}>
+      {step === 1 ? (
+        <div className="space-y-4">
+          <TextInput
+            label="Buscar persona"
+            placeholder="Nombre o puesto"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+
+          {peopleQuery.isLoading ? (
+            <div className="space-y-2">
+              {[0, 1, 2].map((i) => (
+                <div className="h-14 rounded-2xl bg-[var(--skeleton-base)] animate-pulse" key={i} />
+              ))}
+            </div>
+          ) : candidates.length === 0 ? (
+            <p className="rounded-2xl bg-slate-50 p-3 text-sm font-semibold text-[var(--color-muted)]">
+              No hay nadie más para agregar.
+            </p>
+          ) : (
+            <ul className="max-h-72 space-y-2 overflow-y-auto">
+              {candidates.map((p) => {
+                const isChecked = selected.includes(p.id);
+                return (
+                  <li key={p.id}>
+                    <label
+                      className={`flex cursor-pointer items-center gap-3 rounded-2xl p-2.5 ring-1 transition ${
+                        isChecked ? "bg-emerald-50 ring-emerald-300" : "bg-slate-50 ring-slate-200"
+                      }`}
+                    >
+                      <input
+                        checked={isChecked}
+                        className="size-4 accent-emerald-600"
+                        type="checkbox"
+                        onChange={() => toggle(p.id)}
+                      />
+                      <Avatar name={p.full_name} size="size-9" src={p.avatar_url} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold">{p.full_name}</p>
+                        <p className="truncate text-xs text-[var(--color-muted)]">
+                          {p.department ? `Hoy en ${p.department.name}` : "Sin área"}
+                          {p.job_title ? ` · ${p.job_title}` : ""}
+                        </p>
+                      </div>
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          <Button className="w-full" variant="secondary" onClick={onCreateNew}>
+            <UserPlus aria-hidden="true" className="size-5" />
+            Dar de alta a alguien nuevo
+          </Button>
+          <Button className="w-full" disabled={selected.length === 0} onClick={() => setStep(2)}>
+            Continuar ({selected.length})
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <p className="text-sm leading-6 text-[var(--color-text)]">
+            Vas a mover {selected.length === 1 ? "a 1 persona" : `a ${selected.length} personas`} a{" "}
+            <span className="font-bold">{department.name}</span>.
+          </p>
+          <ul className="max-h-56 space-y-2 overflow-y-auto">
+            {chosen.map((p) => (
+              <li className="rounded-2xl bg-slate-50 p-2.5 text-sm ring-1 ring-slate-200" key={p.id}>
+                <span className="font-bold">{p.full_name}</span>
+                <span className="text-[var(--color-muted)]">
+                  {" · "}
+                  {p.department ? `${p.department.name} → ${department.name}` : `Sin área → ${department.name}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {transfers.length > 0 ? (
+            <p className="rounded-2xl bg-amber-50 p-3 text-xs leading-5 text-amber-900 ring-1 ring-amber-200">
+              {transfers.length === 1 ? "1 persona sale de su área actual" : `${transfers.length} personas salen de su área actual`}.
+              Queda registrado en su historial laboral y se puede revertir.
+            </p>
+          ) : null}
+          {error ? (
+            <p className="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <div className="grid grid-cols-2 gap-3">
+            <Button className="w-full" variant="secondary" onClick={() => setStep(1)}>
+              Atras
+            </Button>
+            <Button className="w-full" disabled={saving} onClick={() => void handleConfirm()}>
+              {saving ? "Moviendo…" : "Confirmar"}
+            </Button>
+          </div>
+        </div>
+      )}
+    </BottomSheet>
+  );
+}
+
 export function DepartmentsScreen() {
   const [departments, setDepartments] = useState<DepartmentWithCount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -224,6 +405,11 @@ export function DepartmentsScreen() {
   const [editing, setEditing] = useState<DepartmentWithCount | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [workingId, setWorkingId] = useState<string | null>(null);
+  const [assignTarget, setAssignTarget] = useState<DepartmentWithCount | null>(null);
+  const [inviteFor, setInviteFor] = useState<DepartmentWithCount | null>(null);
+
+  const queryClient = useQueryClient();
+  const managersQuery = useQuery({ queryKey: ["managers"], queryFn: listManagers });
 
   const load = useCallback(async () => {
     try {
@@ -236,6 +422,14 @@ export function DepartmentsScreen() {
       setIsLoading(false);
     }
   }, []);
+
+  /** Tras mover o dar de alta gente: recarga conteos y tira el caché de los
+   *  acordeones y del buscador, que ya quedaron viejos. */
+  const refreshPeople = useCallback(async () => {
+    await load();
+    await queryClient.invalidateQueries({ queryKey: ["department-members"] });
+    await queryClient.invalidateQueries({ queryKey: ["assignable-employees"] });
+  }, [load, queryClient]);
 
   useEffect(() => {
     void load();
@@ -324,6 +518,13 @@ export function DepartmentsScreen() {
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
                       <IconAction
+                        disabled={Boolean(dept.archived_at)}
+                        label="Agregar gente"
+                        onClick={() => setAssignTarget(dept)}
+                      >
+                        <Plus aria-hidden="true" className="size-4" />
+                      </IconAction>
+                      <IconAction
                         label="Editar"
                         onClick={() => {
                           setEditing(dept);
@@ -372,6 +573,28 @@ export function DepartmentsScreen() {
         isOpen={editorOpen}
         onClose={() => setEditorOpen(false)}
         onSaved={() => void load()}
+      />
+
+      <AssignMembersSheet
+        department={assignTarget}
+        onClose={() => setAssignTarget(null)}
+        onCreateNew={() => {
+          setInviteFor(assignTarget);
+          setAssignTarget(null);
+        }}
+        onSaved={() => void refreshPeople()}
+      />
+
+      <InviteSheet
+        defaultDepartmentId={inviteFor?.id}
+        departments={departments}
+        isOpen={Boolean(inviteFor)}
+        managers={managersQuery.data ?? []}
+        onClose={() => setInviteFor(null)}
+        onSaved={() => {
+          setInviteFor(null);
+          void refreshPeople();
+        }}
       />
     </AdminShell>
   );
