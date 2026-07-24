@@ -1,6 +1,17 @@
-import { Archive, ArchiveRestore, Building2, ChevronDown, Pencil, Plus, UserPlus, Users } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  Building2,
+  ChevronDown,
+  ChevronRight,
+  Pencil,
+  Plus,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { Button } from "../../../components/ui/Button";
 import { BottomSheet } from "../../../components/ui/BottomSheet";
 import { TextInput } from "../../../components/ui/TextInput";
@@ -51,7 +62,7 @@ function IconAction({
       </button>
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute -top-1 left-1/2 z-20 origin-bottom -translate-x-1/2 scale-90 whitespace-nowrap rounded-lg bg-slate-900 px-2 py-1 text-[11px] font-bold text-white opacity-0 shadow-lg transition-all duration-200 group-hover:-translate-y-full group-hover:scale-100 group-hover:opacity-100 group-focus-within:-translate-y-full group-focus-within:scale-100 group-focus-within:opacity-100"
+        className="pointer-events-none absolute -bottom-1 left-1/2 z-20 origin-top -translate-x-1/2 scale-90 whitespace-nowrap rounded-lg bg-slate-900 px-2 py-1 text-[11px] font-bold text-white opacity-0 shadow-lg transition-all duration-200 group-hover:translate-y-full group-hover:scale-100 group-hover:opacity-100 group-focus-within:translate-y-full group-focus-within:scale-100 group-focus-within:opacity-100"
       >
         {label}
       </span>
@@ -204,14 +215,23 @@ function MembersAccordion({ department, isOpen }: { department: DepartmentWithCo
             Sin miembros asignados todavía.
           </p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-1">
             {members.map((m) => (
-              <li className="flex items-center gap-3 rounded-2xl bg-slate-50 p-2.5 ring-1 ring-slate-200" key={m.id}>
-                <Avatar name={m.full_name} size="size-9" src={m.avatar_url} />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-bold">{m.full_name}</p>
-                  {m.job_title ? <p className="truncate text-xs text-[var(--color-muted)]">{m.job_title}</p> : null}
-                </div>
+              <li key={m.id}>
+                <Link
+                  className="group/row flex items-center gap-3 rounded-2xl p-2.5 transition-colors hover:bg-slate-100 active:bg-slate-200"
+                  to={`/admin/employees/${m.id}`}
+                >
+                  <Avatar name={m.full_name} size="size-9" src={m.avatar_url} />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold">{m.full_name}</p>
+                    {m.job_title ? <p className="truncate text-xs text-[var(--color-muted)]">{m.job_title}</p> : null}
+                  </div>
+                  <ChevronRight
+                    aria-hidden="true"
+                    className="ml-auto size-4 shrink-0 text-slate-300 transition-all group-hover/row:translate-x-0.5 group-hover/row:text-slate-500"
+                  />
+                </Link>
               </li>
             ))}
           </ul>
