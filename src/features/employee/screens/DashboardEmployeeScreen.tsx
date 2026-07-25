@@ -94,11 +94,15 @@ export function DashboardEmployeeScreen() {
 
   return (
     <main className="mobile-screen" id="main-content" tabIndex={-1}>
-      <section className="flex min-h-dvh flex-col px-5 pb-28 pt-6 lg:px-8">
-        <BirthdayHero />
+      <section className="flex min-h-dvh flex-col px-5 pb-28 pt-6 lg:mx-auto lg:grid lg:w-full lg:max-w-6xl lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-6 lg:px-8">
+        {/* Left column on desktop (main flow); flattened into the single mobile stack via display:contents + order-* */}
+        <div className="contents lg:flex lg:flex-col">
+        <div className="order-1">
+          <BirthdayHero />
+        </div>
         <button
           aria-label="Crear nuevo permiso"
-          className="group press animate-fade-up relative overflow-hidden rounded-[24px] bg-slate-950 p-5 text-left text-white shadow-xl shadow-slate-200 lg:p-7"
+          className="group press animate-fade-up relative order-2 overflow-hidden rounded-[24px] bg-slate-950 p-5 text-left text-white shadow-xl shadow-slate-200 lg:p-7"
           type="button"
           onClick={() => navigate("/employee/request")}
         >
@@ -119,7 +123,7 @@ export function DashboardEmployeeScreen() {
         </button>
 
         <button
-          className="press animate-fade-up mt-4 flex w-full items-center justify-between gap-4 rounded-[24px] border border-[var(--card-border)] bg-[var(--card-bg)] p-5 text-left shadow-sm"
+          className="press animate-fade-up order-3 mt-4 flex w-full items-center justify-between gap-4 rounded-[24px] border border-[var(--card-border)] bg-[var(--card-bg)] p-5 text-left shadow-sm"
           type="button"
           onClick={() => navigate("/employee/requests")}
         >
@@ -156,56 +160,11 @@ export function DashboardEmployeeScreen() {
         </button>
 
         {isLoading ? (
-          <div className="mt-5">
+          <div className="order-4 mt-5">
             <EmployeeDashboardSkeleton />
           </div>
         ) : (
-          <>
-            {inFlightRequest ? (
-              <div className="mt-5">
-                <InProgressRequestCard
-                  requestId={inFlightRequest.id}
-                  title="Solicitud en curso"
-                  onView={(id) => navigate(`/employee/requests/${id}`)}
-                />
-              </div>
-            ) : null}
-
-            {activePermit ? (
-              <div className="mt-5">
-                <ActivePermitBanner request={activePermit} />
-              </div>
-            ) : null}
-
-            {balance && balance.quota > 0 ? (
-              <div className="mt-5">
-                <VacationBalanceCard balance={balance} />
-              </div>
-            ) : null}
-
-            {nextAbsence && !activePermit ? (
-              <div className="mt-5">
-                <NextAbsenceCard request={nextAbsence} />
-              </div>
-            ) : null}
-
-            {peers.length > 0 ? (
-              <PeersStrip absences={peerAbsences} peers={peers} />
-            ) : null}
-
-            {preferences.birthdayVisibility && peers.length > 0 ? (
-              <div className="mt-5">
-                <BirthdayStrip members={peers} />
-              </div>
-            ) : null}
-
-            {error ? (
-              <p className="mt-4 rounded-2xl bg-red-50 p-4 text-sm font-semibold leading-6 text-red-700" role="alert">
-                {error}
-              </p>
-            ) : null}
-
-            <section className="mt-7" aria-labelledby="recent-title">
+            <section className="order-[11] mt-7" aria-labelledby="recent-title">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-lg font-bold tracking-tight text-[var(--color-text)]" id="recent-title">
                   Actividad reciente
@@ -277,8 +236,61 @@ export function DashboardEmployeeScreen() {
                 </button>
               ) : null}
             </section>
-          </>
         )}
+        </div>
+
+        {/* Right column on desktop (status sidebar); flattened into the mobile stack via display:contents + order-* */}
+        <aside className="contents lg:sticky lg:top-8 lg:flex lg:flex-col">
+          {isLoading ? null : (
+            <>
+              {inFlightRequest ? (
+                <div className="order-4 mt-5">
+                  <InProgressRequestCard
+                    requestId={inFlightRequest.id}
+                    title="Solicitud en curso"
+                    onView={(id) => navigate(`/employee/requests/${id}`)}
+                  />
+                </div>
+              ) : null}
+
+              {activePermit ? (
+                <div className="order-5 mt-5">
+                  <ActivePermitBanner request={activePermit} />
+                </div>
+              ) : null}
+
+              {balance && balance.quota > 0 ? (
+                <div className="order-6 mt-5">
+                  <VacationBalanceCard balance={balance} />
+                </div>
+              ) : null}
+
+              {nextAbsence && !activePermit ? (
+                <div className="order-7 mt-5">
+                  <NextAbsenceCard request={nextAbsence} />
+                </div>
+              ) : null}
+
+              {peers.length > 0 ? (
+                <div className="order-8">
+                  <PeersStrip absences={peerAbsences} peers={peers} />
+                </div>
+              ) : null}
+
+              {preferences.birthdayVisibility && peers.length > 0 ? (
+                <div className="order-9 mt-5">
+                  <BirthdayStrip members={peers} />
+                </div>
+              ) : null}
+
+              {error ? (
+                <p className="order-10 mt-4 rounded-2xl bg-red-50 p-4 text-sm font-semibold leading-6 text-red-700" role="alert">
+                  {error}
+                </p>
+              ) : null}
+            </>
+          )}
+        </aside>
       </section>
     </main>
   );

@@ -1,4 +1,4 @@
-import { Download, FileDown, Search } from "lucide-react";
+import { ChevronDown, Download, FileDown, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatDateRangeEs } from "../../../lib/date";
@@ -309,35 +309,34 @@ export function AdminReportsScreen() {
             {recentRows.map((request) => {
               const duration = approvalDays(request);
               return (
-                <article className="rounded-[20px] bg-slate-50 p-4 ring-1 ring-slate-200" key={request.id}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-bold">{request.employee?.full_name ?? "Empleado"}</p>
-                      <p className="mt-1 text-xs text-[var(--color-muted)]">{request.employee?.job_title ?? "Sin puesto"}</p>
+                <details className="group rounded-2xl bg-slate-50 ring-1 ring-slate-200" key={request.id}>
+                  <summary className="flex cursor-pointer list-none items-center gap-2 p-3 [&::-webkit-details-marker]:hidden">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold">{request.employee?.full_name ?? "Empleado"}</p>
+                      <p className="mt-0.5 truncate text-xs text-[var(--color-muted)]">
+                        {leaveTypeLabel[request.leave_type]} · {dayCount(request.start_date, request.end_date)}d
+                      </p>
                     </div>
-                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${statusChipTone[request.status]}`}>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${statusChipTone[request.status]}`}>
                       {statusLabel[request.status]}
                     </span>
-                  </div>
-                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <p className="text-xs font-bold text-[var(--color-muted)]">Tipo</p>
-                      <p className="mt-1 font-bold">{leaveTypeLabel[request.leave_type]}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-[var(--color-muted)]">Dias</p>
-                      <p className="mt-1 font-bold">{dayCount(request.start_date, request.end_date)}</p>
+                    <ChevronDown aria-hidden className="size-4 shrink-0 text-[var(--color-muted)] transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="grid grid-cols-2 gap-3 border-t border-slate-200 p-3 text-sm">
+                    <div className="col-span-2">
+                      <p className="text-xs font-bold text-[var(--color-muted)]">Puesto</p>
+                      <p className="mt-1 font-bold">{request.employee?.job_title ?? "Sin puesto"}</p>
                     </div>
                     <div className="col-span-2">
                       <p className="text-xs font-bold text-[var(--color-muted)]">Periodo</p>
                       <p className="mt-1 font-bold">{formatDateRangeEs(request.start_date, request.end_date)}</p>
                     </div>
-                    <div className="col-span-2">
+                    <div>
                       <p className="text-xs font-bold text-[var(--color-muted)]">Revision</p>
                       <p className="mt-1 font-bold">{duration === null ? "Pendiente" : `${duration}d`}</p>
                     </div>
                   </div>
-                </article>
+                </details>
               );
             })}
           </div>
