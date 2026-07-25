@@ -3,6 +3,7 @@ import type { ReactNode, TouchEvent } from "react";
 import type { Location } from "react-router-dom";
 import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from "framer-motion";
+import { PageSkeleton } from "../components/ui/Skeleton";
 import { bumpHaptic } from "../lib/haptics";
 import { useAuth } from "../features/session/AuthContext";
 import { tabsByRole, type NavTab } from "./navConfig";
@@ -232,13 +233,15 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
         {children(location)}
       </motion.div>
       {drag === "tab" && peek ? (
-        // Suspense propio: si el chunk del vecino aún no cargó, solo esta capa
-        // queda vacía (no toda la pantalla, cuyo Suspense vive en App.tsx).
-        <Suspense fallback={null}>
-          <motion.div className="absolute inset-0 min-h-dvh w-full" style={{ x: peekX }}>
-            {children(peek.loc)}
-          </motion.div>
-        </Suspense>
+        // Suspense propio: si el chunk del vecino aún no cargó, esta capa muestra
+        // el esqueleto de página (no toda la pantalla, cuyo Suspense vive en App.tsx).
+        // Fondo opaco para que la página actual no se transparente por debajo.
+        <motion.div
+          className="absolute inset-0 min-h-dvh w-full bg-[var(--color-background)]"
+          style={{ x: peekX }}
+        >
+          <Suspense fallback={<PageSkeleton />}>{children(peek.loc)}</Suspense>
+        </motion.div>
       ) : null}
     </div>
   );

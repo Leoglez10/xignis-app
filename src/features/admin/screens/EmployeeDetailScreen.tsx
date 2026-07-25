@@ -2,7 +2,7 @@ import { ArrowLeft, ChevronRight, Clock, History } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Avatar } from "../../../components/ui/Avatar";
+import { ZoomableAvatar } from "../../../components/ui/ZoomableAvatar";
 import { BottomSheet } from "../../../components/ui/BottomSheet";
 import { Button } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/TextInput";
@@ -103,7 +103,7 @@ export function EmployeeDetailScreen() {
           </button>
           {sheet ? (
             <div className="flex flex-1 items-center gap-3">
-              <Avatar className="text-base text-emerald-700" name={sheet.full_name} size="size-16" src={sheet.avatar_url} />
+              <ZoomableAvatar className="text-base text-emerald-700" name={sheet.full_name} size="size-16" src={sheet.avatar_url} />
               <div className="min-w-0">
                 <h2 className="truncate text-2xl font-bold md:text-3xl">{sheet.full_name}</h2>
                 <p className="truncate text-sm text-[var(--color-muted)]">{sheet.job_title ?? "Sin puesto"}</p>

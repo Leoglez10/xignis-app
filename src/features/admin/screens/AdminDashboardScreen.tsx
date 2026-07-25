@@ -163,12 +163,12 @@ export function AdminDashboardScreen() {
             )}
           </section>
 
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <TrendChart data={trend} />
             <TypeDistributionChart data={typeDist} />
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
             <RecentOnboardingsWidget items={onboardings} />
             <RecentTerminationsWidget items={terminations} />
             <InactiveEmployeesWidget items={inactive} />

@@ -13,6 +13,27 @@ function json(body: unknown, status = 200) {
   });
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// La migración de JWT signing keys de Supabase deja, en ráfaga, algunas instancias
+// de GoTrue con el JWKS viejo -> rechaza el token con "unrecognized JWT kid ... ES256".
+// Es transitorio: la verificación falla ANTES de mutar nada, así que reintentar es seguro.
+function isTransientJwtError(err: unknown): boolean {
+  const msg = (err && typeof err === "object" && "message" in err)
+    ? String((err as { message: unknown }).message)
+    : String(err ?? "");
+  return /unverifiable|unrecognized JWT kid|keyfunc|invalid JWT/i.test(msg);
+}
+
+async function withJwtRetry<T extends { error: unknown }>(fn: () => Promise<T>): Promise<T> {
+  let last: T = await fn();
+  for (let attempt = 1; attempt <= 4 && last.error && isTransientJwtError(last.error); attempt++) {
+    await sleep(200 * attempt);
+    last = await fn();
+  }
+  return last;
+}
+
 // Asigna un correo real a un empleado creado sin cuenta. No manda correo: la cuenta
 // queda pendiente de activación y la persona define su password al entrar a la app.
 // Solo RH/admin. Contraparte de admin-create-user sin correo.
@@ -28,7 +49,7 @@ Deno.serve(async (req) => {
 
   const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
 
-  const { data: userData, error: userErr } = await admin.auth.getUser(token);
+  const { data: userData, error: userErr } = await withJwtRetry(() => admin.auth.getUser(token));
   if (userErr || !userData.user) return json({ error: "Sesión inválida." }, 401);
 
   const { data: callerProfile } = await admin
@@ -49,12 +70,14 @@ Deno.serve(async (req) => {
 
   // Setea el correo confirmado (sin doble opt-in) sobre el usuario placeholder y lo
   // deja pendiente de activación: define su password al entrar a la app.
-  const { error: updErr } = await admin.auth.admin.updateUserById(userId, {
-    email,
-    email_confirm: true,
-    password: crypto.randomUUID() + crypto.randomUUID(),
-    user_metadata: { no_email: false, must_set_password: true },
-  });
+  const { error: updErr } = await withJwtRetry(() =>
+    admin.auth.admin.updateUserById(userId, {
+      email,
+      email_confirm: true,
+      password: crypto.randomUUID() + crypto.randomUUID(),
+      user_metadata: { no_email: false, must_set_password: true },
+    })
+  );
   if (updErr) {
     const dup = /already|registered|exists/i.test(updErr.message);
     return json({ error: dup ? "Ese correo ya está en uso por otra cuenta." : updErr.message }, 400);

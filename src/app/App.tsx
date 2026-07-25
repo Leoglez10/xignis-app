@@ -6,6 +6,7 @@ import { NotFoundScreen } from "../features/system/screens/NotFoundScreen";
 import { PageTransition } from "./PageTransition";
 import { USER_ROLES } from "../lib/database.types";
 import { TopBar } from "../components/TopBar";
+import { PageSkeleton } from "../components/ui/Skeleton";
 import { useAuth } from "../features/session/AuthContext";
 
 // Code-splitting por ruta: cada pantalla en su chunk → menor parse en cold start (WKWebView).
@@ -54,7 +55,7 @@ export function App() {
       </a>
       <AppChrome />
       <ErrorBoundary>
-      <Suspense fallback={<div className="min-h-dvh" />}>
+      <Suspense fallback={<PageSkeleton />}>
         <PageTransition>
         {(location) => (
         <Routes location={location}>

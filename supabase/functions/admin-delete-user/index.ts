@@ -26,6 +26,27 @@ function json(body: unknown, status = 200) {
   });
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// La migración de JWT signing keys de Supabase deja, en ráfaga, algunas instancias
+// de GoTrue con el JWKS viejo -> rechaza el token con "unrecognized JWT kid ... ES256".
+// Es transitorio: la verificación falla ANTES de mutar nada, así que reintentar es seguro.
+function isTransientJwtError(err: unknown): boolean {
+  const msg = (err && typeof err === "object" && "message" in err)
+    ? String((err as { message: unknown }).message)
+    : String(err ?? "");
+  return /unverifiable|unrecognized JWT kid|keyfunc|invalid JWT/i.test(msg);
+}
+
+async function withJwtRetry<T extends { error: unknown }>(fn: () => Promise<T>): Promise<T> {
+  let last: T = await fn();
+  for (let attempt = 1; attempt <= 4 && last.error && isTransientJwtError(last.error); attempt++) {
+    await sleep(200 * attempt);
+    last = await fn();
+  }
+  return last;
+}
+
 // Baja de empleado = SOFT DELETE: conserva perfil, solicitudes y notificaciones
 // para historial; marca employment_status='terminated' y banea el auth user
 // para que no pueda volver a entrar.
@@ -41,7 +62,7 @@ Deno.serve(async (req) => {
 
   const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
 
-  const { data: userData, error: userErr } = await admin.auth.getUser(token);
+  const { data: userData, error: userErr } = await withJwtRetry(() => admin.auth.getUser(token));
   if (userErr || !userData.user) return json({ error: "Sesión inválida." }, 401);
 
   const { data: callerProfile } = await admin
@@ -74,7 +95,7 @@ Deno.serve(async (req) => {
     .from("profiles").select("id, full_name, role").eq("id", targetId).single();
   if (targetErr || !targetProfile) return json({ error: "Empleado no encontrado." }, 404);
 
-  const { data: targetUser } = await admin.auth.admin.getUserById(targetId);
+  const { data: targetUser } = await withJwtRetry(() => admin.auth.admin.getUserById(targetId));
   const targetEmail = targetUser?.user?.email?.toLowerCase();
   if (targetEmail && PROTECTED_EMAILS.has(targetEmail)) {
     return json({ error: "Esta cuenta no se puede dar de baja." }, 400);
@@ -102,9 +123,9 @@ Deno.serve(async (req) => {
   if (updateErr) return json({ error: updateErr.message }, 400);
 
   // Bloquea el acceso: ban de auth (100 años) + revoca sesiones activas.
-  const { error: banErr } = await admin.auth.admin.updateUserById(targetId, {
-    ban_duration: "876000h",
-  });
+  const { error: banErr } = await withJwtRetry(() =>
+    admin.auth.admin.updateUserById(targetId, { ban_duration: "876000h" })
+  );
   if (banErr) return json({ error: banErr.message }, 400);
   await admin.auth.admin.signOut(targetId, "global").catch(() => {});
 

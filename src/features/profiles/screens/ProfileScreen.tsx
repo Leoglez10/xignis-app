@@ -2,7 +2,7 @@ import { ArrowLeft, Camera, Check, History, Lock, LogOut, Settings } from "lucid
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Avatar } from "../../../components/ui/Avatar";
+import { ZoomableAvatar } from "../../../components/ui/ZoomableAvatar";
 import { ProfileSheet } from "../components/ProfileSheet";
 import { useProfileSheet } from "../hooks/useProfileSheet";
 import { Button } from "../../../components/ui/Button";
@@ -126,20 +126,20 @@ export function ProfileScreen() {
         <section className="animate-fade-up rounded-[28px] bg-white p-6 ring-1 ring-slate-200">
           <div className="flex items-center gap-4">
             <div className="relative shrink-0">
-              <Avatar
+              <ZoomableAvatar
                 className="bg-[var(--color-primary)] text-2xl text-[var(--color-primary-contrast)]"
                 name={profile.full_name}
                 shape="rounded-3xl"
-                size="size-16"
+                size="size-20"
                 src={profile.avatar_url}
               />
               <button
-                className="press absolute -bottom-1 -right-1 grid size-8 place-items-center rounded-full bg-white text-[var(--color-primary)] ring-1 ring-slate-200"
+                className="press absolute -bottom-2.5 -right-2.5 grid size-7 place-items-center rounded-full bg-white text-[var(--color-primary)] ring-1 ring-slate-200"
                 disabled={avatarBusy}
                 onClick={() => setIsPhotoSheetOpen(true)}
                 type="button"
               >
-                <Camera aria-hidden="true" className="size-4" />
+                <Camera aria-hidden="true" className="size-3.5" />
                 <span className="sr-only">{profile.avatar_url ? "Cambiar foto de perfil" : "Subir foto de perfil"}</span>
               </button>
             </div>

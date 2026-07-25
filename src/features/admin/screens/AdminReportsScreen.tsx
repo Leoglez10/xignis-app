@@ -240,7 +240,7 @@ export function AdminReportsScreen() {
           </div>
         </section>
 
-        <section className="animate-fade-up stagger mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6" aria-label="Indicadores">
+        <section className="animate-fade-up stagger mb-5 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 xl:grid-cols-6" aria-label="Indicadores">
           {[
             ["Total", String(total), "bg-white"],
             ["Pendientes", String(pending), "bg-amber-50"],
@@ -249,9 +249,9 @@ export function AdminReportsScreen() {
             ["Dias aprobados", String(approvedDays), "bg-sky-50"],
             ["Prom. revision", averageApprovalDays, "bg-indigo-50"],
           ].map(([label, value, tone]) => (
-            <article className={`rounded-[20px] p-5 ring-1 ring-slate-200 ${tone}`} key={label}>
-              <p className="text-sm font-bold text-[var(--color-muted)]">{label}</p>
-              <p className="mt-2 text-3xl font-bold">{value}</p>
+            <article className={`rounded-2xl p-3 ring-1 ring-slate-200 sm:p-4 ${tone}`} key={label}>
+              <p className="text-xs font-bold leading-tight text-[var(--color-muted)]">{label}</p>
+              <p className="mt-1 text-2xl font-bold sm:text-3xl">{value}</p>
             </article>
           ))}
         </section>
