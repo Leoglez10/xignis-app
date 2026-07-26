@@ -28,6 +28,9 @@ VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
 ```
 
+Para probar migraciones contra una base local en vez de la nube, ver
+`docs/desarrollo-local.md`.
+
 ## Continuar el proyecto
 
 Leer primero:

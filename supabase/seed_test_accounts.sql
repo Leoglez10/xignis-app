@@ -19,10 +19,13 @@ set
   full_name = excluded.full_name,
   job_title = excluded.job_title;
 
+-- The UPDATE target cannot be referenced from a join condition inside `from`,
+-- which is what the previous `join auth.users employee_user on ... = employee.id`
+-- was doing; Postgres rejects it with "invalid reference to FROM-clause entry".
+-- Matching the target in the WHERE clause is the equivalent that parses.
 update public.profiles employee
 set manager_id = manager.id
 from public.profiles manager
 join auth.users manager_user on manager_user.id = manager.id
-join auth.users employee_user on employee_user.id = employee.id
-where employee_user.email = 'ana.employee@xignis.test'
-  and manager_user.email = 'carlos.manager@xignis.test';
+where manager_user.email = 'carlos.manager@xignis.test'
+  and employee.id = (select id from auth.users where email = 'ana.employee@xignis.test');

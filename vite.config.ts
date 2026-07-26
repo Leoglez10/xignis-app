@@ -11,7 +11,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {
     environment: "jsdom",
-    exclude: ["e2e/**", "node_modules/**", "dist/**"],
+    // .claude y .agents traen los tests de los plugins instalados. Vitest los
+    // recogia y reportaba ~96 archivos en rojo que no son del proyecto.
+    exclude: ["e2e/**", "node_modules/**", "dist/**", ".claude/**", ".agents/**"],
     setupFiles: ["./src/test/setup.ts"],
   },
   // WKWebView (iOS 15+): fija el target del transform.
