@@ -12,8 +12,8 @@ jobs:
       VITE_SUPABASE_URL: https://dummy.supabase.co
       VITE_SUPABASE_ANON_KEY: dummy-anon-key-for-ci
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -30,8 +30,8 @@ jobs:
       VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -39,11 +39,21 @@ jobs:
       - run: npm run build
       - name: Add Apache routing rules
         run: cp public/.htaccess dist/.htaccess
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: xignis-app-dist
           path: dist
           retention-days: 1
+      # Tells apart "host unreachable / IP blocked" from "FTP rejected by the server".
+      - name: Probe FTP endpoint
+        run: |
+          for port in 21 990 22; do
+            if timeout 10 bash -c "</dev/tcp/${{ secrets.FTP_SERVER }}/$port" 2>/dev/null; then
+              echo "port $port: open"
+            else
+              echo "port $port: closed or filtered"
+            fi
+          done
       - name: Deploy to Hostinger
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -52,5 +62,6 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
           port: 21
+          timeout: 120000
           local-dir: ./dist/
           server-dir: /public_html/app/
