@@ -65,6 +65,7 @@ export type LeaveRequest = {
   employee_id: string;
   end_date: string;
   end_time: string | null;
+  folio: string;
   id: string;
   leave_type: LeaveType;
   paid: boolean;

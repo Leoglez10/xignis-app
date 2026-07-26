@@ -5,6 +5,10 @@ export type SearchRequest = LeaveRequest & { employee?: Pick<Profile, "full_name
 export type SearchResults = { people: Profile[]; requests: SearchRequest[] };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+// Any term carrying a digit is treated as a folio fragment: "142", "2026-0142"
+// and the full "XG-2026-0142" all reach the same partial match. Checked after
+// ISO_DATE so a plain date still searches by date.
+const HAS_DIGIT = /\d/;
 
 export async function globalSearch(term: string, role: UserRole, currentUserId: string): Promise<SearchResults> {
   const supabase = getSupabaseClient();
@@ -21,6 +25,7 @@ export async function globalSearch(term: string, role: UserRole, currentUserId: 
   const matchingIds = (people ?? []).map((person) => person.id);
   if (UUID.test(q)) requestsQuery = requestsQuery.eq("id", q);
   else if (ISO_DATE.test(q)) requestsQuery = requestsQuery.or(`start_date.eq.${q},end_date.eq.${q}`);
+  else if (HAS_DIGIT.test(q)) requestsQuery = requestsQuery.ilike("folio", `%${q.replace(/[%_]/g, "")}%`);
   else if (matchingIds.length > 0) requestsQuery = requestsQuery.in("employee_id", matchingIds);
   else return { people: (people ?? []) as Profile[], requests: [] };
   if (role === "employee") requestsQuery = requestsQuery.eq("employee_id", currentUserId);

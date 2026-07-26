@@ -241,7 +241,7 @@ export function RequestDetailLayout({
             label="Enviada"
             value={new Date(request.created_at).toLocaleString("es", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
           />
-          <DetailRow icon={FileText} label="Folio" value={request.id} mono />
+          <DetailRow icon={FileText} label="Folio" value={request.folio} mono />
           {request.coverage_contact ? <DetailRow icon={FileText} label="Responsable suplente" value={request.coverage_contact} /> : null}
           {request.pending_tasks ? (
             <div className="rounded-2xl bg-[var(--card-muted)] p-4">
