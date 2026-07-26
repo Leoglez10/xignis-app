@@ -4,14 +4,10 @@ import {
   ChevronLeft,
   Clock,
   FileText,
-  Plane,
-  Stethoscope,
-  User,
-  Utensils,
   type LucideIcon,
 } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
-import type { LeaveRequest, LeaveType } from "../../../lib/database.types";
+import type { LeaveRequest } from "../../../lib/database.types";
 import { leaveTypeConfig, statusTone } from "../config";
 import {
   buildApprovalSteps,
@@ -27,13 +23,6 @@ import {
 import { useLiveLeaveRequest } from "../hooks/useLiveLeaveRequest";
 import { ApprovalTimeline } from "./ApprovalTimeline";
 import { EmployeeAvatar } from "./EmployeeAvatar";
-
-const LEAVE_TYPE_ICON: Record<LeaveType, LucideIcon> = {
-  vacation: Plane,
-  personal: Utensils,
-  sick: Stethoscope,
-  other: User,
-};
 
 const STATE_HERO: Record<
   StepState,
@@ -144,8 +133,8 @@ export function RequestDetailLayout({
     );
   }
 
-  const LeaveIcon = LEAVE_TYPE_ICON[request.leave_type] ?? User;
   const typeConfig = leaveTypeConfig[request.leave_type];
+  const LeaveIcon = typeConfig.icon;
   const allDone = !currentStep && request.status === "approved";
 
   return (

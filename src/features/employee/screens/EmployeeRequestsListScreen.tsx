@@ -125,9 +125,9 @@ export function EmployeeRequestsListScreen() {
                     onClick={() => navigate(`/employee/requests/${r.id}`)}
                   >
                     <span
-                      className={`grid size-10 shrink-0 place-items-center rounded-2xl text-xs font-bold ${cfg.avatarTone}`}
+                      className={`grid size-10 shrink-0 place-items-center rounded-2xl ${cfg.avatarTone}`}
                     >
-                      {cfg.label.slice(0, 1)}
+                      <cfg.icon aria-hidden="true" className="size-5" />
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-bold">{cfg.label}</p>

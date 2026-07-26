@@ -1,9 +1,11 @@
+import { Plane, Stethoscope, User, Utensils, type LucideIcon } from "lucide-react";
 import type { LeaveStatus, LeaveType } from "../../lib/database.types";
 
 type LeaveTypeEntry = {
   avatarTone: string;
   chipTone: string;
   label: string;
+  icon: LucideIcon;
 };
 
 export const leaveTypeConfig: Record<LeaveType, LeaveTypeEntry> = {
@@ -11,21 +13,25 @@ export const leaveTypeConfig: Record<LeaveType, LeaveTypeEntry> = {
     avatarTone: "bg-emerald-100 text-emerald-700",
     chipTone: "bg-emerald-100 text-emerald-800",
     label: "Vacaciones",
+    icon: Plane,
   },
   personal: {
     avatarTone: "bg-indigo-100 text-indigo-700",
     chipTone: "bg-indigo-100 text-indigo-800",
     label: "Personal",
+    icon: Utensils,
   },
   sick: {
     avatarTone: "bg-rose-100 text-rose-700",
     chipTone: "bg-rose-100 text-rose-800",
     label: "Enfermedad",
+    icon: Stethoscope,
   },
   other: {
     avatarTone: "bg-slate-200 text-slate-700",
     chipTone: "bg-slate-200 text-slate-700",
     label: "Otro",
+    icon: User,
   },
 };
 
