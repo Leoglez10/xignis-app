@@ -8,6 +8,7 @@ import { StepDots } from "../../../components/ui/StepDots";
 import { TextInput } from "../../../components/ui/TextInput";
 import { TextArea } from "../../../components/ui/TextArea";
 import { Avatar } from "../../../components/ui/Avatar";
+import { DateRangeCalendar } from "../../../components/ui/DateRangeCalendar";
 import { diffDaysInclusive, formatDateEs, formatDateRangeEs, todayIso } from "../../../lib/date";
 import type { LeaveType, ScheduleType } from "../../../lib/database.types";
 import { usePageTitle } from "../../../lib/usePageTitle";
@@ -108,6 +109,7 @@ export function LeaveRequestScreen() {
     register,
     setError,
     setFocus,
+    setValue,
     trigger,
   } = useForm<RequestFormValues>({
     defaultValues: draft.values,
@@ -197,11 +199,11 @@ export function LeaveRequestScreen() {
   return (
     <main className="mobile-screen" id="main-content" tabIndex={-1}>
       <form
-        className="flex min-h-dvh flex-col px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-5 lg:px-8"
+        className="flex min-h-dvh flex-col px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-5 lg:grid lg:max-w-5xl lg:grid-cols-[240px_minmax(0,1fr)] lg:content-start lg:gap-x-10 lg:px-8 lg:pt-10"
         noValidate
         onSubmit={handleSubmit(onSubmit)}
       >
-        <header className="mb-3 grid grid-cols-[44px_1fr_44px] items-center">
+        <header className="mb-3 grid grid-cols-[44px_1fr_44px] items-center lg:col-start-2 lg:row-start-1">
           <button
             aria-label="Regresar"
             className="grid size-11 place-items-center rounded-full bg-[var(--color-surface)]"
@@ -216,24 +218,46 @@ export function LeaveRequestScreen() {
           </span>
         </header>
 
-        <div className="mb-4">
+        <div className="mb-4 lg:hidden">
           <StepDots current={step} total={TOTAL_STEPS} />
         </div>
 
-        <section
-          className="mb-4 flex items-center gap-4 rounded-[20px] bg-[var(--color-surface)] p-4"
-          aria-hidden="true"
-        >
-          <Avatar className="size-14" name={profile?.full_name ?? "Empleado"} src={profile?.avatar_url} />
-          <div>
-            <h2 className="font-bold text-[var(--color-text)]">{profile?.full_name ?? "Empleado"}</h2>
-            <p className="mt-1 text-sm text-[var(--color-muted)]">{profile?.job_title ?? "Perfil Xignis"}</p>
-          </div>
-        </section>
+        <aside className="mb-4 lg:col-start-1 lg:row-start-1 lg:row-span-4 lg:mb-0 lg:sticky lg:top-6 lg:self-start lg:space-y-4">
+          <section
+            className="flex items-center gap-4 rounded-[20px] bg-[var(--color-surface)] p-4 lg:flex-col lg:items-start lg:gap-3"
+            aria-hidden="true"
+          >
+            <Avatar className="size-14" name={profile?.full_name ?? "Empleado"} src={profile?.avatar_url} />
+            <div>
+              <h2 className="font-bold text-[var(--color-text)]">{profile?.full_name ?? "Empleado"}</h2>
+              <p className="mt-1 text-sm text-[var(--color-muted)]">{profile?.job_title ?? "Perfil Xignis"}</p>
+            </div>
+          </section>
 
-        <div key={step}>
+          <ol aria-hidden="true" className="hidden lg:block">
+            {STEP_TITLES.map((title, index) => (
+              <li
+                className={`flex items-center gap-3 rounded-2xl px-3 py-2 text-sm transition ${
+                  index === step ? "bg-emerald-50 font-bold text-[var(--color-text)]" : "text-[var(--color-muted)]"
+                }`}
+                key={title}
+              >
+                <span
+                  className={`grid size-6 shrink-0 place-items-center rounded-full text-xs font-bold ${
+                    index <= step ? "bg-[var(--color-primary)] text-white" : "bg-slate-200 text-slate-600"
+                  }`}
+                >
+                  {index < step ? <Check className="size-3.5" /> : index + 1}
+                </span>
+                {title}
+              </li>
+            ))}
+          </ol>
+        </aside>
+
+        <div className="lg:col-start-2 lg:row-start-2 lg:rounded-3xl lg:bg-[var(--card-bg)] lg:p-6 lg:ring-1 lg:ring-[var(--card-border)]" key={step}>
           <div className={animationClass}>
-            {step === 0 ? <StepDates endDate={endDate} errors={errors} overlap={overlap ? formatDateRangeEs(overlap.start_date, overlap.end_date) : null} register={register} startDate={startDate} /> : null}
+            {step === 0 ? <StepDates endDate={endDate} errors={errors} overlap={overlap ? formatDateRangeEs(overlap.start_date, overlap.end_date) : null} register={register} setValue={setValue} startDate={startDate} /> : null}
             {step === 1 ? (
               <StepType
                 endTime={endTime}
@@ -264,19 +288,19 @@ export function LeaveRequestScreen() {
         </div>
 
         {errors.root?.message ? (
-          <p className="mt-3 rounded-2xl bg-red-50 p-4 text-sm font-semibold leading-6 text-red-700" role="alert">
+          <p className="mt-3 rounded-2xl bg-red-50 p-4 text-sm font-semibold leading-6 text-red-700 lg:col-start-2 lg:row-start-3" role="alert">
             {errors.root.message}
           </p>
         ) : null}
 
-        <div className="mt-6">
+        <div className="mt-6 lg:col-start-2 lg:row-start-4 lg:flex lg:justify-end">
           {isLast ? (
-            <Button className="w-full" disabled={isSubmitting} type="submit">
+            <Button className="w-full lg:w-auto lg:min-w-48" disabled={isSubmitting} type="submit">
               {isSubmitting ? <CalendarDays aria-hidden="true" className="size-5" /> : <Check aria-hidden="true" className="size-5" />}
               {isSubmitting ? "Enviando..." : "Crear solicitud"}
             </Button>
           ) : (
-            <Button className="w-full" type="button" onClick={goNext}>
+            <Button className="w-full lg:w-auto lg:min-w-48" type="button" onClick={goNext}>
               Siguiente
             </Button>
           )}
@@ -307,9 +331,14 @@ function StepDates({
   errors,
   overlap,
   register,
+  setValue,
   startDate,
-}: Pick<StepProps, "endDate" | "errors" | "register" | "startDate"> & { overlap: string | null }) {
+}: Pick<StepProps, "endDate" | "errors" | "register" | "startDate"> & {
+  overlap: string | null;
+  setValue: ReturnType<typeof useForm<RequestFormValues>>["setValue"];
+}) {
   const days = startDate && endDate && endDate >= startDate ? diffDaysInclusive(startDate, endDate) : 0;
+  const dateError = errors.startDate?.message ?? errors.endDate?.message;
   return (
     <div className="space-y-4">
       <div className="rounded-2xl bg-[var(--color-surface)] p-4">
@@ -317,19 +346,38 @@ function StepDates({
           <CalendarDays aria-hidden="true" className="size-4" />
           Selecciona el rango
         </p>
-        <p className="mt-1 text-xs text-[var(--color-muted)]">Desde que dia hasta que dia necesitas ausentarte.</p>
+        <p className="mt-1 text-xs text-[var(--color-muted)]">
+          Toca el día de inicio y luego el día de fin.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <TextInput
-          error={errors.startDate?.message}
-          label="Inicio"
-          min={todayIso()}
-          type="date"
-          {...register("startDate")}
-        />
-        <TextInput error={errors.endDate?.message} label="Fin" type="date" {...register("endDate")} />
+      <input type="hidden" {...register("startDate")} />
+      <input type="hidden" {...register("endDate")} />
+
+      <DateRangeCalendar
+        end={endDate}
+        min={todayIso()}
+        start={startDate}
+        onChange={(range) => {
+          setValue("startDate", range.start, { shouldDirty: true, shouldValidate: true });
+          setValue("endDate", range.end, { shouldDirty: true, shouldValidate: Boolean(range.end) });
+        }}
+      />
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-2xl bg-[var(--color-surface)] p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)]">Inicio</p>
+          <p className="mt-0.5 text-sm font-bold text-[var(--color-text)]">{startDate ? formatDateEs(startDate) : "—"}</p>
+        </div>
+        <div className="rounded-2xl bg-[var(--color-surface)] p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)]">Fin</p>
+          <p className="mt-0.5 text-sm font-bold text-[var(--color-text)]">{endDate ? formatDateEs(endDate) : "—"}</p>
+        </div>
       </div>
+
+      {dateError ? (
+        <p className="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700" role="alert">{dateError}</p>
+      ) : null}
 
       {days > 0 ? (
         <div className="rounded-2xl bg-emerald-50 p-4 text-emerald-900">

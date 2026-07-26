@@ -107,3 +107,36 @@ export function eachDayIso(start: string, end: string): string[] {
   }
   return out;
 }
+
+/** Las 42 celdas (6 semanas lun-dom) de un mes, con relleno del mes anterior/siguiente. */
+export function monthCellsISO(year: number, monthIndex: number): { iso: string; isInMonth: boolean }[] {
+  const first = startOfMonthISO(year, monthIndex);
+  const last = endOfMonthISO(year, monthIndex);
+  const leading = weekdayISO(first);
+  const TOTAL = 42;
+
+  let prevY = year, prevM = monthIndex;
+  if (prevM === 0) { prevY -= 1; prevM = 11; } else { prevM -= 1; }
+  const prevAll = eachDayIso(startOfMonthISO(prevY, prevM), endOfMonthISO(prevY, prevM));
+  const prevPad = prevAll.slice(prevAll.length - leading);
+
+  let nextY = year, nextM = monthIndex;
+  if (nextM === 11) { nextY += 1; nextM = 0; } else { nextM += 1; }
+  const nextAll = eachDayIso(startOfMonthISO(nextY, nextM), endOfMonthISO(nextY, nextM));
+
+  const cells: { iso: string; isInMonth: boolean }[] = [];
+  for (const iso of prevPad) cells.push({ iso, isInMonth: false });
+  for (const iso of eachDayIso(first, last)) cells.push({ iso, isInMonth: true });
+  let i = 0;
+  while (cells.length < TOTAL) {
+    cells.push({ iso: nextAll[i] ?? nextAll[0], isInMonth: false });
+    i++;
+  }
+  return cells;
+}
+
+/** Mes siguiente/anterior (delta en meses) como {year, monthIndex}. */
+export function shiftMonth(year: number, monthIndex: number, delta: number): { monthIndex: number; year: number } {
+  const total = year * 12 + monthIndex + delta;
+  return { monthIndex: ((total % 12) + 12) % 12, year: Math.floor(total / 12) };
+}

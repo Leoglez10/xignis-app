@@ -5,9 +5,9 @@ import { BottomSheet } from "../../../components/ui/BottomSheet";
 import {
   eachDayIso,
   endOfMonthISO,
+  monthCellsISO,
   startOfMonthISO,
   todayIso,
-  weekdayISO,
 } from "../../../lib/date";
 import {
   listTeamAbsencesInRange,
@@ -19,32 +19,6 @@ import { DayCell } from "./DayCell";
 const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const monthFmt = new Intl.DateTimeFormat("es", { month: "long", year: "numeric" });
 const dayFmt = new Intl.DateTimeFormat("es", { weekday: "long", day: "numeric", month: "long" });
-
-function eachCellISO(year: number, month: number): { iso: string; isInMonth: boolean }[] {
-  const first = startOfMonthISO(year, month);
-  const last = endOfMonthISO(year, month);
-  const leading = weekdayISO(first);
-  const TOTAL = 42;
-
-  let prevY = year, prevM = month;
-  if (prevM === 0) { prevY -= 1; prevM = 11; } else { prevM -= 1; }
-  const prevAll = eachDayIso(startOfMonthISO(prevY, prevM), endOfMonthISO(prevY, prevM));
-  const prevPad = prevAll.slice(prevAll.length - leading);
-
-  let nextY = year, nextM = month;
-  if (nextM === 11) { nextY += 1; nextM = 0; } else { nextM += 1; }
-  const nextAll = eachDayIso(startOfMonthISO(nextY, nextM), endOfMonthISO(nextY, nextM));
-
-  const cells: { iso: string; isInMonth: boolean }[] = [];
-  for (const iso of prevPad) cells.push({ iso, isInMonth: false });
-  for (const iso of eachDayIso(first, last)) cells.push({ iso, isInMonth: true });
-  let i = 0;
-  while (cells.length < TOTAL) {
-    cells.push({ iso: nextAll[i] ?? nextAll[0], isInMonth: false });
-    i++;
-  }
-  return cells;
-}
 
 export function AbsencesCalendar() {
   const navigate = useNavigate();
@@ -84,7 +58,7 @@ export function AbsencesCalendar() {
     return map;
   }, [absences]);
 
-  const cells = useMemo(() => eachCellISO(year, month), [year, month]);
+  const cells = useMemo(() => monthCellsISO(year, month), [year, month]);
   const selectedDayAbsences = selectedDay ? byDay.get(selectedDay) ?? [] : [];
 
   const monthLabel = monthFmt.format(new Date(year, month, 1)).replace(/^./, (c) => c.toUpperCase());
