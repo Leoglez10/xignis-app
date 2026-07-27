@@ -44,9 +44,14 @@ jobs:
           name: xignis-app-dist
           path: dist
           retention-days: 1
-      # Tells apart "host unreachable / IP blocked" from "FTP rejected by the server".
+      # Tells apart "bad hostname", "host unreachable / IP blocked" and "FTP rejected by the server".
       - name: Probe FTP endpoint
         run: |
+          if getent hosts "${{ secrets.FTP_SERVER }}" > /dev/null; then
+            echo "dns: resolves"
+          else
+            echo "dns: DOES NOT RESOLVE - FTP_SERVER secret is wrong"
+          fi
           for port in 21 990 22; do
             if timeout 10 bash -c "</dev/tcp/${{ secrets.FTP_SERVER }}/$port" 2>/dev/null; then
               echo "port $port: open"
