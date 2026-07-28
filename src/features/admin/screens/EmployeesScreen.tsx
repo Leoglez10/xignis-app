@@ -1,5 +1,5 @@
 import { Avatar } from "../../../components/ui/Avatar";
-import { ArrowLeft, CalendarDays, LayoutGrid, List, Pencil, Search, Trash2, UserPlus } from "lucide-react";
+import { ArrowLeft, CalendarDays, LayoutGrid, List, Pencil, Plus, Search, Trash2, UserPlus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
 import { useNavigate } from "react-router-dom";
@@ -21,9 +21,33 @@ import {
 } from "../../profiles/services/profileService";
 import { listActiveDepartments } from "../services/departmentService";
 import { areaColor } from "../areaColor";
+import { useIsDesktop } from "../../../lib/useIsDesktop";
 
 /** Bucket key for employees with no department assigned. */
 const NO_AREA = "__no_area__";
+
+/** How many people a collapsed area group previews before "Ver más". */
+export const GROUP_PREVIEW = 3;
+
+/**
+ * Area groups collapse to a preview so the grouped list stops being one endless
+ * scroll on a phone. Three cases bypass the cap:
+ * - desktop, where the grid is already 3 columns wide and there is no scroll
+ *   problem to solve;
+ * - drilling into a single area, which is an explicit "show me this one";
+ * - searching, since capping would hide matches behind the button and make the
+ *   search look broken.
+ */
+export function groupPreview<T>(
+  members: T[],
+  areaFilter: string | null,
+  query: string,
+  isDesktop: boolean,
+): { visible: T[]; hidden: number } {
+  const expanded = isDesktop || areaFilter !== null || query.trim() !== "";
+  const visible = expanded ? members : members.slice(0, GROUP_PREVIEW);
+  return { visible, hidden: members.length - visible.length };
+}
 
 /**
  * Runs `update` inside a View Transition so the tapped area card morphs into
@@ -76,12 +100,13 @@ const roleOptions: UserRole[] = ["employee", "manager", "hr_admin", "admin"];
 
 export function EmployeesScreen() {
   const navigate = useNavigate();
+  const isDesktop = useIsDesktop();
   const [employees, setEmployees] = useState<ProfileWithManager[]>([]);
   const [managers, setManagers] = useState<Pick<Profile, "id" | "full_name" | "role">[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
   const [areaFilter, setAreaFilter] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [viewMode, setViewMode] = useState<ViewMode>("areas");
   const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -248,7 +273,7 @@ export function EmployeesScreen() {
           </p>
         ) : null}
 
-        <div aria-label="Filtro por estado de empleo" className="mb-4 flex flex-wrap gap-2" role="group">
+        <div aria-label="Filtro por estado de empleo" className="mb-4 flex flex-wrap gap-2 px-2" role="group">
           {STATUS_FILTERS.map((f) => (
             <button
               aria-pressed={statusFilter === f.key}
@@ -270,7 +295,7 @@ export function EmployeesScreen() {
         {viewMode === "list" && areas.length > 1 ? (
           <div
             aria-label="Filtro por área"
-            className="-mx-4 mb-5 flex snap-x gap-2 overflow-x-auto px-4 pb-1 pt-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0"
+            className="-mx-4 mb-5 flex snap-x scroll-px-6 gap-2 overflow-x-auto px-6 pb-1 pt-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-2"
             role="group"
           >
             {areas.map((area) => {
@@ -350,6 +375,7 @@ export function EmployeesScreen() {
           <div className="space-y-8">
             {groups.map((group) => {
               const color = areaColor(group.id === NO_AREA ? null : group.id, colorByArea.get(group.id));
+              const { visible, hidden } = groupPreview(group.members, areaFilter, query, isDesktop);
               return (
                 <section key={group.id}>
                   <div
@@ -361,7 +387,7 @@ export function EmployeesScreen() {
                     <span className="tabular-nums text-xs text-[var(--color-muted)]">{group.members.length}</span>
                   </div>
                   <ul className="stagger grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-                    {group.members.map((emp) => (
+                    {visible.map((emp) => (
                       <li
                         className="relative flex items-center gap-4 overflow-hidden rounded-[20px] bg-white p-4 pl-5 shadow-sm ring-1 ring-slate-200"
                         data-mount="true"
@@ -421,6 +447,16 @@ export function EmployeesScreen() {
                       </li>
                     ))}
                   </ul>
+                  {hidden > 0 ? (
+                    <button
+                      className="press mt-3 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-2xl bg-white text-xs font-bold text-[var(--color-muted)] ring-1 ring-slate-200"
+                      type="button"
+                      onClick={() => withViewTransition(() => setAreaFilter(group.id))}
+                    >
+                      Ver {hidden} más en {group.name}
+                      <Plus aria-hidden="true" className="size-3.5" />
+                    </button>
+                  ) : null}
                 </section>
               );
             })}
