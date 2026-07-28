@@ -124,13 +124,6 @@ h1, h2, h3 {
   letter-spacing: -0.02em;
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
@@ -155,8 +148,13 @@ textarea {
   scroll-margin-bottom: 5rem;
 }
 
-button {
-  min-height: 44px;
+/* Touch target por defecto. Va en @layer base para que cualquier min-h-* /
+   size-* de Tailwind pueda ganarle: sin capa, esta regla anulaba las utilidades
+   (el CSS sin capa gana a @layer utilities) y aplastaba celdas y badges. */
+@layer base {
+  button {
+    min-height: 44px;
+  }
 }
 
 .skip-link {
@@ -325,6 +323,32 @@ button {
 .animate-scale-in { animation: scale-in 320ms var(--ease-soft) both; }
 .animate-slide-up { animation: slide-up 420ms var(--ease-ios) both; }
 .animate-backdrop { animation: backdrop-in 240ms ease both; }
+
+/* Modal que crece desde el elemento que lo abrio: Modal.tsx fija transform-origin en ese punto. */
+@keyframes zoom-from-origin {
+  from { opacity: 0; transform: scale(0.28); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes zoom-to-origin {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: scale(0.28); }
+}
+
+@keyframes scale-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: scale(0.96); }
+}
+
+@keyframes backdrop-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.animate-zoom-from-origin { animation: zoom-from-origin 340ms var(--ease-soft) both; }
+.animate-zoom-to-origin { animation: zoom-to-origin 240ms var(--ease-soft) both; }
+.animate-scale-out { animation: scale-out 240ms var(--ease-soft) both; }
+.animate-backdrop-out { animation: backdrop-out 240ms ease both; }
 
 /* Wizard step transitions: horizontal slide suave (24px) entre pasos. */
 @keyframes step-in-right {
