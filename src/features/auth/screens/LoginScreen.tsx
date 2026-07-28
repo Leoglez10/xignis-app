@@ -1,4 +1,4 @@
-import { ArrowRight, Lock, Mail } from "lucide-react";
+import { ArrowRight, Lock, Mail, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
@@ -35,6 +35,8 @@ export function LoginScreen() {
   const { t } = useTranslation();
   const { isConfigured, profile, refreshProfile, session } = useAuth();
   const [activating, setActivating] = useState(false);
+  /** Modo explícito "primera vez": sólo pide el correo y lo lleva a crear contraseña. */
+  const [firstTime, setFirstTime] = useState(false);
   const {
     clearErrors,
     formState: { errors, isSubmitting },
@@ -89,8 +91,17 @@ export function LoginScreen() {
         const status = await getAccountStatus(values.email);
         if (status === "pending") {
           setActivating(true);
+          setFirstTime(false);
           resetField("password");
           clearErrors();
+          setFocus("password");
+          return;
+        }
+        if (firstTime) {
+          setFirstTime(false);
+          setError("root", {
+            message: "Esta cuenta ya tiene contraseña. Ingresa con la tuya o recupérala.",
+          });
           setFocus("password");
           return;
         }
@@ -116,6 +127,7 @@ export function LoginScreen() {
 
   function cancelActivation() {
     setActivating(false);
+    setFirstTime(false);
     resetField("password");
     resetField("passwordConfirm");
     clearErrors();
@@ -178,6 +190,11 @@ export function LoginScreen() {
                   <p className="rounded-2xl bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-800" role="status">
                     Tu cuenta ya está dada de alta. Crea una contraseña para entrar.
                   </p>
+                ) : firstTime ? (
+                  <p className="rounded-2xl bg-emerald-50 p-4 text-sm font-medium leading-6 text-emerald-900" role="status">
+                    Escribe el correo con el que Recursos Humanos te dio de alta y continúa para crear tu
+                    contraseña.
+                  </p>
                 ) : null}
 
                 <TextInput
@@ -189,13 +206,15 @@ export function LoginScreen() {
                   type="email"
                   {...register("email")}
                 />
-                <PasswordField
-                  autoComplete={activating ? "new-password" : "current-password"}
-                  error={errors.password?.message}
-                  label={activating ? "Nueva contraseña" : t("auth.password")}
-                  placeholder={activating ? "Mínimo 8 caracteres" : t("auth.passwordPlaceholder")}
-                  {...register("password")}
-                />
+                <div className={firstTime && !activating ? "hidden" : undefined}>
+                  <PasswordField
+                    autoComplete={activating ? "new-password" : "current-password"}
+                    error={errors.password?.message}
+                    label={activating ? "Nueva contraseña" : t("auth.password")}
+                    placeholder={activating ? "Mínimo 8 caracteres" : t("auth.passwordPlaceholder")}
+                    {...register("password")}
+                  />
+                </div>
                 {activating ? (
                   <PasswordField
                     autoComplete="new-password"
@@ -218,6 +237,18 @@ export function LoginScreen() {
                       onClick={cancelActivation}
                     >
                       Usar otro correo
+                    </button>
+                  ) : firstTime ? (
+                    <button
+                      className="w-fit rounded-md font-bold text-[var(--color-text)] underline decoration-slate-300 underline-offset-4 transition-colors hover:text-[var(--color-primary-strong)]"
+                      type="button"
+                      onClick={() => {
+                        setFirstTime(false);
+                        clearErrors();
+                        setFocus("password");
+                      }}
+                    >
+                      Ya tengo contraseña
                     </button>
                   ) : (
                     <Link
@@ -246,9 +277,27 @@ export function LoginScreen() {
                   ? t("auth.entering")
                   : activating
                     ? "Crear contraseña y entrar"
-                    : t("auth.enter")}
+                    : firstTime
+                      ? "Continuar"
+                      : t("auth.enter")}
                 {!isSubmitting ? <ArrowRight aria-hidden="true" className="size-4" /> : null}
               </Button>
+
+              {!activating && !firstTime ? (
+                <button
+                  className="press mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-bold text-[var(--color-text)] ring-1 ring-slate-200 transition-colors hover:text-[var(--color-primary-strong)]"
+                  type="button"
+                  onClick={() => {
+                    setFirstTime(true);
+                    resetField("password");
+                    clearErrors();
+                    setFocus("email");
+                  }}
+                >
+                  <UserPlus aria-hidden="true" className="size-4" />
+                  ¿Primera vez? Activa tu cuenta
+                </button>
+              ) : null}
             </form>
           </div>
         </div>
