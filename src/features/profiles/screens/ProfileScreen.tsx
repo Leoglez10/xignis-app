@@ -128,7 +128,9 @@ export function ProfileScreen() {
             <div className="relative shrink-0">
               <ZoomableAvatar
                 className="bg-[var(--color-primary)] text-2xl text-[var(--color-primary-contrast)]"
+                isRemoving={avatarBusy}
                 name={profile.full_name}
+                onRemove={handleAvatarRemove}
                 shape="rounded-3xl"
                 size="size-20"
                 src={profile.avatar_url}
@@ -148,16 +150,6 @@ export function ProfileScreen() {
               <span className="mt-1 inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-[var(--color-muted)]">
                 {roleLabel[profile.role]}
               </span>
-              {profile.avatar_url ? (
-                <button
-                  className="mt-2 block text-xs font-bold text-[var(--color-muted)] underline disabled:opacity-50"
-                  disabled={avatarBusy}
-                  onClick={handleAvatarRemove}
-                  type="button"
-                >
-                  Quitar foto
-                </button>
-              ) : null}
             </div>
           </div>
 
