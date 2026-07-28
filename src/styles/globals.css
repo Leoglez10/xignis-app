@@ -80,6 +80,15 @@ body:has(.app-topbar) #main-content {
   padding-top: calc(var(--topbar-content-h) + env(safe-area-inset-top));
 }
 
+/* Un descendiente con min-h-dvh vuelve a pedir la altura COMPLETA del viewport,
+   pero su ancestro #main-content ya reservó la TopBar como padding-top. Las dos
+   alturas se suman y la página queda ~94px más alta que la pantalla: scroll
+   muerto al final de cada vista, aunque no haya contenido. Sin capa a propósito:
+   el CSS sin @layer gana a las utilidades de Tailwind v4. */
+body:has(.app-topbar) #main-content .min-h-dvh {
+  min-height: calc(100dvh - var(--topbar-content-h) - env(safe-area-inset-top));
+}
+
 /* Contenedor único de página: fluido en móvil, ancho amplio en desktop.
    Sustituye a los max-w-2xl/3xl que hacían ver el escritorio como una columna
    de móvil. El gutter crece con el viewport para que el contenido respire. */
@@ -346,9 +355,9 @@ textarea {
 }
 
 .animate-zoom-from-origin { animation: zoom-from-origin 340ms var(--ease-soft) both; }
-.animate-zoom-to-origin { animation: zoom-to-origin 240ms var(--ease-soft) both; }
-.animate-scale-out { animation: scale-out 240ms var(--ease-soft) both; }
-.animate-backdrop-out { animation: backdrop-out 240ms ease both; }
+.animate-zoom-to-origin { animation: zoom-to-origin 320ms var(--ease-soft) both; }
+.animate-scale-out { animation: scale-out 320ms var(--ease-soft) both; }
+.animate-backdrop-out { animation: backdrop-out 320ms ease both; }
 
 /* Wizard step transitions: horizontal slide suave (24px) entre pasos. */
 @keyframes step-in-right {

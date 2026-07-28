@@ -94,7 +94,7 @@ export function DashboardEmployeeScreen() {
 
   return (
     <main className="mobile-screen" id="main-content" tabIndex={-1}>
-      <section className="flex min-h-dvh flex-col px-5 pb-28 pt-6 lg:mx-auto lg:grid lg:w-full lg:max-w-6xl lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-6 lg:px-8">
+      <section className="flex min-h-dvh flex-col px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-6 lg:mx-auto lg:grid lg:w-full lg:max-w-6xl lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-6 lg:px-8">
         {/* Left column on desktop (main flow); flattened into the single mobile stack via display:contents + order-* */}
         <div className="contents lg:flex lg:flex-col">
         <div className="order-1">

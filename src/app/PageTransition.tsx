@@ -118,9 +118,18 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
   const startX = useRef(0);
   const startY = useRef(0);
   const armed = useRef<null | "back" | "tab">(null);
+  // Espejo síncrono de `drag`: dentro de un mismo gesto llegan varios touchmove
+  // antes de que React repinte, así que leer el state daría `null` y volveríamos
+  // a armar el gesto (o lo abortaríamos) con el arrastre ya en curso.
+  const dragRef = useRef<null | "back" | "tab">(null);
+
+  function setDragMode(mode: null | "back" | "tab") {
+    dragRef.current = mode;
+    setDrag(mode);
+  }
 
   function onTouchStart(e: TouchEvent) {
-    if (drag || reducedMotion) return;
+    if (dragRef.current || reducedMotion) return;
     const t = e.touches[0];
     startX.current = t.clientX;
     startY.current = t.clientY;
@@ -140,13 +149,13 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
     const t = e.touches[0];
     const dx = t.clientX - startX.current;
     const dy = t.clientY - startY.current;
-    if (!drag) {
+    if (!dragRef.current) {
       if (Math.abs(dy) > Math.abs(dx)) {
         armed.current = null; // gesto vertical → es scroll, abortar
         return;
       }
       if (mode === "back" ? dx < 6 : Math.abs(dx) < 6) return;
-      setDrag(mode);
+      setDragMode(mode);
     }
     if (mode === "back") {
       x.set(Math.max(0, dx));
@@ -168,10 +177,16 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
     }
   }
 
+  /** Fin del gesto. También se usa para `touchcancel`: iOS lo dispara al
+   *  interrumpir el arrastre (navegación, segundo dedo, scroll robado) y sin él
+   *  `drag` se quedaba colgado → todo touchstart posterior salía por el early
+   *  return y el swipe entre pestañas moría hasta recargar. */
   function onTouchEnd() {
     const mode = armed.current;
     armed.current = null;
-    if (!mode || !drag) return;
+    // Se comprueba `dragRef`, no `mode`: si el gesto se abortó a mitad hay que
+    // devolver la página a su sitio igual, no dejarla desplazada.
+    if (!dragRef.current) return;
     const w = window.innerWidth;
     const dx = x.get();
 
@@ -184,12 +199,12 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
           onComplete: () => {
             fromDrag.current = true;
             navigate(-1);
-            setDrag(null);
+            setDragMode(null);
           },
         });
         return;
       }
-    } else if (peek && Math.abs(dx) > w * TAB_COMMIT) {
+    } else if (mode === "tab" && peek && Math.abs(dx) > w * TAB_COMMIT) {
       const { to, base } = peek;
       bumpHaptic();
       // El vecino (en `base`) se desliza hasta 0 → x va a -base. La página
@@ -201,7 +216,7 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
         onComplete: () => {
           fromDrag.current = true; // salta la animación de entrada del efecto
           navigate(to);
-          setDrag(null);
+          setDragMode(null);
           setPeek(null);
         },
       });
@@ -211,7 +226,7 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
       duration: 0.2,
       ease,
       onComplete: () => {
-        setDrag(null);
+        setDragMode(null);
         setPeek(null);
       },
     });
@@ -223,6 +238,7 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchEnd}
     >
       {drag === "back" && prevRef.current ? (
         <motion.div className="absolute inset-0" style={{ x: underX }}>

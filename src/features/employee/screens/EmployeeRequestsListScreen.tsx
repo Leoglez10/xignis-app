@@ -53,7 +53,7 @@ export function EmployeeRequestsListScreen() {
 
   return (
     <main className="mobile-screen" id="main-content" tabIndex={-1}>
-      <section className="flex min-h-dvh flex-col px-5 pb-28 pt-4 lg:px-8">
+      <section className="flex min-h-dvh flex-col px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4 lg:px-8">
         <header className="animate-fade-up mb-5 flex items-center gap-3">
           <button
             aria-label="Volver"

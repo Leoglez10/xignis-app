@@ -9,11 +9,12 @@ export type AppPreferences = {
   notifyApprovals: boolean;
   notifyBirthdays: boolean;
   notifyRequests: boolean;
+  soundEffects: boolean;
   theme: ThemePreference;
 };
 
 const STORAGE_KEY = "xignis.preferences:v1";
-const defaults: AppPreferences = { birthdayVisibility: true, dashboardCompact: false, language: "es", notifyApprovals: true, notifyBirthdays: true, notifyRequests: true, theme: "system" };
+const defaults: AppPreferences = { birthdayVisibility: true, dashboardCompact: false, language: "es", notifyApprovals: true, notifyBirthdays: true, notifyRequests: true, soundEffects: false, theme: "system" };
 type Value = { preferences: AppPreferences; updatePreferences: (patch: Partial<AppPreferences>) => void };
 const PreferencesContext = createContext<Value | null>(null);
 

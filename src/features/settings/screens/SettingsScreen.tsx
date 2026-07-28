@@ -1,10 +1,11 @@
-import { ArrowLeft, Bell, Cake, LayoutDashboard, Moon, PackageOpen } from "lucide-react";
+import { ArrowLeft, Bell, Cake, LayoutDashboard, Moon, PackageOpen, Volume2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { Select } from "../../../components/ui/Select";
 import { useToast } from "../../../components/ui/Toast";
+import { playSuccessCue } from "../../../lib/sound";
 import { checkForUpdate } from "../../../lib/version";
 import { routeForRole } from "../../auth/services/authService";
 import { useAuth } from "../../session/AuthContext";
@@ -19,6 +20,11 @@ export function SettingsScreen() {
   const { preferences, updatePreferences } = usePreferences();
   const toast = useToast();
   const toggle = (key: keyof AppPreferences) => updatePreferences({ [key]: !preferences[key] });
+  const toggleSound = () => {
+    const enabled = !preferences.soundEffects;
+    updatePreferences({ soundEffects: enabled });
+    if (enabled) playSuccessCue();
+  };
   const checkUpdate = async () => {
     try {
       const update = await checkForUpdate();
@@ -35,7 +41,7 @@ export function SettingsScreen() {
           <div><p className="text-sm font-bold text-[var(--color-muted)]">Tu experiencia</p><h2 className="text-3xl font-bold">Configuración</h2></div>
         </header>
         <div className="space-y-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-4 lg:space-y-0">
-          <Card className="p-5"><SettingHeading icon={<Moon />} title="Apariencia" /><Select label="Tema" value={preferences.theme} onChange={(event) => updatePreferences({ theme: event.target.value as AppPreferences["theme"] })}><option value="system">Usar el sistema</option><option value="light">Claro</option><option value="dark">Oscuro</option></Select><div className="mt-4"><Select label="Idioma" value={preferences.language} onChange={(event) => updatePreferences({ language: event.target.value as AppPreferences["language"] })}><option value="es">Español</option><option value="en">English (preview)</option></Select></div></Card>
+          <Card className="p-5"><SettingHeading icon={<Moon />} title="Apariencia" /><Select label="Tema" value={preferences.theme} onChange={(event) => updatePreferences({ theme: event.target.value as AppPreferences["theme"] })}><option value="system">Usar el sistema</option><option value="light">Claro</option><option value="dark">Oscuro</option></Select><div className="mt-4"><Select label="Idioma" value={preferences.language} onChange={(event) => updatePreferences({ language: event.target.value as AppPreferences["language"] })}><option value="es">Español</option><option value="en">English (preview)</option></Select></div><div className="mt-2 border-t border-[var(--color-border)]"><Toggle icon={<Volume2 />} label="Sonido al enviar una solicitud" checked={preferences.soundEffects} onChange={toggleSound} /></div></Card>
           <Card className="p-5"><SettingHeading icon={<Bell />} title="Notificaciones" /><div className="divide-y divide-[var(--color-border)]"><Toggle label="Actualizaciones de solicitudes" checked={preferences.notifyRequests} onChange={() => toggle("notifyRequests")} /><Toggle label="Aprobaciones y rechazos" checked={preferences.notifyApprovals} onChange={() => toggle("notifyApprovals")} /><Toggle label="Cumpleaños y aniversarios" checked={preferences.notifyBirthdays} onChange={() => toggle("notifyBirthdays")} /></div></Card>
           <Card className="p-5"><SettingHeading icon={<LayoutDashboard />} title="Privacidad y tablero" /><Toggle icon={<Cake />} label="Mostrar cumpleaños del equipo" checked={preferences.birthdayVisibility} onChange={() => toggle("birthdayVisibility")} /><Toggle label="Vista compacta del tablero" checked={preferences.dashboardCompact} onChange={() => toggle("dashboardCompact")} /></Card>
           <Card className="p-5"><SettingHeading icon={<PackageOpen />} title="Versión" /><dl className="grid grid-cols-2 gap-3 text-sm"><div><dt className="text-[var(--color-muted)]">Aplicación</dt><dd className="mt-1 font-bold">v{version}</dd></div><div><dt className="text-[var(--color-muted)]">Build</dt><dd className="mt-1 font-bold">{new Date(build).toLocaleDateString("es-MX")}</dd></div></dl><Button className="mt-5 w-full" variant="secondary" onClick={() => void checkUpdate()}>Buscar actualizaciones</Button></Card>

@@ -13,6 +13,8 @@ import { diffDaysInclusive, formatDateEs, formatDateRangeEs, todayIso } from "..
 import type { LeaveType, ScheduleType } from "../../../lib/database.types";
 import { usePageTitle } from "../../../lib/usePageTitle";
 import { bumpHaptic, successHaptic, tapHaptic } from "../../../lib/haptics";
+import { playSuccessCue } from "../../../lib/sound";
+import { usePreferences } from "../../settings/PreferencesContext";
 import { useAuth } from "../../session/AuthContext";
 import { createLeaveRequest } from "../../leave-requests/services/leaveRequestService";
 import { useLeaveRequests } from "../../leave-requests/hooks/useLeaveRequests";
@@ -98,6 +100,7 @@ export function LeaveRequestScreen() {
   const navigate = useNavigate();
   usePageTitle("Nuevo permiso");
   const { profile } = useAuth();
+  const { preferences } = usePreferences();
   const [draft] = useState(readDraft);
   const [step, setStep] = useState(draft.step);
   const [direction, setDirection] = useState<StepDirection>("next");
@@ -177,6 +180,7 @@ export function LeaveRequestScreen() {
     try {
       const request = await createLeaveRequest(result.data);
       await successHaptic();
+      if (preferences.soundEffects) playSuccessCue();
       sessionStorage.removeItem(DRAFT_KEY);
       setSubmitted({ id: request.id, values: result.data });
     } catch (error) {

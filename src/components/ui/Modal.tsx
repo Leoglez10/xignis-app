@@ -5,8 +5,8 @@ import { createPortal } from "react-dom";
 /** Punto en viewport desde el que el modal crece (centro del elemento que lo abrio). */
 export type ModalOrigin = { x: number; y: number };
 
-/** Debe cubrir la animacion de salida mas larga de globals.css (240ms) mas margen. */
-const EXIT_DURATION_MS = 280;
+/** Debe cubrir la animacion de salida mas larga de globals.css (320ms) mas margen. */
+const EXIT_DURATION_MS = 380;
 
 export function Modal({ children, description, isOpen, onClose, origin, title }: { children: ReactNode; description?: string; isOpen: boolean; onClose: () => void; origin?: ModalOrigin | null; title: string }) {
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -31,14 +31,15 @@ export function Modal({ children, description, isOpen, onClose, origin, title }:
     return () => window.clearTimeout(timer);
   }, [isOpen, isMounted]);
   // Se mide antes del primer paint para que el rect no venga ya escalado por la animacion.
+  // isMounted va en las deps: al abrir, el panel recien existe un render despues de isOpen.
   useLayoutEffect(() => {
     // Al cerrar se resetea: si no, al reabrir el panel ya vendria escalado y el origin saldria mal.
-    if (!isOpen) { setOriginReady(false); return; }
-    if (!origin || !panelRef.current) { setOriginReady(false); return; }
+    if (!isOpen || !origin) { setOriginReady(false); return; }
+    if (!panelRef.current) return;
     const rect = panelRef.current.getBoundingClientRect();
     panelRef.current.style.transformOrigin = `${origin.x - rect.left}px ${origin.y - rect.top}px`;
     setOriginReady(true);
-  }, [isOpen, origin]);
+  }, [isMounted, isOpen, origin]);
   if (!isMounted) return null;
   const exitAnimation = origin ? "animate-zoom-to-origin" : "animate-scale-out";
   const enterAnimation = origin ? (originReady ? "animate-zoom-from-origin" : "invisible") : "animate-scale-in";
