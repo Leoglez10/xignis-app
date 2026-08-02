@@ -77,9 +77,9 @@ src/
 
 ## Produccion mobile
 
-1. Construir web app con `npm run build`.
-2. Sincronizar Capacitor con `npx cap sync`.
-3. Abrir iOS con `npx cap open ios`.
+1. Construir web app con `bun run build`.
+2. Sincronizar Capacitor con `bunx cap sync`.
+3. Abrir iOS con `bunx cap open ios`.
 4. Configurar signing en Xcode.
 5. Probar en simulador y dispositivo real.
 6. Subir a TestFlight.

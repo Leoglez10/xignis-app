@@ -120,19 +120,19 @@ Nota: `capacitor-plugins` fue marcada por el CLI con Snyk High Risk. Revisar ant
 ## Comandos utiles
 
 ```bash
-npm install
-npm run dev -- --host 127.0.0.1
-npm run build
-npx cap sync
-npx cap open ios
+bun install
+bun run dev -- --host 127.0.0.1
+bun run build
+bunx cap sync
+bunx cap open ios
 ```
 
 Para probar iOS:
 
 ```bash
-npm run build
-npx cap sync ios
-npx cap open ios
+bun run build
+bunx cap sync ios
+bunx cap open ios
 ```
 
 Luego correr en Xcode con simulador o dispositivo real.

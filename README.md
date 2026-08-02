@@ -12,11 +12,11 @@ App mobile-first para empleados y panel web responsive para RH/admin.
 ## Comandos
 
 ```bash
-npm install
-npm run dev
-npm run build
-npm test
-npm run cap:sync
+bun install
+bun run dev
+bun run build
+bun run test
+bun run cap:sync
 ```
 
 ## Configuracion

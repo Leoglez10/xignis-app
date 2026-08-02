@@ -30,7 +30,7 @@ base.
 ## Prender
 
 ```bash
-npx supabase start
+bunx supabase start
 ```
 
 La primera vez descarga las imagenes y tarda varios minutos. Despues arranca en
@@ -71,12 +71,12 @@ Esa llave es el default de Supabase, identica en todas las maquinas del mundo y
 solo sirve contra `127.0.0.1`. No es un secreto.
 
 **Para volver a la nube:** renombra el archivo a `.env.local.off` y reinicia
-`npm run dev`. Para volver a local, lo renombras de regreso. No se toca codigo.
+`bun run dev`. Para volver a local, lo renombras de regreso. No se toca codigo.
 
 ## Apagar
 
 ```bash
-npx supabase stop
+bunx supabase stop
 ```
 
 Los contenedores siguen prendidos hasta que corras esto. Consumen RAM mientras
@@ -90,10 +90,10 @@ la base esta como la dejaste.
 Este es el punto de tener todo esto:
 
 1. Escribes la migracion en `supabase/migrations/`.
-2. `npx supabase db reset` — borra la base local, reaplica **todas** las
+2. `bunx supabase db reset` — borra la base local, reaplica **todas** las
    migraciones en orden y vuelve a sembrar los datos de prueba.
 3. Si truena, corriges y repites. Es tu boton de deshacer.
-4. Cuando pasa limpio, `npx supabase db push` la manda a la nube.
+4. Cuando pasa limpio, `bunx supabase db push` la manda a la nube.
 
 `db reset` es el paso que importa. Aplica todo desde cero, asi que detecta
 migraciones que dependen de un estado que no existe en una base nueva.
@@ -148,5 +148,5 @@ coincidan.
 **Los redirects de login fallan** — `site_url` en `supabase/config.toml` tiene
 que coincidir con el puerto de Vite (5173).
 
-**Un puerto ocupado** — otro proyecto de Supabase esta prendido. `npx supabase
+**Un puerto ocupado** — otro proyecto de Supabase esta prendido. `bunx supabase
 stop` en esa carpeta, o cambia los puertos en `config.toml`.

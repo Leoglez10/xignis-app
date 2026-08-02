@@ -10,7 +10,7 @@
     "test": "vitest run --config vite.config.ts",
     "test:coverage": "vitest run --config vite.config.ts --coverage",
     "test:e2e": "playwright test",
-    "cap:sync": "npm run build && cap sync",
+    "cap:sync": "bun run build && cap sync",
     "cap:open:ios": "cap open ios",
     "cap:open:android": "cap open android"
   },
