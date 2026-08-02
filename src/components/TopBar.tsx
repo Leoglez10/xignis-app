@@ -48,11 +48,17 @@ export function TopBar() {
       <div className="page-wrap flex h-14 items-center gap-3">
         <button
           aria-label="Mi perfil"
-          className="press grid size-10 shrink-0 place-items-center rounded-full bg-[var(--color-surface)] text-sm font-bold text-[var(--color-text)]"
+          className="press grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-[var(--color-surface)] text-sm font-bold text-[var(--color-text)]"
           type="button"
           onClick={() => navigate("/profile")}
         >
-          {profile ? initials(profile.full_name) : ""}
+          {profile?.avatar_url ? (
+            <img alt="" className="size-full object-cover" src={profile.avatar_url} />
+          ) : profile ? (
+            initials(profile.full_name)
+          ) : (
+            ""
+          )}
         </button>
         <h1 className="min-w-0 flex-1 truncate text-2xl font-bold text-[var(--color-text)]">{title}</h1>
         <div className="flex shrink-0 items-center gap-1">
