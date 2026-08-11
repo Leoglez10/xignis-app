@@ -12,7 +12,7 @@ export function TextInput({ className = "", error, hint, id, label, required, ..
 
   return (
     <div className="min-w-0 space-y-2">
-      <label className="text-sm font-medium text-[var(--color-text)]" htmlFor={inputId}>
+      <label className="text-sm font-bold text-[var(--color-text)]" htmlFor={inputId}>
         {label}{required ? <span aria-hidden="true" className="text-red-700"> *</span> : null}
       </label>
       <input

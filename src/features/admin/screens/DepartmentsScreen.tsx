@@ -514,12 +514,11 @@ export function DepartmentsScreen() {
               const isExpanded = expandedId === dept.id;
               return (
                 <li
-                  className={`relative overflow-hidden rounded-[20px] bg-white p-4 pl-5 ring-1 ring-slate-200 ${
+                  className={`relative overflow-hidden rounded-[20px] bg-white p-4 ring-1 ${tone.ring} ${
                     dept.archived_at ? "opacity-60" : ""
                   }`}
                   key={dept.id}
                 >
-                  <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-1.5 ${tone.bar}`} />
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">

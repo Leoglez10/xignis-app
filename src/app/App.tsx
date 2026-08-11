@@ -6,6 +6,7 @@ import { NotFoundScreen } from "../features/system/screens/NotFoundScreen";
 import { PageTransition } from "./PageTransition";
 import { USER_ROLES } from "../lib/database.types";
 import { TopBar } from "../components/TopBar";
+import { Sidebar } from "../components/Sidebar";
 import { PageSkeleton } from "../components/ui/Skeleton";
 import { useAuth } from "../features/session/AuthContext";
 
@@ -39,12 +40,20 @@ const ComingSoonScreen = lazy(() => import("../features/system/screens/ComingSoo
 const SettingsScreen = lazy(() => import("../features/settings/screens/SettingsScreen").then((m) => ({ default: m.SettingsScreen })));
 const SearchScreen = lazy(() => import("../features/search/screens/SearchScreen").then((m) => ({ default: m.SearchScreen })));
 
-/** Header persistente: se monta una sola vez y queda fijo fuera de la transición
+/** Chrome persistente: se monta una sola vez y queda fijo fuera de la transición
  *  de página, para que al cambiar de pestaña se sienta la misma pantalla. Solo
- *  visible con sesión (en login/signup no aparece). */
+ *  visible con sesión (en login/signup no aparece). La Sidebar manda en
+ *  escritorio y la TopBar en móvil; el breakpoint es CSS, no JS, así que no hay
+ *  parpadeo al hidratar. */
 function AppChrome() {
   const { session, profile } = useAuth();
-  return session && profile ? <TopBar /> : null;
+  if (!session || !profile) return null;
+  return (
+    <>
+      <Sidebar />
+      <TopBar />
+    </>
+  );
 }
 
 export function App() {

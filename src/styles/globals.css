@@ -1,17 +1,32 @@
 @import "tailwindcss";
-@import "@fontsource-variable/inter";
-@import "@fontsource/bricolage-grotesque/400.css";
-@import "@fontsource/bricolage-grotesque/600.css";
-@import "@fontsource/bricolage-grotesque/700.css";
-@import "@fontsource/bricolage-grotesque/800.css";
+@import "@fontsource-variable/source-sans-3";
 @import "@fontsource-variable/jetbrains-mono";
+
+/* Type scale. Redefining Tailwind's size tokens keeps the scale in one place
+   instead of rewriting the text-* class on every component. */
+@theme {
+  --text-xs: 0.8125rem; /* 13px - labels, categories */
+  --text-xs--line-height: 1.25rem;
+  --text-sm: 0.9375rem; /* 15px - body, nav, buttons */
+  --text-sm--line-height: 1.4rem;
+  --text-base: 1rem; /* 16px - long-form body */
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem; /* 18px - card titles */
+  --text-lg--line-height: 1.6rem;
+  --text-xl: 1.25rem; /* 20px */
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.625rem; /* 26px - inner page titles */
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 1.875rem; /* 30px - main title */
+  --text-3xl--line-height: 2.25rem;
+}
 
 :root {
   color-scheme: light;
   --font-body:
-    "Inter Variable", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
-  --font-display: "Bricolage Grotesque", var(--font-body);
+    "Source Sans 3 Variable", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: var(--font-body);
   --font-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", monospace;
   font-family: var(--font-body);
   /* Verde de marca refinado: acción con blanco encima cumple AA (primary ≈ emerald-700),
@@ -45,6 +60,7 @@
   --skeleton-base: #e2e8f0;
   --topbar-content-h: 5.875rem;
   --topbar-bg: rgb(255 255 255 / 0.95);
+  --sidebar-w: 16rem;
   --content-max: 90rem;
 }
 
@@ -89,6 +105,19 @@ body:has(.app-topbar) #main-content .min-h-dvh {
   min-height: calc(100dvh - var(--topbar-content-h) - env(safe-area-inset-top));
 }
 
+/* Escritorio: las secciones se van a la Sidebar, así que la TopBar pierde su
+   segunda fila y solo reserva 3.5rem. Redefinir la variable basta: las dos
+   reglas de arriba ya la leen, incluida la compensación de min-h-dvh. */
+@media (min-width: 768px) {
+  :root {
+    --topbar-content-h: 3.5rem;
+  }
+
+  body:has(.app-sidebar) #main-content {
+    padding-left: var(--sidebar-w);
+  }
+}
+
 /* Contenedor único de página: fluido en móvil, ancho amplio en desktop.
    Sustituye a los max-w-2xl/3xl que hacían ver el escritorio como una columna
    de móvil. El gutter crece con el viewport para que el contenido respire. */
@@ -126,11 +155,11 @@ body {
   -webkit-tap-highlight-color: transparent; /* sin flash gris al tocar */
 }
 
-/* Titulares en la fuente display (Bricolage). Aplica a los <h1>/<h2>/<h3> de
-   toda la app sin tocar cada componente; el cuerpo sigue en Inter. */
+/* Single family (Source Sans 3) for headings and body. Source Sans is already
+   narrow, so the tracking is lighter than the previous display face needed. */
 h1, h2, h3 {
   font-family: var(--font-display);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 button:focus-visible,

@@ -389,16 +389,12 @@ export function EmployeesScreen() {
                   <ul className="stagger grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                     {visible.map((emp) => (
                       <li
-                        className="relative flex items-center gap-4 overflow-hidden rounded-[20px] bg-white p-4 pl-5 shadow-sm ring-1 ring-slate-200"
+                        className={`relative flex items-center gap-4 overflow-hidden rounded-[20px] bg-white p-4 shadow-sm ring-1 ${
+                          areaColor(emp.department_id, emp.department_id ? colorByArea.get(emp.department_id) : null).ring
+                        }`}
                         data-mount="true"
                         key={emp.id}
                       >
-                        <span
-                          aria-hidden="true"
-                          className={`absolute inset-y-0 left-0 w-1.5 ${
-                            areaColor(emp.department_id, emp.department_id ? colorByArea.get(emp.department_id) : null).bar
-                          }`}
-                        />
                         <Avatar className="text-sm text-emerald-700" name={emp.full_name} size="size-12" src={emp.avatar_url} />
                         <button
                           className="press min-w-0 flex-1 text-left"

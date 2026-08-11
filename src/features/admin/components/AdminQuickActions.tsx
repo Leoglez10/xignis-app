@@ -13,7 +13,7 @@ export function AdminQuickActions() {
   return (
     <section
       aria-label="Accesos rapidos"
-      className="grid grid-cols-2 gap-3 md:grid-cols-4"
+      className="grid grid-cols-2 gap-3 md:grid-cols-5"
     >
       {actions.map((action) => {
         const Icon = action.icon;

@@ -40,7 +40,7 @@ export function TopBar() {
 
   return (
     <header
-      className={`app-topbar fixed inset-x-0 top-0 z-40 border-b border-[var(--card-border)] bg-[var(--topbar-bg)] pt-[env(safe-area-inset-top)] backdrop-blur transition-transform duration-200 ${
+      className={`app-topbar fixed inset-x-0 top-0 z-40 border-b border-[var(--card-border)] bg-[var(--topbar-bg)] pt-[env(safe-area-inset-top)] backdrop-blur transition-transform duration-200 md:pl-[var(--sidebar-w)] ${
         hidden ? "-translate-y-full" : "translate-y-0"
       }`}
     >
@@ -48,7 +48,7 @@ export function TopBar() {
       <div className="page-wrap flex h-14 items-center gap-3">
         <button
           aria-label="Mi perfil"
-          className="press grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-[var(--color-surface)] text-sm font-bold text-[var(--color-text)]"
+          className="press grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-[var(--color-surface)] text-sm font-bold text-[var(--color-text)] md:hidden"
           type="button"
           onClick={() => navigate("/profile")}
         >
@@ -73,7 +73,7 @@ export function TopBar() {
           <NotificationBell />
           <button
             aria-label="Módulos de Xignis"
-            className="press grid size-10 place-items-center rounded-full text-[var(--color-text)]"
+            className="press grid size-10 place-items-center rounded-full text-[var(--color-text)] md:hidden"
             type="button"
             onClick={() => setSwitcherOpen(true)}
           >
@@ -82,9 +82,10 @@ export function TopBar() {
         </div>
       </div>
 
-      {/* Fila 2: wordmark de marca inline con las tabs */}
+      {/* Fila 2: wordmark de marca inline con las tabs. Solo móvil: en escritorio
+          las secciones viven en la Sidebar. */}
       {tabs.length > 0 ? (
-        <nav aria-label="Secciones" className="page-wrap flex items-center gap-5 overflow-x-auto pb-0">
+        <nav aria-label="Secciones" className="page-wrap flex items-center gap-5 overflow-x-auto pb-0 md:hidden">
           <span
             className="shrink-0 pb-2 text-lg font-bold tracking-tight text-[var(--color-text)]"
             style={{ fontFamily: "var(--font-display)" }}

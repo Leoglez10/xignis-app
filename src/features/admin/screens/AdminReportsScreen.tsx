@@ -209,20 +209,21 @@ export function AdminReportsScreen() {
         ) : null}
 
         <section className="animate-fade-up mb-5 rounded-[24px] bg-white p-4 ring-1 ring-slate-200" aria-label="Filtros de reportes">
-          <div className="grid gap-3 md:grid-cols-[1fr_repeat(5,auto)] md:items-end">
-            <label className="block min-w-0 space-y-2">
-              <span className="text-xs font-bold text-[var(--color-muted)]">Buscar</span>
-              <span className="relative block">
-                <Search aria-hidden="true" className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[var(--color-muted)]" />
-                <input
-                  className="h-11 w-full rounded-full bg-slate-50 pl-11 pr-4 text-sm outline-none ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-[var(--color-focus)]"
-                  placeholder="Empleado, puesto, estado"
-                  type="search"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                />
-              </span>
-            </label>
+          <label className="block min-w-0 space-y-2">
+            <span className="block text-sm font-bold text-[var(--color-text)]">Buscar</span>
+            <span className="relative block">
+              <Search aria-hidden="true" className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[var(--color-muted)]" />
+              <input
+                className="h-11 w-full rounded-full bg-[var(--card-bg)] pl-11 pr-4 text-sm outline-none ring-1 ring-inset ring-[var(--color-border)] focus:ring-2 focus:ring-[var(--color-focus)]"
+                placeholder="Empleado, puesto, estado"
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+            </span>
+          </label>
+
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <ReportSelect label="Estado" value={statusFilter} onChange={(value) => setStatusFilter(value as "all" | LeaveStatus)}>
               <option value="all">Todos</option>
               {allStatuses.map((status) => <option key={status} value={status}>{statusLabel[status]}</option>)}
@@ -388,9 +389,18 @@ export function AdminReportsScreen() {
 }
 
 function ReportSelect({ children, label, onChange, value }: { children: React.ReactNode; label: string; onChange: (value: string) => void; value: string }) {
-  return <Select className="h-11 rounded-full text-sm font-bold md:w-40" label={label} value={value} onChange={(event) => onChange(event.target.value)}>{children}</Select>;
+  return <Select className="h-11 rounded-full text-sm font-bold" label={label} value={value} onChange={(event) => onChange(event.target.value)}>{children}</Select>;
 }
 
 function DateInput({ label, onChange, value }: { label: string; onChange: (value: string) => void; value: string }) {
-  return <UiDateInput className="h-11 rounded-full text-sm font-bold md:w-36" label={label} value={value} onChange={(event) => onChange(event.target.value)} />;
+  // ponytail: ring instead of border — the base border is transparent except the 2px bottom that .text-input turns
+  // into the focus underline, so a ring outlines the pill without fighting those border utilities.
+  return (
+    <UiDateInput
+      className="h-11 rounded-full bg-[var(--card-bg)] text-sm font-bold ring-1 ring-inset ring-[var(--color-border)]"
+      label={label}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  );
 }
