@@ -5,6 +5,7 @@ import type {
   LeaveType,
   Profile,
   ScheduleType,
+  TimeBankTransaction,
   UserRole,
 } from "../../../lib/database.types";
 import { getSupabaseClient } from "../../../lib/supabase";
@@ -65,6 +66,19 @@ export type VacationBalance = {
   year: number;
 };
 
+export type TimeBankBalance = {
+  availableHours: number;
+};
+
+/** Calcula la diferencia en horas entre dos cadenas `HH:MM`. */
+export function timeRangeHours(startTime: string, endTime: string): number {
+  if (!startTime || !endTime || endTime <= startTime) return 0;
+  const [startH, startM] = startTime.split(":").map(Number);
+  const [endH, endM] = endTime.split(":").map(Number);
+  if ([startH, startM, endH, endM].some((n) => Number.isNaN(n))) return 0;
+  return (endH * 60 + endM - (startH * 60 + startM)) / 60;
+}
+
 /** Saldo de vacaciones del usuario actual:
  *  cuota = profile.annual_vacation_days
  *  tomado = suma de días de vacaciones APROBADAS (full_day) en el año natural actual.
@@ -93,8 +107,31 @@ export async function getMyVacationBalance(): Promise<VacationBalance> {
   return { available: Math.max(0, quota - taken), pending, quota, taken, year };
 }
 
-type PageOptions = { limit: number; offset?: number };
+export type PageOptions = { limit: number; offset?: number };
 function page(options: PageOptions) { const offset = options.offset ?? 0; return { from: offset, to: offset + options.limit - 1 }; }
+
+/** Saldo actual del banco de horas del usuario autenticado. */
+export async function getMyTimeBank(): Promise<TimeBankBalance> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.rpc("get_my_time_bank");
+  if (error) throw error;
+  return { availableHours: typeof data === "number" ? data : 0 };
+}
+
+/** Historial de movimientos del banco de horas del usuario autenticado. */
+export async function listMyTimeBankTransactions(options?: PageOptions) {
+  const supabase = getSupabaseClient();
+  const userId = await getCurrentUserId();
+  let query = supabase
+    .from("time_bank_transactions")
+    .select("*")
+    .eq("employee_id", userId)
+    .order("created_at", { ascending: false });
+  if (options) query = query.range(page(options).from, page(options).to);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []) as TimeBankTransaction[];
+}
 
 export async function listMyLeaveRequests(options?: PageOptions) {
   const supabase = getSupabaseClient();

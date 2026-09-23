@@ -14,10 +14,12 @@ import type { Profile } from "../../../lib/database.types";
 import { logout } from "../../auth/services/authService";
 import {
   formatDateRange,
+  getMyTimeBank,
   getMyVacationBalance,
   leaveTypeLabel,
   listAbsencesForEmployeesToday,
   statusLabel,
+  type TimeBankBalance,
   type VacationBalance,
 } from "../../leave-requests/services/leaveRequestService";
 import { useAuth } from "../../session/AuthContext";
@@ -34,6 +36,7 @@ import { EmployeeDashboardSkeleton } from "../components/EmployeeDashboardSkelet
 import { NextAbsenceCard } from "../components/NextAbsenceCard";
 import { PeersStrip } from "../components/PeersStrip";
 import { VacationBalanceCard } from "../components/VacationBalanceCard";
+import { TimeBankCard } from "../components/TimeBankCard";
 import { useLeaveRequests } from "../../leave-requests/hooks/useLeaveRequests";
 
 export function DashboardEmployeeScreen() {
@@ -43,6 +46,7 @@ export function DashboardEmployeeScreen() {
   const [today] = useState(todayIso);
   const requestsQuery = useLeaveRequests("mine", profile?.id);
   const balanceQuery = useQuery<VacationBalance | null>({ queryKey: ["vacation-balance", profile?.id], queryFn: () => getMyVacationBalance().catch(() => null) });
+  const timeBankQuery = useQuery<TimeBankBalance | null>({ queryKey: ["time-bank", profile?.id], queryFn: () => getMyTimeBank().catch(() => null) });
   const peersQuery = useQuery<Profile[]>({ queryKey: ["peers", profile?.id], queryFn: () => listMyPeers().catch(() => []) });
   const peers = peersQuery.data ?? [];
   const peerIds = useMemo(() => peers.map((peer) => peer.id), [peers]);
@@ -50,8 +54,8 @@ export function DashboardEmployeeScreen() {
   const requests = requestsQuery.data ?? [];
   const balance = balanceQuery.data ?? null;
   const peerAbsences = absencesQuery.data ?? [];
-  const isLoading = requestsQuery.isLoading || balanceQuery.isLoading || peersQuery.isLoading;
-  const refreshing = requestsQuery.isFetching || balanceQuery.isFetching || peersQuery.isFetching || absencesQuery.isFetching;
+  const isLoading = requestsQuery.isLoading || balanceQuery.isLoading || timeBankQuery.isLoading || peersQuery.isLoading;
+  const refreshing = requestsQuery.isFetching || balanceQuery.isFetching || timeBankQuery.isFetching || peersQuery.isFetching || absencesQuery.isFetching;
   const error = requestsQuery.error instanceof Error ? requestsQuery.error.message : null;
 
   const inFlightRequest = useMemo(
@@ -60,7 +64,7 @@ export function DashboardEmployeeScreen() {
   );
 
   async function handleRefresh() {
-    await Promise.all([requestsQuery.refetch(), balanceQuery.refetch(), peersQuery.refetch(), absencesQuery.refetch()]);
+    await Promise.all([requestsQuery.refetch(), balanceQuery.refetch(), timeBankQuery.refetch(), peersQuery.refetch(), absencesQuery.refetch()]);
   }
 
   async function handleLogout() {
@@ -262,6 +266,12 @@ export function DashboardEmployeeScreen() {
               {balance && balance.quota > 0 ? (
                 <div className="order-6 mt-5">
                   <VacationBalanceCard balance={balance} />
+                </div>
+              ) : null}
+
+              {timeBankQuery.data ? (
+                <div className="order-6 mt-5">
+                  <TimeBankCard balance={timeBankQuery.data} />
                 </div>
               ) : null}
 

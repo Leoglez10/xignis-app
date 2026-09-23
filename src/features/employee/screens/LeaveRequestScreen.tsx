@@ -1,6 +1,7 @@
-import { CalendarDays, Check, ChevronLeft, Clock, FileText, Heart, ListTodo, Palmtree, Stethoscope, Tag } from "lucide-react";
+import { CalendarDays, Check, ChevronLeft, Clock, FileText, ListTodo, Palmtree, Stethoscope, Tag } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { Button } from "../../../components/ui/Button";
@@ -16,14 +17,21 @@ import { bumpHaptic, successHaptic, tapHaptic } from "../../../lib/haptics";
 import { playSuccessCue } from "../../../lib/sound";
 import { usePreferences } from "../../settings/PreferencesContext";
 import { useAuth } from "../../session/AuthContext";
-import { createLeaveRequest } from "../../leave-requests/services/leaveRequestService";
+import {
+  createLeaveRequest,
+  getMyTimeBank,
+  getMyVacationBalance,
+  timeRangeHours,
+  type TimeBankBalance,
+  type VacationBalance,
+} from "../../leave-requests/services/leaveRequestService";
 import { useLeaveRequests } from "../../leave-requests/hooks/useLeaveRequests";
 
 const leaveTypeOptions: Array<{ description: string; icon: typeof Tag; label: string; tone: string; value: LeaveType }> = [
-  { description: "Dias libres con goce", icon: Palmtree, label: "Vacaciones", tone: "bg-emerald-100 text-emerald-700", value: "vacation" },
-  { description: "Reposo medico o consulta", icon: Stethoscope, label: "Enfermedad", tone: "bg-rose-100 text-rose-700", value: "sick" },
-  { description: "Asuntos personales", icon: Heart, label: "Personal", tone: "bg-indigo-100 text-indigo-700", value: "personal" },
-  { description: "Otro motivo", icon: Tag, label: "Otro", tone: "bg-slate-200 text-slate-700", value: "other" },
+  { description: "Días libres con goce", icon: Palmtree, label: "Vacaciones", tone: "bg-emerald-100 text-emerald-700", value: "vacation" },
+  { description: "Asuntos personales", icon: Tag, label: "Permiso", tone: "bg-indigo-100 text-indigo-700", value: "personal" },
+  { description: "Reposo médico o consulta", icon: Stethoscope, label: "Enfermedad", tone: "bg-rose-100 text-rose-700", value: "sick" },
+  { description: "Otro motivo", icon: FileText, label: "Otro", tone: "bg-slate-200 text-slate-700", value: "other" },
 ];
 
 export const requestSchema = z
@@ -79,15 +87,15 @@ type RequestFormValues = z.infer<typeof requestSchema>;
 type StepDirection = "next" | "back";
 
 const FIELDS_BY_STEP: Array<Array<keyof RequestFormValues>> = [
-  ["startDate", "endDate"],
-  ["leaveType", "scheduleType", "startTime", "endTime"],
+  ["leaveType"],
+  ["startDate", "endDate", "scheduleType", "startTime", "endTime"],
   [],
   [],
 ];
 
-const STEP_TITLES = ["Fechas", "Tipo y horario", "Pendientes", "Resumen"] as const;
+const STEP_TITLES = ["Tipo", "Fechas", "Pendientes", "Resumen"] as const;
 const TOTAL_STEPS = STEP_TITLES.length;
-const DRAFT_KEY = "xignis.draft.request:v1";
+const DRAFT_KEY = "xignis.draft.request:v2";
 const DEFAULT_VALUES: RequestFormValues = { coverageContact: "", endDate: "", endTime: "", leaveType: "vacation", paid: true, pendingTasks: "", scheduleType: "full_day", startDate: "", startTime: "" };
 function readDraft(): { step: number; values: RequestFormValues } {
   try {
@@ -121,15 +129,33 @@ export function LeaveRequestScreen() {
   });
   const values = useWatch({ control });
   const scheduleType: ScheduleType = values.scheduleType ?? "full_day";
+  const leaveType: LeaveType = values.leaveType ?? "vacation";
+
+  useEffect(() => {
+    if (leaveType === "personal") {
+      setValue("scheduleType", "time_range", { shouldDirty: true, shouldValidate: true });
+    } else {
+      setValue("scheduleType", "full_day", { shouldDirty: true, shouldValidate: true });
+    }
+  }, [leaveType, setValue]);
   const startDate = values.startDate ?? "";
   const endDate = values.endDate ?? "";
-  const leaveType: LeaveType = values.leaveType ?? "vacation";
   const paid = values.paid ?? true;
   const startTime = values.startTime ?? "";
   const endTime = values.endTime ?? "";
   const pendingTasks = values.pendingTasks ?? "";
   const coverageContact = values.coverageContact ?? "";
   const myRequests = useLeaveRequests("mine", profile?.id);
+  const vacationBalanceQuery = useQuery<VacationBalance | null>({
+    queryKey: ["vacation-balance", profile?.id],
+    queryFn: () => getMyVacationBalance().catch(() => null),
+    enabled: leaveType === "vacation" && Boolean(profile?.id),
+  });
+  const timeBankQuery = useQuery<TimeBankBalance | null>({
+    queryKey: ["time-bank", profile?.id],
+    queryFn: () => getMyTimeBank().catch(() => null),
+    enabled: leaveType === "personal" && Boolean(profile?.id),
+  });
   const overlap = useMemo(() => {
     if (!startDate || !endDate || endDate < startDate) return null;
     return (myRequests.data ?? []).find((request) =>
@@ -261,16 +287,24 @@ export function LeaveRequestScreen() {
 
         <div className="lg:col-start-2 lg:row-start-2 lg:rounded-3xl lg:bg-[var(--card-bg)] lg:p-6 lg:ring-1 lg:ring-[var(--card-border)]" key={step}>
           <div className={animationClass}>
-            {step === 0 ? <StepDates endDate={endDate} errors={errors} overlap={overlap ? formatDateRangeEs(overlap.start_date, overlap.end_date) : null} register={register} setValue={setValue} startDate={startDate} /> : null}
+            {step === 0 ? (
+              <StepType errors={errors} leaveType={leaveType} register={register} />
+            ) : null}
             {step === 1 ? (
-              <StepType
+              <StepDates
+                endDate={endDate}
                 endTime={endTime}
                 errors={errors}
                 leaveType={leaveType}
+                overlap={overlap ? formatDateRangeEs(overlap.start_date, overlap.end_date) : null}
                 paid={paid}
                 register={register}
                 scheduleType={scheduleType}
+                setValue={setValue}
+                startDate={startDate}
                 startTime={startTime}
+                timeBank={timeBankQuery.data ?? null}
+                vacationBalance={vacationBalanceQuery.data ?? null}
               />
             ) : null}
             {step === 2 ? <StepTasks coverageContact={coverageContact} errors={errors} pendingTasks={pendingTasks} register={register} /> : null}
@@ -328,23 +362,36 @@ type StepProps = {
   scheduleType: ScheduleType;
   startDate: string;
   startTime: string;
+  timeBank: TimeBankBalance | null;
+  vacationBalance: VacationBalance | null;
 };
 
 function StepDates({
   endDate,
+  endTime,
   errors,
+  leaveType,
   overlap,
+  paid,
   register,
+  scheduleType,
   setValue,
   startDate,
-}: Pick<StepProps, "endDate" | "errors" | "register" | "startDate"> & {
+  startTime,
+  timeBank,
+  vacationBalance,
+}: Pick<StepProps, "endDate" | "endTime" | "errors" | "leaveType" | "paid" | "register" | "scheduleType" | "startDate" | "startTime" | "timeBank" | "vacationBalance"> & {
   overlap: string | null;
   setValue: ReturnType<typeof useForm<RequestFormValues>>["setValue"];
 }) {
   const days = startDate && endDate && endDate >= startDate ? diffDaysInclusive(startDate, endDate) : 0;
   const dateError = errors.startDate?.message ?? errors.endDate?.message;
+  const requestedHours = scheduleType === "full_day" ? 8 * Math.max(1, days) : timeRangeHours(startTime, endTime);
+  const exceedsVacation = leaveType === "vacation" && vacationBalance !== null && days > vacationBalance.available;
+  const exceedsTimeBank = leaveType === "personal" && timeBank !== null && requestedHours > timeBank.availableHours;
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="rounded-2xl bg-[var(--color-surface)] p-4">
         <p className="flex items-center gap-2 text-sm font-medium text-[var(--color-text)]">
           <CalendarDays aria-hidden="true" className="size-4" />
@@ -383,30 +430,95 @@ function StepDates({
         <p className="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700" role="alert">{dateError}</p>
       ) : null}
 
-      {days > 0 ? (
+      {overlap ? <p className="rounded-2xl bg-amber-100 p-4 text-sm font-semibold leading-6 text-amber-950" role="status">Ya tienes una solicitud activa que se cruza con estas fechas: {overlap}.</p> : null}
+
+      <fieldset className="space-y-2">
+        <legend className="flex items-center gap-2 text-sm font-medium text-[var(--color-text)]">
+          <Clock aria-hidden="true" className="size-4" />
+          Horario
+        </legend>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            ["Día completo", "full_day"],
+            ["Por horas", "time_range"],
+          ].map(([label, value]) => (
+            <label
+              className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl border-2 px-4 transition ${
+                scheduleType === value
+                  ? "border-[var(--color-primary)] bg-emerald-50"
+                  : "border-transparent bg-[var(--color-surface)]"
+              }`}
+              key={value}
+            >
+              <input
+                className="size-4 accent-[var(--color-primary)]"
+                type="radio"
+                value={value}
+                {...register("scheduleType")}
+              />
+              <span className="text-sm font-bold text-[var(--color-text)]">{label}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      {scheduleType === "time_range" ? (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <TextInput error={errors.startTime?.message} label="Desde" type="time" {...register("startTime")} />
+          <TextInput error={errors.endTime?.message} label="Hasta" type="time" {...register("endTime")} />
+        </div>
+      ) : null}
+
+      <label
+        className={`flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-2xl border-2 p-4 transition ${
+          paid ? "border-[var(--color-primary)] bg-emerald-50" : "border-transparent bg-[var(--color-surface)]"
+        }`}
+      >
+        <span className="min-w-0">
+          <span className="block text-sm font-bold text-[var(--color-text)]">Con goce de sueldo</span>
+          <span className="block text-xs text-[var(--color-muted)]">
+            {paid ? "El permiso se paga con normalidad." : "Sin goce: los días no se pagan."}
+          </span>
+        </span>
+        <input className="size-5 accent-[var(--color-primary)]" type="checkbox" {...register("paid")} />
+      </label>
+
+      {leaveType === "vacation" && vacationBalance !== null ? (
         <div className="rounded-2xl bg-emerald-50 p-4 text-emerald-900">
           <p className="text-sm leading-6">
-            <span className="font-bold">{days}</span> {days === 1 ? "dia solicitado" : "dias solicitados"}
-            <span className="block text-xs text-emerald-800/80">
-              {formatDateRangeEs(startDate, endDate)}
-            </span>
+            Disponibles: <span className="font-bold">{vacationBalance.available}</span> {vacationBalance.available === 1 ? "día" : "días"}
           </p>
         </div>
       ) : null}
-      {overlap ? <p className="rounded-2xl bg-amber-100 p-4 text-sm font-semibold leading-6 text-amber-950" role="status">Ya tienes una solicitud activa que se cruza con estas fechas: {overlap}.</p> : null}
+
+      {exceedsVacation ? (
+        <p className="rounded-2xl bg-amber-100 p-4 text-sm font-semibold leading-6 text-amber-950" role="status">
+          Solicitaste {days} {days === 1 ? "día" : "días"} y tienes {vacationBalance?.available} disponibles. Se enviará de todos modos.
+        </p>
+      ) : null}
+
+      {leaveType === "personal" && timeBank !== null ? (
+        <div className="rounded-2xl bg-indigo-50 p-4 text-indigo-900">
+          <p className="text-sm leading-6">
+            Banco de horas: <span className="font-bold">{timeBank.availableHours.toFixed(1)}h</span> disponibles
+          </p>
+        </div>
+      ) : null}
+
+      {exceedsTimeBank ? (
+        <p className="rounded-2xl bg-amber-100 p-4 text-sm font-semibold leading-6 text-amber-950" role="status">
+          El permiso requiere {requestedHours.toFixed(1)}h y tienes {timeBank?.availableHours.toFixed(1)}h. Se enviará de todos modos.
+        </p>
+      ) : null}
     </div>
   );
 }
 
 function StepType({
-  endTime,
   errors,
   leaveType,
-  paid,
   register,
-  scheduleType,
-  startTime,
-}: Pick<StepProps, "endTime" | "errors" | "leaveType" | "paid" | "register" | "scheduleType" | "startTime">) {
+}: Pick<StepProps, "errors" | "leaveType" | "register">) {
   return (
     <div className="space-y-5">
       <div>
@@ -414,6 +526,9 @@ function StepType({
           <Tag aria-hidden="true" className="size-4" />
           Tipo de permiso
         </p>
+        {errors.leaveType?.message ? (
+          <p className="mb-2 rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700" role="alert">{errors.leaveType.message}</p>
+        ) : null}
         <div className="grid grid-cols-2 gap-3">
           {leaveTypeOptions.map((option) => {
             const Icon = option.icon;
@@ -449,57 +564,6 @@ function StepType({
           })}
         </div>
       </div>
-
-      <fieldset className="space-y-2">
-        <legend className="flex items-center gap-2 text-sm font-medium text-[var(--color-text)]">
-          <Clock aria-hidden="true" className="size-4" />
-          Horario
-        </legend>
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            ["Dia completo", "full_day"],
-            ["Por horas", "time_range"],
-          ].map(([label, value]) => (
-            <label
-              className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl border-2 px-4 transition ${
-                scheduleType === value
-                  ? "border-[var(--color-primary)] bg-emerald-50"
-                  : "border-transparent bg-[var(--color-surface)]"
-              }`}
-              key={value}
-            >
-              <input
-                className="size-4 accent-[var(--color-primary)]"
-                type="radio"
-                value={value}
-                {...register("scheduleType")}
-              />
-              <span className="text-sm font-bold text-[var(--color-text)]">{label}</span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
-
-      <label
-        className={`flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-2xl border-2 p-4 transition ${
-          paid ? "border-[var(--color-primary)] bg-emerald-50" : "border-transparent bg-[var(--color-surface)]"
-        }`}
-      >
-        <span className="min-w-0">
-          <span className="block text-sm font-bold text-[var(--color-text)]">Con goce de sueldo</span>
-          <span className="block text-xs text-[var(--color-muted)]">
-            {paid ? "El permiso se paga con normalidad." : "Sin goce: los días no se pagan."}
-          </span>
-        </span>
-        <input className="size-5 accent-[var(--color-primary)]" type="checkbox" {...register("paid")} />
-      </label>
-
-      {scheduleType === "time_range" ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <TextInput error={errors.startTime?.message} label="Desde" type="time" {...register("startTime")} />
-          <TextInput error={errors.endTime?.message} label="Hasta" type="time" {...register("endTime")} />
-        </div>
-      ) : null}
     </div>
   );
 }

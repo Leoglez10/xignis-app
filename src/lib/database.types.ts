@@ -90,6 +90,16 @@ export type LeaveRequestApproval = {
   reviewer_role: UserRole;
 };
 
+export type TimeBankTransaction = {
+  id: string;
+  employee_id: string;
+  hours: number;
+  reason: string;
+  leave_request_id: string | null;
+  created_by: string | null;
+  created_at: string;
+};
+
 export type NotificationType =
   | "info"
   | "request_new"
@@ -210,6 +220,18 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      time_bank_transactions: {
+        Row: TimeBankTransaction;
+        Insert: {
+          employee_id: string;
+          hours: number;
+          reason: string;
+          leave_request_id?: string | null;
+          created_by?: string | null;
+        };
+        Update: never;
+        Relationships: [];
+      };
       notifications: {
         Row: AppNotification;
         Insert: {
@@ -272,6 +294,8 @@ export type Database = {
     Functions: {
       get_profile_sheet: { Args: { target: string }; Returns: Json };
       set_profile_custom_field: { Args: { target: string; field_key: string; new_value: Json }; Returns: undefined };
+      get_my_time_bank: { Args: Record<string, never>; Returns: number };
+      get_time_bank_for: { Args: { p_employee_id: string }; Returns: number };
     };
     Enums: {
       approval_decision: ApprovalDecision;
