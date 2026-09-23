@@ -15,23 +15,20 @@ type Section = { rows: Row[]; title: string };
 export function ProfileSheet({ defs, sheet }: ProfileSheetProps) {
   const sections: Section[] = [];
 
-  const trabajo: Row[] = [
+  // Campos fijos en una lista plana (sin etiquetas de sección).
+  const fijos: Row[] = [
     { label: "Área", value: sheet.department_name ?? "—" },
     { label: "Jefe", value: sheet.manager_name ?? "—" },
     { label: "Puesto", value: sheet.job_title ?? "—" },
     { label: "Ingreso", value: hireLine(sheet.hire_date) },
-  ];
-  sections.push({ rows: trabajo, title: "Trabajo" });
-
-  const personal: Row[] = [
     { label: "Correo", value: hasRealEmail(sheet.email) ? sheet.email : "Sin cuenta" },
     { label: "Cumpleaños", value: sheet.birth_date ? formatDateEs(sheet.birth_date) : "—" },
+    {
+      label: "Vacaciones/año",
+      value: sheet.annual_vacation_days != null ? `${sheet.annual_vacation_days} días` : "—",
+    },
   ];
-  personal.push({
-    label: "Vacaciones/año",
-    value: sheet.annual_vacation_days != null ? `${sheet.annual_vacation_days} días` : "—",
-  });
-  sections.push({ rows: personal, title: "Personal" });
+  sections.push({ rows: fijos, title: "" });
 
   // Campos custom, agrupados por su sección propia, en el orden que trajo listFieldDefs.
   const customBySection = new Map<string, Row[]>();
@@ -47,11 +44,13 @@ export function ProfileSheet({ defs, sheet }: ProfileSheetProps) {
   return (
     <section className="animate-fade-up rounded-[28px] bg-white p-6 ring-1 ring-slate-200" aria-label="Ficha">
       <div className="space-y-5">
-        {sections.map((s) => (
-          <div key={s.title}>
-            <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--color-muted)]">
-              {s.title}
-            </h3>
+        {sections.map((s, i) => (
+          <div key={s.title || `sec-${i}`}>
+            {s.title ? (
+              <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--color-muted)]">
+                {s.title}
+              </h3>
+            ) : null}
             <dl className="divide-y divide-slate-100">
               {s.rows.map((r) => (
                 <div className="flex items-baseline justify-between gap-4 py-2" key={r.label}>
@@ -82,7 +81,7 @@ function formatValue(def: ProfileFieldDef, raw: Json): string {
 }
 
 /** Fecha de ingreso + antigüedad calculada. */
-function hireLine(hireIso: string | null): string {
+export function hireLine(hireIso: string | null): string {
   if (!hireIso) return "—";
   const s = seniority(hireIso);
   return s ? `${formatDateEs(hireIso)} · ${s}` : formatDateEs(hireIso);

@@ -1,4 +1,4 @@
-import { CalendarDays, Check, ChevronLeft, Clock, FileText, Heart, Info, ListTodo, Palmtree, Stethoscope, Tag } from "lucide-react";
+import { CalendarDays, Check, ChevronLeft, Clock, FileText, Heart, ListTodo, Palmtree, Stethoscope, Tag } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -197,7 +197,7 @@ export function LeaveRequestScreen() {
 
   if (submitted) {
     const sentDays = diffDaysInclusive(submitted.values.startDate, submitted.values.endDate);
-    return <main className="mobile-screen grid min-h-dvh place-items-center px-5" id="main-content" tabIndex={-1}><section className="w-full max-w-md rounded-[28px] bg-[var(--card-bg)] p-7 text-center shadow-xl ring-1 ring-[var(--card-border)]"><span className="mx-auto grid size-20 place-items-center rounded-full bg-emerald-100 text-emerald-800"><Check aria-hidden="true" className="size-10" /></span><h2 className="mt-5 text-3xl font-bold">Solicitud enviada</h2><p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">La enviamos al flujo de aprobación y te notificaremos cada cambio.</p><dl className="mt-5 grid grid-cols-2 gap-3 rounded-2xl bg-[var(--color-surface)] p-4 text-left text-sm"><div><dt className="text-[var(--color-muted)]">Fechas</dt><dd className="mt-1 font-bold">{formatDateRangeEs(submitted.values.startDate, submitted.values.endDate)}</dd></div><div><dt className="text-[var(--color-muted)]">Duración</dt><dd className="mt-1 font-bold">{sentDays} {sentDays === 1 ? "día" : "días"}</dd></div></dl><Button className="mt-6 w-full" onClick={() => navigate(`/employee/requests/${submitted.id}`)}>Ver detalle</Button></section></main>;
+    return <main className="mobile-screen grid min-h-dvh place-items-center px-5" id="main-content" tabIndex={-1}><section className="w-full max-w-md rounded-[28px] bg-[var(--card-bg)] p-7 text-center shadow-xl ring-1 ring-[var(--card-border)]"><span className="mx-auto grid size-20 place-items-center rounded-full bg-emerald-100 text-emerald-800"><Check aria-hidden="true" className="size-10" /></span><h2 className="mt-5 text-3xl font-bold">Solicitud enviada</h2><p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">Tu solicitud será enviada a tu jefe para su aprobación y te notificaremos cada cambio.</p><dl className="mt-5 grid grid-cols-2 gap-3 rounded-2xl bg-[var(--color-surface)] p-4 text-left text-sm"><div><dt className="text-[var(--color-muted)]">Fechas</dt><dd className="mt-1 font-bold">{formatDateRangeEs(submitted.values.startDate, submitted.values.endDate)}</dd></div><div><dt className="text-[var(--color-muted)]">Duración</dt><dd className="mt-1 font-bold">{sentDays} {sentDays === 1 ? "día" : "días"}</dd></div></dl><Button className="mt-6 w-full" onClick={() => navigate(`/employee/requests/${submitted.id}`)}>Ver detalle</Button></section></main>;
   }
 
   return (
@@ -588,13 +588,6 @@ function StepSummary({
         label="Pendientes"
         value={pendingTasks.trim() ? pendingTasks.trim() : "Sin pendientes"}
       />
-
-      <section className="flex gap-3 rounded-2xl bg-orange-50 p-4 text-orange-900">
-        <Info aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
-        <p className="text-sm leading-6">
-          Si tienes jefe asignado, la solicitud ira primero a su revision. Si no, pasara directo a RH.
-        </p>
-      </section>
 
       {startDate ? (
         <p className="text-xs text-[var(--color-muted)]">

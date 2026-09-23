@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ZoomableAvatar } from "../../../components/ui/ZoomableAvatar";
-import { ProfileSheet } from "../components/ProfileSheet";
+import { hireLine, ProfileSheet } from "../components/ProfileSheet";
+import { getMyVacationBalance, type VacationBalance } from "../../leave-requests/services/leaveRequestService";
 import { useProfileSheet } from "../hooks/useProfileSheet";
 import { Button } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/TextInput";
@@ -30,6 +31,7 @@ export function ProfileScreen() {
   const events = eventsQuery.data ?? [];
   const sheetQuery = useProfileSheet(profile?.id);
   const email = sheetQuery.data?.sheet?.email ?? null;
+  const balanceQuery = useQuery<VacationBalance | null>({ queryKey: ["vacation-balance", profile?.id], queryFn: () => getMyVacationBalance().catch(() => null) });
 
   useEffect(() => {
     if (profile) setFullName(profile.full_name);
@@ -165,6 +167,29 @@ export function ProfileScreen() {
             onClose={() => setIsPhotoSheetOpen(false)}
             onConfirm={handleAvatarConfirm}
           />
+        </section>
+
+        <section className="animate-fade-up rounded-[22px] bg-white p-5 ring-1 ring-slate-200" aria-label="Datos laborales">
+          <dl className="divide-y divide-slate-100">
+            <div className="flex items-baseline justify-between gap-4 py-2">
+              <dt className="shrink-0 text-sm text-[var(--color-muted)]">Ingreso</dt>
+              <dd className="min-w-0 truncate text-right text-sm font-bold text-[var(--color-text)]">{hireLine(profile.hire_date)}</dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-4 py-2">
+              <dt className="shrink-0 text-sm text-[var(--color-muted)]">Vacaciones/año</dt>
+              <dd className="min-w-0 truncate text-right text-sm font-bold text-[var(--color-text)]">{profile.annual_vacation_days != null ? `${profile.annual_vacation_days} días` : "—"}</dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-4 py-2">
+              <dt className="shrink-0 text-sm text-[var(--color-muted)]">Disponibles</dt>
+              <dd className="min-w-0 truncate text-right text-sm font-bold text-[var(--color-text)]">{balanceQuery.data ? `${balanceQuery.data.available} días` : "—"}</dd>
+            </div>
+            {balanceQuery.data && balanceQuery.data.pending > 0 ? (
+              <div className="flex items-baseline justify-between gap-4 py-2">
+                <dt className="shrink-0 text-sm text-[var(--color-muted)]">En trámite</dt>
+                <dd className="min-w-0 truncate text-right text-sm font-bold text-amber-800">{balanceQuery.data.pending} {balanceQuery.data.pending === 1 ? "día" : "días"}</dd>
+              </div>
+            ) : null}
+          </dl>
         </section>
 
         <button className="press flex min-h-14 w-full items-center gap-3 rounded-[22px] bg-white px-5 text-left font-bold ring-1 ring-slate-200" type="button" onClick={() => navigate("/settings")}><Settings aria-hidden="true" className="size-5" />Configuración</button>
