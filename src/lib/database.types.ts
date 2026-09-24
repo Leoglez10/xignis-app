@@ -111,6 +111,20 @@ export type OwnerRequest = {
   resolved_at: string | null;
 };
 
+export type HrReportStatus = "open" | "resolved";
+
+export type HrReport = {
+  id: string;
+  reporter_id: string;
+  subject: string;
+  message: string;
+  request_anonymity: boolean;
+  status: HrReportStatus;
+  created_at: string;
+  resolved_by: string | null;
+  resolved_at: string | null;
+};
+
 export type AdministrativeActType = "amonestacion_verbal" | "amonestacion_escrita" | "suspension" | "otro";
 
 export const ADMINISTRATIVE_ACT_TYPE_LABELS: Record<AdministrativeActType, string> = {
@@ -331,6 +345,20 @@ export type Database = {
           resolved_at?: string | null;
         };
         Update: Partial<Pick<OwnerRequest, "message" | "context" | "status" | "resolved_by" | "resolved_at">>;
+        Relationships: [];
+      };
+      hr_reports: {
+        Row: HrReport;
+        Insert: {
+          reporter_id: string;
+          subject: string;
+          message: string;
+          request_anonymity?: boolean;
+          status?: HrReportStatus;
+          resolved_by?: string | null;
+          resolved_at?: string | null;
+        };
+        Update: Partial<Pick<HrReport, "subject" | "message" | "request_anonymity" | "status" | "resolved_by" | "resolved_at">>;
         Relationships: [];
       };
       administrative_acts: {

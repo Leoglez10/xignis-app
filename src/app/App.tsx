@@ -18,6 +18,7 @@ const AdminRulesScreen = lazy(() => import("../features/admin/screens/AdminRules
 const AdminRequestsScreen = lazy(() => import("../features/admin/screens/AdminRequestsScreen").then((m) => ({ default: m.AdminRequestsScreen })));
 const AdminAbsencesScreen = lazy(() => import("../features/admin/screens/AdminAbsencesScreen").then((m) => ({ default: m.AdminAbsencesScreen })));
 const AdminOwnerRequestsScreen = lazy(() => import("../features/admin/screens/AdminOwnerRequestsScreen").then((m) => ({ default: m.AdminOwnerRequestsScreen })));
+const AdminReportsCenterScreen = lazy(() => import("../features/admin/screens/AdminReportsCenterScreen").then((m) => ({ default: m.AdminReportsCenterScreen })));
 const EmployeesScreen = lazy(() => import("../features/admin/screens/EmployeesScreen").then((m) => ({ default: m.EmployeesScreen })));
 const EmployeeDetailScreen = lazy(() => import("../features/admin/screens/EmployeeDetailScreen").then((m) => ({ default: m.EmployeeDetailScreen })));
 const FieldDefsScreen = lazy(() => import("../features/admin/screens/FieldDefsScreen").then((m) => ({ default: m.FieldDefsScreen })));
@@ -257,6 +258,14 @@ export function App() {
             element={
               <RequireAuth allowedRoles={["hr_admin", "admin"]}>
                 <AdminOwnerRequestsScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin/hr-reports"
+            element={
+              <RequireAuth allowedRoles={["hr_admin", "admin"]}>
+                <AdminReportsCenterScreen />
               </RequireAuth>
             }
           />

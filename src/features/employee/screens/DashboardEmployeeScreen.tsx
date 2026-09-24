@@ -37,6 +37,7 @@ import { NextAbsenceCard } from "../components/NextAbsenceCard";
 import { PeersStrip } from "../components/PeersStrip";
 import { VacationBalanceCard } from "../components/VacationBalanceCard";
 import { TimeBankCard } from "../components/TimeBankCard";
+import { ReportToRhCard } from "../components/ReportToRhCard";
 import { useLeaveRequests } from "../../leave-requests/hooks/useLeaveRequests";
 
 export function DashboardEmployeeScreen() {
@@ -274,6 +275,10 @@ export function DashboardEmployeeScreen() {
                   <TimeBankCard balance={timeBankQuery.data} />
                 </div>
               ) : null}
+
+              <div className="order-6 mt-5">
+                <ReportToRhCard />
+              </div>
 
               {nextAbsence && !activePermit ? (
                 <div className="order-7 mt-5">

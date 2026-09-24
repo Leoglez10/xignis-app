@@ -12,10 +12,11 @@ Fase 5 del plan de mejoras RRHH. Tres bloques independientes.
 
 ## Tareas
 
-- [ ] T1 (5a): Edición de datos personales en perfil + mensaje "solicítalo a RH" en puesto/correo
-- [ ] T2 (5b): Migración `administrative_acts` + UI RH (crear/listar) + UI empleado (tarjeta amarilla) + notificación
-- [ ] T3 (5c): Migración `hr_reports` + formulario empleado (checkbox anonimato) + pantalla RH con resolución
-- [ ] T4: Verificación (tsc + vite build) + commits de trabajo
+- [x] T1 (5a): Edición de datos personales en perfil + mensaje "solicítalo a RH" en puesto/correo
+- [x] T2 (5b): Migración `administrative_acts` + UI RH (crear/listar) + UI empleado (tarjeta amarilla) + notificación
+- [x] T3 (5c): Migración `hr_reports` + formulario empleado (checkbox anonimato) + pantalla RH con resolución
+- [x] T4: Verificación (tsc + vite build) + commits de trabajo
 
 ## Evidencia de commits
-- (pendiente)
+- `6ed670f` feat(hr): editable personal data with RH-only notice, administrative acts (yellow cards)
+- `5061cce` feat(hr): employee-to-RH reports with anonymity request flag
