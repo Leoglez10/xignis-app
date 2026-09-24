@@ -2,12 +2,13 @@
 
 ## Objetivo
 
-Dejar listas 4 cuentas para probar la app:
+Dejar listas 5 cuentas para probar la app:
 
 - empleado
 - manager
 - RH
 - admin tecnico
+- owner
 
 ## Datos de prueba
 
@@ -17,12 +18,13 @@ Dejar listas 4 cuentas para probar la app:
 | `carlos.manager@xignis.test` | `Xignis123!` | `manager` |
 | `maria.hr@xignis.test` | `Xignis123!` | `hr_admin` |
 | `admin.tech@xignis.test` | `Xignis123!` | `admin` |
+| `owner.test@xignis.test` | `Xignis123!` | `owner` |
 
 ## Paso 1: crear usuarios en Auth
 
 1. Abre Supabase Dashboard.
 2. Ve a `Authentication -> Users`.
-3. Crea estos 4 usuarios con los emails y passwords de arriba.
+3. Crea estos 5 usuarios con los emails y passwords de arriba.
 4. Verifica que cada usuario quede activo.
 
 ## Paso 2: tomar los IDs
@@ -44,6 +46,8 @@ Dejar listas 4 cuentas para probar la app:
 2. Confirma que `carlos.manager@xignis.test` tenga rol `manager`.
 3. Confirma que `maria.hr@xignis.test` tenga rol `hr_admin`.
 4. Confirma que `admin.tech@xignis.test` tenga rol `admin`.
+5. Confirma que `owner.test@xignis.test` tenga rol `owner`.
+6. Confirma que `is_test` sea `true` para las cinco cuentas demo; sin ese flag, las cuentas de prueba serian visibles para los usuarios reales.
 
 ## Paso 5: probar login
 
@@ -55,6 +59,7 @@ Dejar listas 4 cuentas para probar la app:
    - manager va a `/manager`
    - RH va a `/admin`
    - admin va a `/admin`
+   - owner va a `/owner`
 
 ## Si falla
 
