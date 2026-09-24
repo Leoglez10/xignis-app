@@ -27,7 +27,7 @@ export type LeaveRequestDraft = {
 };
 
 export type LeaveRequestWithEmployee = LeaveRequest & {
-  employee?: (Pick<Profile, "avatar_url" | "full_name" | "job_title"> & { department_id?: string | null }) | null;
+  employee?: (Pick<Profile, "avatar_url" | "full_name" | "job_title"> & { department_id?: string | null; manager_id?: string | null }) | null;
 };
 
 export const statusLabel: Record<LeaveStatus, string> = {
@@ -305,7 +305,7 @@ export async function listHrLeaveRequests(options?: PageOptions) {
   const supabase = getSupabaseClient();
   let query = supabase
     .from("leave_requests")
-    .select("*, employee:profiles!leave_requests_employee_id_fkey(full_name, job_title, department_id)")
+    .select("*, employee:profiles!leave_requests_employee_id_fkey(full_name, job_title, department_id, manager_id)")
     .in("status", ["pending_hr", "approved_by_manager", "approved", "rejected"])
     .order("created_at", { ascending: false });
   if (options) query = query.range(page(options).from, page(options).to);
