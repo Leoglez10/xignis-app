@@ -63,7 +63,7 @@ export function OwnerRhRequestsScreen() {
             <h3 className="text-sm font-bold uppercase tracking-wide">Nuevo pedido</h3>
           </div>
           <TextArea
-            label="¿Qué necesitás que revise RH?"
+            label="¿Qué necesitas que revise RH?"
             placeholder="Ej. Quiero entender el saldo de vacaciones de un empleado..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}

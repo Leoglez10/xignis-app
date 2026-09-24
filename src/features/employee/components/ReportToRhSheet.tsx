@@ -80,7 +80,7 @@ export function ReportToRhSheet({ isOpen, onClose }: ReportToRhSheetProps) {
           </span>
           <p className="text-lg font-bold text-[var(--color-text)]">Reporte enviado a RH.</p>
           <p className="text-sm text-[var(--color-muted)]">
-            Podés seguir el estado desde tu dashboard.
+            Puedes seguir el estado desde tu dashboard.
           </p>
         </div>
       ) : (

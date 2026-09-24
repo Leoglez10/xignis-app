@@ -132,7 +132,7 @@ export function ActsSection({ employeeId }: ActsSectionProps) {
 
           <TextArea
             label="Motivo"
-            placeholder="Describí el motivo del acta…"
+            placeholder="Describe el motivo del acta…"
             required
             value={reason}
             onChange={(e) => setReason(e.target.value)}

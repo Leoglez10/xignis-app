@@ -193,7 +193,7 @@ function AdjustmentSheet({
     <BottomSheet isOpen={isOpen} title="Solicitar ajuste a RH" onClose={onClose}>
       <div className="min-w-0 space-y-4">
         <p className="text-sm text-[var(--color-muted)]">
-          Este pedido llega al equipo de RH. No podés editar datos directamente desde la vista de dueño.
+          Este pedido llega al equipo de RH. No puedes editar datos directamente desde la vista de dueño.
         </p>
         <TextArea
           label="Mensaje"

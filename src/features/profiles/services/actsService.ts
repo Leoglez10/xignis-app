@@ -8,7 +8,7 @@ export async function listMyActs(): Promise<AdministrativeAct[]> {
     error: userError,
   } = await supabase.auth.getUser();
   if (userError) throw new Error("No se pudieron cargar tus actas.");
-  if (!user) throw new Error("Necesitás iniciar sesión.");
+  if (!user) throw new Error("Necesitas iniciar sesión.");
 
   const { data, error } = await supabase
     .from("administrative_acts")
@@ -45,7 +45,7 @@ export async function createAct(input: {
     error: userError,
   } = await supabase.auth.getUser();
   if (userError) throw new Error("No se pudo registrar el acta.");
-  if (!user) throw new Error("Necesitás iniciar sesión.");
+  if (!user) throw new Error("Necesitas iniciar sesión.");
 
   const { error } = await supabase.from("administrative_acts").insert({
     employee_id: input.employeeId,
@@ -57,6 +57,6 @@ export async function createAct(input: {
   });
 
   if (error) {
-    throw new Error("No se pudo registrar el acta. ¿Tenés permisos de RH?");
+    throw new Error("No se pudo registrar el acta. ¿Tienes permisos de RH?");
   }
 }

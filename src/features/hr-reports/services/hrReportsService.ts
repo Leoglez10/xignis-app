@@ -13,7 +13,7 @@ export async function listMyReports(): Promise<HrReport[]> {
     error: userError,
   } = await supabase.auth.getUser();
   if (userError) throw userError;
-  if (!user) throw new Error("Necesitás iniciar sesión.");
+  if (!user) throw new Error("Necesitas iniciar sesión.");
 
   const { data, error } = await supabase
     .from("hr_reports")
@@ -47,7 +47,7 @@ export async function createReport(input: {
     error: userError,
   } = await supabase.auth.getUser();
   if (userError) throw userError;
-  if (!user) throw new Error("Necesitás iniciar sesión.");
+  if (!user) throw new Error("Necesitas iniciar sesión.");
 
   const { data, error } = await supabase
     .from("hr_reports")
@@ -71,7 +71,7 @@ export async function resolveReport(id: string): Promise<void> {
     error: userError,
   } = await supabase.auth.getUser();
   if (userError) throw userError;
-  if (!user) throw new Error("Necesitás iniciar sesión.");
+  if (!user) throw new Error("Necesitas iniciar sesión.");
 
   const { error } = await supabase
     .from("hr_reports")

@@ -68,7 +68,7 @@ export function ReportToRhCard() {
             <div className="h-12 rounded-xl bg-[var(--skeleton-base)] animate-pulse" />
           ) : recent.length === 0 ? (
             <p className="text-center text-xs text-[var(--color-muted)]">
-              No tenés reportes.
+              No tienes reportes.
             </p>
           ) : (
             recent.map((report) => (
