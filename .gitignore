@@ -63,3 +63,4 @@ skills-lock.json
 
 # Video skill scratch projects (no app code)
 videos/
+.codegraph/
