@@ -1,6 +1,6 @@
 # Xignis - Cuentas de Prueba (LISTAS)
 
-Cuatro cuentas ya estan creadas y confirmadas en Supabase (`wtycqdnrulknhzheqflq`) y listas para login. La cuenta owner (`owner.test@xignis.test`) esta pendiente: crearla ejecutando `supabase/hosted_test_owner_account.sql` en el proyecto alojado.
+Las cinco cuentas estan creadas y confirmadas en Supabase (`wtycqdnrulknhzheqflq`) y listas para login. La cuenta owner se creo ejecutando `supabase/hosted_test_owner_account.sql` en el proyecto alojado.
 
 | Email | Password | Rol | Ruta tras login |
 |---|---|---|---|

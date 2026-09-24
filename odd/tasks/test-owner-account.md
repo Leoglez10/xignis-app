@@ -94,6 +94,23 @@ Supabase envuelve el script en una transaccion explicita.
 - El commit se armo con `git add` de rutas explicitas para no arrastrar el trabajo
   sin commitear de la otra sesion (`src/features/admin/**`).
 
-## Pendiente (accion del usuario)
-- Ejecutar `supabase/hosted_test_owner_account.sql` en el proyecto
-  `wtycqdnrulknhzheqflq` para que la cuenta exista en el entorno alojado.
+## Ejecucion en el proyecto alojado (hecha)
+
+`owner.test@xignis.test` se creo en `wtycqdnrulknhzheqflq` ejecutando el SQL de
+`supabase/hosted_test_owner_account.sql` (sin el bloque `do $$` del enum: el
+label `owner` ya existia, comprobado antes de escribir).
+
+Verificado despues de crear la cuenta:
+
+| Comprobacion | Resultado |
+|---|---|
+| Fila resultante | `owner.test@xignis.test` · `owner` · `is_test = true` · confirmado · 1 identidad · sin jefe |
+| Idempotencia (re-ejecutar los 3 insert) | 1 usuario / 1 identidad / 1 perfil, sin duplicados |
+| Login con `Xignis123!` | OK; con password incorrecta, rechazado |
+| Visibilidad del owner | ve 73 perfiles (todos) y accede a `owner_requests` |
+| Aislamiento | sin sesion, `is_test = true` devuelve `[]` |
+| Visible entre las de prueba | `admin.tech` ve las 5 filas de prueba, roles `admin, employee, hr_admin, manager, owner` |
+| `is_test` en el proyecto | 5 perfiles de prueba sobre 73 totales |
+
+El trigger `guard_profile_privileged_fields` no revirtio la escritura: la
+conexion no llevaba JWT de usuario, que es el contexto requerido.
