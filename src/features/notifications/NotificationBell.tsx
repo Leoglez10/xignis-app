@@ -161,7 +161,7 @@ export const NotificationBell = memo(function NotificationBell({ className }: No
       const path =
         role === "employee"
           ? `/employee/requests/${item.related_request_id}`
-          : role === "manager"
+          : role === "manager" || role === "owner"
             ? `/manager/requests/${item.related_request_id}`
             : role === "hr_admin" || role === "admin"
               ? `/admin/requests/${item.related_request_id}`

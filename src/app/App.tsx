@@ -128,7 +128,7 @@ export function App() {
           <Route
             path="/manager"
             element={
-              <RequireAuth allowedRoles={["manager"]}>
+              <RequireAuth allowedRoles={["manager", "owner"]}>
                 <ManagerDashboardScreen />
               </RequireAuth>
             }
@@ -136,7 +136,7 @@ export function App() {
           <Route
             path="/manager/requests"
             element={
-              <RequireAuth allowedRoles={["manager"]}>
+              <RequireAuth allowedRoles={["manager", "owner"]}>
                 <ManagerRequestsScreen />
               </RequireAuth>
             }
@@ -144,7 +144,7 @@ export function App() {
           <Route
             path="/manager/team"
             element={
-              <RequireAuth allowedRoles={["manager"]}>
+              <RequireAuth allowedRoles={["manager", "owner"]}>
                 <ManagerTeamScreen />
               </RequireAuth>
             }
@@ -152,7 +152,7 @@ export function App() {
           <Route
             path="/manager/calendar"
             element={
-              <RequireAuth allowedRoles={["manager"]}>
+              <RequireAuth allowedRoles={["manager", "owner"]}>
                 <ManagerCalendarScreen />
               </RequireAuth>
             }
@@ -160,7 +160,7 @@ export function App() {
           <Route
             path="/manager/member/:memberId"
             element={
-              <RequireAuth allowedRoles={["manager"]}>
+              <RequireAuth allowedRoles={["manager", "owner"]}>
                 <ManagerMemberDetailScreen />
               </RequireAuth>
             }
@@ -168,7 +168,7 @@ export function App() {
           <Route
             path="/manager/requests/:requestId"
             element={
-              <RequireAuth allowedRoles={["manager"]}>
+              <RequireAuth allowedRoles={["manager", "owner"]}>
                 <ManagerRequestDetailScreen />
               </RequireAuth>
             }

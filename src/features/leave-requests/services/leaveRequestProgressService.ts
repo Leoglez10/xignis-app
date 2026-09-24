@@ -61,7 +61,9 @@ export function buildApprovalSteps(
     a.created_at.localeCompare(b.created_at),
   );
 
-  const managerApproval = ordered.find((a) => a.reviewer_role === "manager");
+  // El dueño solo revisa como jefe directo (nunca como RH), así que su
+  // aprobación cuenta como el paso del jefe.
+  const managerApproval = ordered.find((a) => a.reviewer_role === "manager" || a.reviewer_role === "owner");
   const hrApproval = ordered.find((a) =>
     a.reviewer_role === "hr_admin" || a.reviewer_role === "admin",
   );

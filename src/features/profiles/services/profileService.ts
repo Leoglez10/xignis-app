@@ -161,6 +161,18 @@ export async function listMyTeam() {
   return (data ?? []) as Profile[];
 }
 
+/** Cuántos empleados tienen a `managerId` como jefe directo (solo conteo). */
+export async function countDirectReports(managerId: string) {
+  const supabase = getSupabaseClient();
+  const { count, error } = await supabase
+    .from("profiles")
+    .select("id", { count: "exact", head: true })
+    .eq("manager_id", managerId);
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
 /** Empleados que comparten mi mismo manager (excluyéndome). Si no tengo
  *  manager, devuelve lista vacía. Útil para el dashboard empleado "compañeros". */
 export async function listMyPeers() {
