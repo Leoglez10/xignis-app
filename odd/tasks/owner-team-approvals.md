@@ -34,3 +34,7 @@ Un owner puede ser `manager_id` de encargados. Hoy esas solicitudes quedan traba
 - Swipe de `PageTransition` no incluye "Mi equipo" (tap sí funciona).
 - Búsqueda (`searchService`/`SearchScreen`) enlaza a `/admin/...` para owner.
 - `/manager/calendar` muestra ausencias de toda la empresa al owner (coherente con su lectura global).
+
+## Extra (aceptado por el usuario)
+- `ecd9ed4` `listManagers` incluye `owner` (RH puede asignar owner como jefe).
+- Migración `20260924214657` (aplicada a prod): si el jefe es `hr_admin`/`admin`, la solicitud salta a `pending_hr` (el panel RH no podía aprobar el paso de jefe). Verificado con transacción revertida: status = `pending_hr`.
