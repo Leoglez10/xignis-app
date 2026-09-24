@@ -73,10 +73,13 @@ type RequestDetailLayoutProps = {
   actions?: (request: LeaveRequest) => ReactNode;
   /** true para mostrar el nombre del empleado (manager/admin). */
   showEmployee?: boolean;
+  /** Optional notice rendered under the header, inside the page offset. */
+  banner?: ReactNode;
 };
 
 export function RequestDetailLayout({
   actions,
+  banner,
   onBack,
   requestId,
   showEmployee = false,
@@ -98,7 +101,7 @@ export function RequestDetailLayout({
 
   if (isLoading) {
     return (
-      <DetailShell title={title} onBack={onBack}>
+      <DetailShell banner={banner} title={title} onBack={onBack}>
         <div className="animate-pulse space-y-4">
           <div className="flex items-center gap-4">
             <div className="size-16 rounded-full bg-[var(--skeleton-base)]" />
@@ -125,7 +128,7 @@ export function RequestDetailLayout({
 
   if (error || !request) {
     return (
-      <DetailShell title={title} onBack={onBack}>
+      <DetailShell banner={banner} title={title} onBack={onBack}>
         <p className="rounded-2xl bg-red-50 p-4 text-sm font-semibold leading-6 text-red-700" role="alert">
           {error ?? "No se pudo cargar la solicitud."}
         </p>
@@ -138,7 +141,7 @@ export function RequestDetailLayout({
   const allDone = !currentStep && request.status === "approved";
 
   return (
-    <DetailShell title={title} onBack={onBack}>
+    <DetailShell banner={banner} title={title} onBack={onBack}>
       <section className="rounded-[24px] bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] shadow-sm">
         <div className="flex items-center gap-4">
           <span
@@ -288,11 +291,13 @@ function DetailRow({
 
 function DetailShell({
   actions,
+  banner,
   children,
   onBack,
   title,
 }: {
   actions?: ReactNode;
+  banner?: ReactNode;
   children: ReactNode;
   onBack: () => void;
   title: string;
@@ -311,6 +316,7 @@ function DetailShell({
           </button>
           <h2 className="text-center text-lg font-bold text-[var(--color-text)]">{title}</h2>
         </header>
+        {banner ? <div className="mb-5">{banner}</div> : null}
         {children}
       </section>
     </main>

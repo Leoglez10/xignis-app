@@ -1,5 +1,5 @@
 import { ChevronDown, Download, FileDown, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatDateRangeEs } from "../../../lib/date";
 import type { Department, LeaveStatus, LeaveType } from "../../../lib/database.types";
@@ -120,7 +120,7 @@ function Bar({ label, value, total, tone }: { label: string; value: number; tota
   );
 }
 
-export function AdminReportsScreen() {
+export function AdminReportsScreen({ banner }: { banner?: ReactNode } = {}) {
   const requestsQuery = useLeaveRequests("hr");
   const departmentsQuery = useQuery<Department[]>({ queryKey: ["departments", "active"], queryFn: listActiveDepartments });
   const requests = (requestsQuery.data ?? []) as LeaveRequestWithEmployee[];
@@ -183,6 +183,7 @@ export function AdminReportsScreen() {
   return (
     <AdminShell>
       <section className="page-wrap pb-24 pt-4 md:pt-6">
+        {banner ? <div className="mb-5">{banner}</div> : null}
         <header className="animate-fade-up mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-bold text-[var(--color-muted)]">Recursos Humanos</p>

@@ -9,16 +9,12 @@ export function OwnerRequestDetailScreen() {
   usePageTitle("Detalle de solicitud");
 
   return (
-    <>
-      <div className="page-wrap pb-4 pt-4 md:pt-6">
-        <OwnerReadOnlyBanner />
-      </div>
-      <RequestDetailLayout
-        onBack={() => navigate("/owner/requests")}
-        requestId={requestId ?? ""}
-        showEmployee
-        title="Detalle de solicitud"
-      />
-    </>
+    <RequestDetailLayout
+      banner={<OwnerReadOnlyBanner />}
+      onBack={() => navigate("/owner/requests")}
+      requestId={requestId ?? ""}
+      showEmployee
+      title="Detalle de solicitud"
+    />
   );
 }
