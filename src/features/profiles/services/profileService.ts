@@ -34,7 +34,7 @@ export async function getCurrentProfile() {
 
 /** Edita el perfil propio. El trigger guard_profile_privileged_fields evita que
  *  un usuario sin rol RH/admin cambie su role, manager_id o job_title. */
-export async function updateMyProfile(changes: { full_name?: string; avatar_url?: string | null }) {
+export async function updateMyProfile(changes: { full_name?: string; avatar_url?: string | null; birth_date?: string | null }) {
   const supabase = getSupabaseClient();
   const {
     data: { user },

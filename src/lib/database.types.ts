@@ -111,6 +111,26 @@ export type OwnerRequest = {
   resolved_at: string | null;
 };
 
+export type AdministrativeActType = "amonestacion_verbal" | "amonestacion_escrita" | "suspension" | "otro";
+
+export const ADMINISTRATIVE_ACT_TYPE_LABELS: Record<AdministrativeActType, string> = {
+  amonestacion_verbal: "Amonestación verbal",
+  amonestacion_escrita: "Amonestación escrita",
+  suspension: "Suspensión",
+  otro: "Otro",
+};
+
+export type AdministrativeAct = {
+  id: string;
+  employee_id: string;
+  act_type: AdministrativeActType;
+  reason: string;
+  act_date: string;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+};
+
 export type NotificationType =
   | "info"
   | "request_new"
@@ -311,6 +331,19 @@ export type Database = {
           resolved_at?: string | null;
         };
         Update: Partial<Pick<OwnerRequest, "message" | "context" | "status" | "resolved_by" | "resolved_at">>;
+        Relationships: [];
+      };
+      administrative_acts: {
+        Row: AdministrativeAct;
+        Insert: {
+          employee_id: string;
+          act_type: AdministrativeActType;
+          reason: string;
+          act_date: string;
+          notes?: string | null;
+          created_by?: string | null;
+        };
+        Update: Partial<Omit<AdministrativeAct, "id" | "created_at">>;
         Relationships: [];
       };
     };

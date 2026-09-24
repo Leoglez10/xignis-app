@@ -15,6 +15,7 @@ import { EmploymentTimeline } from "../../profiles/components/EmploymentTimeline
 import { ProfileSheet } from "../../profiles/components/ProfileSheet";
 import { useProfileSheet } from "../../profiles/hooks/useProfileSheet";
 import { TimeBankSection } from "../components/TimeBankSection";
+import { ActsSection } from "../components/ActsSection";
 import {
   getEmployeeProfile,
   grantAccess,
@@ -158,6 +159,8 @@ export function EmployeeDetailScreen() {
           ) : null}
 
           {sheet ? <TimeBankSection employeeId={sheet.id} /> : null}
+
+          {sheet ? <ActsSection employeeId={sheet.id} /> : null}
 
           <section
             aria-labelledby="leave-history-title"

@@ -13,13 +13,16 @@ import { logout, routeForRole } from "../../auth/services/authService";
 import { useAuth } from "../../session/AuthContext";
 import { AvatarPhotoSheet } from "../components/AvatarPhotoSheet";
 import { listEmploymentEvents, removeMyAvatar, roleLabel, updateMyProfile, uploadMyAvatar } from "../services/profileService";
-import type { EmploymentEvent } from "../../../lib/database.types";
+import { listMyActs } from "../services/actsService";
+import { EmployeeActsCard } from "../components/EmployeeActsCard";
+import type { AdministrativeAct, EmploymentEvent } from "../../../lib/database.types";
 import { useConfirm } from "../../../components/ui/ConfirmDialog";
 
 export function ProfileScreen() {
   const navigate = useNavigate();
   const { profile, refreshProfile } = useAuth();
   const [fullName, setFullName] = useState(profile?.full_name ?? "");
+  const [birthDate, setBirthDate] = useState(profile?.birth_date ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -29,12 +32,16 @@ export function ProfileScreen() {
   const confirm = useConfirm();
   const eventsQuery = useQuery<EmploymentEvent[]>({ enabled: Boolean(profile), queryKey: ["employment-events", profile?.id], queryFn: () => listEmploymentEvents(profile!.id) });
   const events = eventsQuery.data ?? [];
+  const actsQuery = useQuery<AdministrativeAct[]>({ enabled: Boolean(profile), queryKey: ["my-acts", profile?.id], queryFn: () => listMyActs() });
   const sheetQuery = useProfileSheet(profile?.id);
   const email = sheetQuery.data?.sheet?.email ?? null;
   const balanceQuery = useQuery<VacationBalance | null>({ queryKey: ["vacation-balance", profile?.id], queryFn: () => getMyVacationBalance().catch(() => null) });
 
   useEffect(() => {
-    if (profile) setFullName(profile.full_name);
+    if (profile) {
+      setFullName(profile.full_name);
+      setBirthDate(profile.birth_date ?? "");
+    }
   }, [profile]);
 
   if (!profile) {
@@ -47,14 +54,14 @@ export function ProfileScreen() {
 
   const canEditPrivileged = profile.role === "hr_admin" || profile.role === "admin";
   const trimmed = fullName.trim();
-  const dirty = trimmed !== profile.full_name;
+  const dirty = trimmed !== profile.full_name || birthDate !== (profile.birth_date ?? "");
 
   async function handleSave() {
     if (!trimmed || !dirty) return;
     try {
       setIsSaving(true);
       setError(null);
-      await updateMyProfile({ full_name: trimmed });
+      await updateMyProfile({ birth_date: birthDate || null, full_name: trimmed });
       await refreshProfile();
       setSavedAt(Date.now());
     } catch (saveError) {
@@ -208,6 +215,13 @@ export function ProfileScreen() {
             value={fullName}
           />
 
+          <TextInput
+            label="Cumpleaños"
+            onChange={(event) => setBirthDate(event.target.value)}
+            type="date"
+            value={birthDate}
+          />
+
           <div>
             <label className="mb-2 block text-sm font-bold" htmlFor="profile-email">
               Correo
@@ -231,7 +245,7 @@ export function ProfileScreen() {
               </span>
             </div>
             {!canEditPrivileged ? (
-              <p className="mt-2 text-xs text-[var(--color-muted)]">El puesto y el rol solo los cambia RH.</p>
+              <p className="mt-2 text-xs text-[var(--color-muted)]">Para editar puesto y correo, solicítalo a RH.</p>
             ) : null}
           </div>
 
@@ -256,6 +270,8 @@ export function ProfileScreen() {
             <EmploymentTimeline events={events} />
           </section>
         ) : null}
+
+        <EmployeeActsCard acts={actsQuery.data ?? []} />
         </div>
         </div>
       </div>
