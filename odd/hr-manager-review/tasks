@@ -1,0 +1,10 @@
+Feature: HR Manager Review (Fase 3)
+Status: en progreso
+Branch: feat/hr-ux-cleanup
+
+Tareas:
+- [x] T1: Servicio: balance de vacaciones para un empleado dado + helper banco de horas por empleado
+- [x] T2: Detalle de aprobación: panel de contexto del solicitante
+- [x] T3: Verificación (vite build) + tests enfocados si vitest responde
+
+Nota: usuario pidió no commitear.

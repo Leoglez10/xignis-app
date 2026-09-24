@@ -10,7 +10,7 @@ import type {
 } from "../../../lib/database.types";
 import { getSupabaseClient } from "../../../lib/supabase";
 import { diffDaysInclusive } from "../../../lib/date";
-import { getCurrentProfile } from "../../profiles/services/profileService";
+import { getCurrentProfile, getTeamMemberProfile } from "../../profiles/services/profileService";
 
 export { leaveTypeLabel } from "../config";
 
@@ -79,16 +79,12 @@ export function timeRangeHours(startTime: string, endTime: string): number {
   return (endH * 60 + endM - (startH * 60 + startM)) / 60;
 }
 
-/** Saldo de vacaciones del usuario actual:
- *  cuota = profile.annual_vacation_days
- *  tomado = suma de días de vacaciones APROBADAS (full_day) en el año natural actual.
- *  No descuenta pendientes (puede revertirse). */
-export async function getMyVacationBalance(): Promise<VacationBalance> {
-  const supabase = getSupabaseClient();
-  const [profile, requests] = await Promise.all([
-    getCurrentProfile(),
-    listMyLeaveRequests(),
-  ]);
+/** Computo compartido del saldo de vacaciones anual.
+ *  Exportado como `__computeVacationBalance` solo para tests unitarios. */
+export function __computeVacationBalance(
+  profile: Pick<Profile, "annual_vacation_days"> | null,
+  requests: LeaveRequest[],
+): VacationBalance {
   const year = new Date().getFullYear();
   const yearStart = `${year}-01-01`;
   const yearEnd = `${year}-12-31`;
@@ -102,9 +98,45 @@ export async function getMyVacationBalance(): Promise<VacationBalance> {
         r.end_date >= yearStart,
     )
     .reduce((sum, r) => sum + diffDaysInclusive(r.start_date, r.end_date), 0);
-  const pending = (requests ?? []).filter((r) => r.leave_type === "vacation" && r.paid !== false && ["pending_manager", "approved_by_manager", "pending_hr"].includes(r.status)).reduce((sum, r) => sum + diffDaysInclusive(r.start_date, r.end_date), 0);
+  const pending = (requests ?? [])
+    .filter(
+      (r) =>
+        r.leave_type === "vacation" &&
+        r.paid !== false &&
+        ["pending_manager", "approved_by_manager", "pending_hr"].includes(r.status),
+    )
+    .reduce((sum, r) => sum + diffDaysInclusive(r.start_date, r.end_date), 0);
   const quota = profile?.annual_vacation_days ?? 0;
   return { available: Math.max(0, quota - taken), pending, quota, taken, year };
+}
+
+/** Saldo de vacaciones del usuario actual:
+ *  cuota = profile.annual_vacation_days
+ *  tomado = suma de días de vacaciones APROBADAS (full_day) en el año natural actual.
+ *  No descuenta pendientes (puede revertirse). */
+export async function getMyVacationBalance(): Promise<VacationBalance> {
+  const [profile, requests] = await Promise.all([
+    getCurrentProfile(),
+    listMyLeaveRequests(),
+  ]);
+  return __computeVacationBalance(profile, requests ?? []);
+}
+
+/** Saldo de vacaciones de un empleado arbitrario que el llamante pueda ver. */
+export async function getVacationBalanceFor(employeeId: string): Promise<VacationBalance> {
+  const [profile, requests] = await Promise.all([
+    getTeamMemberProfile(employeeId),
+    listEmployeeLeaveRequests(employeeId),
+  ]);
+  return __computeVacationBalance(profile, requests ?? []);
+}
+
+/** Saldo actual del banco de horas de un empleado específico. */
+export async function getTimeBankFor(employeeId: string): Promise<TimeBankBalance> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.rpc("get_time_bank_for", { p_employee_id: employeeId });
+  if (error) throw error;
+  return { availableHours: typeof data === "number" ? data : 0 };
 }
 
 export type PageOptions = { limit: number; offset?: number };
