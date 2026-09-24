@@ -1,11 +1,9 @@
 import { CheckCircle2, Download, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AdminRequestCard } from "../components/AdminRequestCard";
+import { AdminRequestRow } from "../components/AdminRequestRow";
 import { AdminShell } from "../components/adminNav";
 import { leaveTypeLabel, statusLabel, type LeaveRequestWithEmployee } from "../../leave-requests/services/leaveRequestService";
-import { isInFlight } from "../../leave-requests/services/leaveRequestProgressService";
-import { InProgressRequestCard } from "../../leave-requests/components/InProgressRequestCard";
 import { useHrLeaveRequests } from "../hooks/useHrLeaveRequests";
 
 type FilterKey = "all" | "pending" | "approved" | "rejected";
@@ -49,11 +47,10 @@ function exportCsv(rows: LeaveRequestWithEmployee[]) {
 }
 
 /**
- * Full HR/admin requests management. Relocated from the dashboard: search,
- * CSV export, status filter chips, the in-flight request card, and the full
- * filtered requests list. Behavior matches the previous dashboard
- * implementation; only its home moved. Reads from the shared requests hook so
- * it does not pull the dashboard's heavy analytics query.
+ * Full HR/admin requests management: status filter chips, search, CSV export
+ * and a single grouped list of compact rows with an approval stepper. Reads
+ * from the shared requests hook so it does not pull the dashboard's heavy
+ * analytics query. The page title lives in the AdminShell top bar.
  */
 export function AdminRequestsScreen() {
   const navigate = useNavigate();
@@ -61,11 +58,10 @@ export function AdminRequestsScreen() {
   const [filter, setFilter] = useState<FilterKey>("pending");
   const [query, setQuery] = useState("");
 
-  const inFlightRequest = useMemo(() => {
-    const inFlight = requests.filter((r) => isInFlight(r.status));
-    inFlight.sort((a, b) => a.created_at.localeCompare(b.created_at));
-    return inFlight[0] ?? null;
-  }, [requests]);
+  const pendingCount = useMemo(
+    () => requests.filter((r) => matchesFilter(r.status, "pending")).length,
+    [requests],
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -76,24 +72,13 @@ export function AdminRequestsScreen() {
     });
   }, [requests, filter, query]);
 
+  const filterLabel = FILTERS.find((f) => f.key === filter)?.label ?? "";
+
   return (
     <AdminShell>
       <div className="min-h-dvh bg-slate-50">
-        <section className="page-wrap flex flex-col gap-5 pb-24 pt-4 md:pt-6">
-
-          <header className="animate-fade-up">
-            <p className="text-sm font-bold text-[var(--color-muted)]">Recursos Humanos</p>
-            <h2 className="mt-1 text-2xl font-bold md:text-3xl">Solicitudes</h2>
-          </header>
-
-          {inFlightRequest ? (
-            <InProgressRequestCard
-              requestId={inFlightRequest.id}
-              showEmployee
-              title="Solicitud en cola"
-              onView={(id) => navigate(`/admin/requests/${id}`)}
-            />
-          ) : null}
+        <section className="page-wrap flex flex-col gap-4 pb-24 pt-4 md:pt-6">
+          <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-muted)]">Recursos Humanos</p>
 
           {error ? (
             <p className="rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-700" role="alert">
@@ -101,68 +86,86 @@ export function AdminRequestsScreen() {
             </p>
           ) : null}
 
-          <section className="flex flex-col gap-3 rounded-[20px] bg-white p-4 ring-1 ring-slate-200 md:flex-row md:items-center md:justify-between">
-            <div className="relative flex-1">
+          <div aria-label="Filtro de solicitudes" className="flex flex-wrap gap-2" role="group">
+            {FILTERS.map((f) => {
+              const selected = filter === f.key;
+              return (
+                <button
+                  aria-pressed={selected}
+                  className={`press inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition ${
+                    selected ? "bg-slate-950 text-white" : "bg-white text-[var(--color-muted)] ring-1 ring-slate-200"
+                  }`}
+                  key={f.key}
+                  type="button"
+                  onClick={() => setFilter(f.key)}
+                >
+                  {f.label}
+                  {f.key === "pending" && pendingCount > 0 ? (
+                    <span
+                      className={`min-w-5 rounded-full px-1.5 py-0.5 text-[10px] leading-none ${
+                        selected ? "bg-white/20 text-white" : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      <span className="sr-only">: </span>
+                      {pendingCount}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="relative min-w-0 flex-1">
               <span className="sr-only">Buscar solicitudes</span>
               <Search aria-hidden="true" className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[var(--color-muted)]" />
               <input
-                className="h-11 w-full rounded-full bg-slate-50 pl-11 pr-4 text-sm outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[var(--color-focus)]"
+                className="h-11 w-full rounded-full bg-white pl-11 pr-4 text-sm outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-[var(--color-focus)]"
                 placeholder="Buscar empleado"
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
-            </div>
+            </label>
             <button
-              className="press inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-slate-950 px-5 text-sm font-bold text-white"
+              aria-label="Exportar CSV"
+              className="press inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-slate-950 px-4 text-sm font-bold text-white disabled:opacity-50 sm:px-5"
               type="button"
               onClick={() => exportCsv(filtered)}
               disabled={filtered.length === 0}
             >
               <Download aria-hidden="true" className="size-4" />
-              Exportar CSV
+              <span className="sm:hidden">CSV</span>
+              <span className="hidden sm:inline">Exportar CSV</span>
             </button>
-          </section>
-
-          <div aria-label="Filtro de solicitudes" className="flex flex-wrap gap-2" role="group">
-            {FILTERS.map((f) => (
-              <button
-                aria-pressed={filter === f.key}
-                className={`press rounded-full px-4 py-2 text-xs font-bold transition ${
-                  filter === f.key ? "bg-slate-950 text-white" : "bg-white text-[var(--color-muted)] ring-1 ring-slate-200"
-                }`}
-                key={f.key}
-                type="button"
-                onClick={() => setFilter(f.key)}
-              >
-                {f.label}
-              </button>
-            ))}
           </div>
 
-          <section aria-labelledby="recent-title">
-            <h2 className="mb-3 text-base font-bold md:text-lg" id="recent-title">
-              Solicitudes {filter === "all" ? "" : FILTERS.find((f) => f.key === filter)?.label.toLowerCase()}
+          <section aria-labelledby="requests-list-title">
+            <h2 className="sr-only" id="requests-list-title">
+              Solicitudes {filter === "all" ? "" : filterLabel.toLowerCase()}
             </h2>
 
             {isLoading ? (
-              <div className="grid gap-3 xl:grid-cols-2">
+              <div className="divide-y divide-[var(--card-border)] overflow-hidden rounded-[20px] bg-[var(--card-bg)] ring-1 ring-[var(--card-border)]">
                 {[0, 1, 2].map((i) => (
-                  <div className="h-20 rounded-[20px] bg-[var(--skeleton-base)] animate-pulse" key={i} />
+                  <div className="flex items-center gap-3 px-4 py-3.5" key={i}>
+                    <div className="size-10 shrink-0 animate-pulse rounded-full bg-[var(--skeleton-base)]" />
+                    <div className="flex flex-1 flex-col gap-2">
+                      <div className="h-3 w-1/2 animate-pulse rounded-full bg-[var(--skeleton-base)]" />
+                      <div className="h-2.5 w-1/3 animate-pulse rounded-full bg-[var(--skeleton-base)]" />
+                    </div>
+                  </div>
                 ))}
               </div>
+            ) : filtered.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 rounded-[20px] bg-[var(--card-bg)] p-10 text-center ring-1 ring-[var(--card-border)]">
+                <CheckCircle2 aria-hidden="true" className="size-10 text-[var(--color-muted)]" />
+                <p className="text-sm font-semibold text-[var(--color-muted)]">No hay solicitudes para este filtro.</p>
+              </div>
             ) : (
-              <ul className="stagger grid gap-3 xl:grid-cols-2">
-                {filtered.length === 0 ? (
-                  <li className="col-span-full flex flex-col items-center gap-2 rounded-[20px] bg-white p-10 text-center ring-1 ring-slate-200">
-                    <CheckCircle2 aria-hidden="true" className="size-10 text-[var(--color-muted)]" />
-                    <p className="text-sm font-semibold text-[var(--color-muted)]">
-                      No hay solicitudes para este filtro.
-                    </p>
-                  </li>
-                ) : null}
+              <ul className="stagger divide-y divide-[var(--card-border)] overflow-hidden rounded-[20px] bg-[var(--card-bg)] ring-1 ring-[var(--card-border)]">
                 {filtered.map((request) => (
-                  <AdminRequestCard
+                  <AdminRequestRow
                     key={request.id}
                     onClick={() => navigate(`/admin/requests/${request.id}`)}
                     request={request}
