@@ -4,8 +4,10 @@ import {
   CalendarDays,
   CalendarOff,
   CircleUser,
+  Crown,
   Home,
   Inbox,
+  MessageSquare,
   SlidersHorizontal,
   Users,
   type LucideIcon,
@@ -31,6 +33,7 @@ const adminTabs: NavTab[] = [
   { to: "/admin", label: "Inicio", end: true, icon: Home, group: "Principal" },
   { to: "/admin/requests", label: "Solicitudes", icon: Inbox, group: "Principal" },
   { to: "/admin/absences", label: "Ausentes", icon: CalendarOff, group: "Principal" },
+  { to: "/admin/owner-requests", label: "Pedidos", icon: MessageSquare, group: "Principal" },
   { to: "/admin/employees", label: "Empleados", icon: Users, group: "Organización" },
   { to: "/admin/departments", label: "Áreas", icon: Building2, group: "Organización" },
   { to: "/admin/reports", label: "Reportes", icon: BarChart3, group: "Análisis" },
@@ -38,7 +41,18 @@ const adminTabs: NavTab[] = [
   { to: "/profile", label: "Perfil", icon: CircleUser, group: "Cuenta" },
 ];
 
+const ownerTabs: NavTab[] = [
+  { to: "/owner", label: "Inicio", end: true, icon: Home, group: "Principal" },
+  { to: "/owner/employees", label: "Empleados", icon: Users, group: "Principal" },
+  { to: "/owner/requests", label: "Solicitudes", icon: Inbox, group: "Principal" },
+  { to: "/owner/absences", label: "Ausentes", icon: CalendarOff, group: "Principal" },
+  { to: "/owner/reports", label: "Reportes", icon: BarChart3, group: "Análisis" },
+  { to: "/owner/rh-requests", label: "Pedidos a RH", icon: Crown, group: "Principal" },
+  { to: "/profile", label: "Perfil", icon: CircleUser, group: "Cuenta" },
+];
+
 export const tabsByRole: Record<UserRole, NavTab[]> = {
+  owner: ownerTabs,
   employee: [
     { to: "/employee", label: "Inicio", end: true, icon: Home, group: "Principal" },
     { to: "/employee/requests", label: "Solicitudes", icon: Inbox, group: "Principal" },

@@ -12,6 +12,7 @@ export const roleLabel: Record<UserRole, string> = {
   employee: "Empleado",
   hr_admin: "RH",
   manager: "Jefe",
+  owner: "Dueño",
 };
 
 export async function getCurrentProfile() {

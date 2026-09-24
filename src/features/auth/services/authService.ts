@@ -7,6 +7,7 @@ const roleRoute: Record<UserRole, string> = {
   employee: "/employee",
   hr_admin: "/admin",
   manager: "/manager",
+  owner: "/owner",
 };
 
 export function routeForRole(role: UserRole) {

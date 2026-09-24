@@ -52,6 +52,7 @@ export function ManagerRequestDetailScreen() {
         request.status === "pending_manager" ? (
           <RequestReviewActions
             approveComment={approveComment}
+            comment={comment}
             error={error}
             isWorking={isWorking}
             rejecting={rejecting}
@@ -73,6 +74,7 @@ export function ManagerRequestDetailScreen() {
 
 type RequestReviewActionsProps = {
   approveComment: string;
+  comment: string;
   error: string | null;
   isWorking: boolean;
   rejecting: boolean;
@@ -85,6 +87,7 @@ type RequestReviewActionsProps = {
 
 function RequestReviewActions({
   approveComment,
+  comment,
   error,
   isWorking,
   rejecting,

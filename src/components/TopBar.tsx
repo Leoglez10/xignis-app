@@ -1,4 +1,4 @@
-import { Search, Grid2x2 } from "lucide-react";
+import { Search, Grid2x2, Crown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { NotificationBell } from "../features/notifications/NotificationBell";
@@ -61,6 +61,12 @@ export function TopBar() {
           )}
         </button>
         <h1 className="min-w-0 flex-1 truncate text-2xl font-bold text-[var(--color-text)]">{title}</h1>
+        {role === "owner" ? (
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-400 px-2.5 py-1 text-xs font-bold text-amber-900">
+            <Crown aria-hidden="true" className="size-4" />
+            Dueño
+          </span>
+        ) : null}
         <div className="flex shrink-0 items-center gap-1">
           <button
             aria-label="Buscar"

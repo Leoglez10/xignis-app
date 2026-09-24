@@ -1,7 +1,7 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-export type UserRole = "admin" | "hr_admin" | "manager" | "employee";
-export const USER_ROLES: readonly UserRole[] = ["employee", "manager", "hr_admin", "admin"];
+export type UserRole = "admin" | "hr_admin" | "manager" | "employee" | "owner";
+export const USER_ROLES: readonly UserRole[] = ["employee", "manager", "hr_admin", "admin", "owner"];
 export type LeaveType = "vacation" | "sick" | "personal" | "other";
 export type LeaveStatus =
   | "pending_manager"
@@ -98,6 +98,17 @@ export type TimeBankTransaction = {
   leave_request_id: string | null;
   created_by: string | null;
   created_at: string;
+};
+
+export type OwnerRequest = {
+  id: string;
+  owner_id: string;
+  message: string;
+  context: string | null;
+  status: "open" | "resolved";
+  created_at: string;
+  resolved_by: string | null;
+  resolved_at: string | null;
 };
 
 export type NotificationType =
@@ -287,6 +298,19 @@ export type Database = {
           archived_at?: string | null;
         };
         Update: Partial<Omit<ProfileFieldDef, "id" | "created_at" | "updated_at">>;
+        Relationships: [];
+      };
+      owner_requests: {
+        Row: OwnerRequest;
+        Insert: {
+          owner_id: string;
+          message: string;
+          context?: string | null;
+          status?: "open" | "resolved";
+          resolved_by?: string | null;
+          resolved_at?: string | null;
+        };
+        Update: Partial<Pick<OwnerRequest, "message" | "context" | "status" | "resolved_by" | "resolved_at">>;
         Relationships: [];
       };
     };

@@ -17,6 +17,7 @@ const AdminReportsScreen = lazy(() => import("../features/admin/screens/AdminRep
 const AdminRulesScreen = lazy(() => import("../features/admin/screens/AdminRulesScreen").then((m) => ({ default: m.AdminRulesScreen })));
 const AdminRequestsScreen = lazy(() => import("../features/admin/screens/AdminRequestsScreen").then((m) => ({ default: m.AdminRequestsScreen })));
 const AdminAbsencesScreen = lazy(() => import("../features/admin/screens/AdminAbsencesScreen").then((m) => ({ default: m.AdminAbsencesScreen })));
+const AdminOwnerRequestsScreen = lazy(() => import("../features/admin/screens/AdminOwnerRequestsScreen").then((m) => ({ default: m.AdminOwnerRequestsScreen })));
 const EmployeesScreen = lazy(() => import("../features/admin/screens/EmployeesScreen").then((m) => ({ default: m.EmployeesScreen })));
 const EmployeeDetailScreen = lazy(() => import("../features/admin/screens/EmployeeDetailScreen").then((m) => ({ default: m.EmployeeDetailScreen })));
 const FieldDefsScreen = lazy(() => import("../features/admin/screens/FieldDefsScreen").then((m) => ({ default: m.FieldDefsScreen })));
@@ -35,6 +36,14 @@ const ManagerCalendarScreen = lazy(() => import("../features/manager/screens/Man
 const ManagerMemberDetailScreen = lazy(() => import("../features/manager/screens/ManagerMemberDetailScreen").then((m) => ({ default: m.ManagerMemberDetailScreen })));
 const ManagerTeamScreen = lazy(() => import("../features/manager/screens/ManagerTeamScreen").then((m) => ({ default: m.ManagerTeamScreen })));
 const AdminRequestDetailScreen = lazy(() => import("../features/admin/screens/AdminRequestDetailScreen").then((m) => ({ default: m.AdminRequestDetailScreen })));
+const OwnerDashboardScreen = lazy(() => import("../features/owner/screens/OwnerDashboardScreen").then((m) => ({ default: m.OwnerDashboardScreen })));
+const OwnerEmployeesScreen = lazy(() => import("../features/owner/screens/OwnerEmployeesScreen").then((m) => ({ default: m.OwnerEmployeesScreen })));
+const OwnerEmployeeDetailScreen = lazy(() => import("../features/owner/screens/OwnerEmployeeDetailScreen").then((m) => ({ default: m.OwnerEmployeeDetailScreen })));
+const OwnerRequestsScreen = lazy(() => import("../features/owner/screens/OwnerRequestsScreen").then((m) => ({ default: m.OwnerRequestsScreen })));
+const OwnerRequestDetailScreen = lazy(() => import("../features/owner/screens/OwnerRequestDetailScreen").then((m) => ({ default: m.OwnerRequestDetailScreen })));
+const OwnerAbsencesScreen = lazy(() => import("../features/owner/screens/OwnerAbsencesScreen").then((m) => ({ default: m.OwnerAbsencesScreen })));
+const OwnerReportsScreen = lazy(() => import("../features/owner/screens/OwnerReportsScreen").then((m) => ({ default: m.OwnerReportsScreen })));
+const OwnerRhRequestsScreen = lazy(() => import("../features/owner/screens/OwnerRhRequestsScreen").then((m) => ({ default: m.OwnerRhRequestsScreen })));
 const ProfileScreen = lazy(() => import("../features/profiles/screens/ProfileScreen").then((m) => ({ default: m.ProfileScreen })));
 const ComingSoonScreen = lazy(() => import("../features/system/screens/ComingSoonScreen").then((m) => ({ default: m.ComingSoonScreen })));
 const SettingsScreen = lazy(() => import("../features/settings/screens/SettingsScreen").then((m) => ({ default: m.SettingsScreen })));
@@ -240,6 +249,78 @@ export function App() {
             element={
               <RequireAuth allowedRoles={["hr_admin", "admin"]}>
                 <AdminRulesScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin/owner-requests"
+            element={
+              <RequireAuth allowedRoles={["hr_admin", "admin"]}>
+                <AdminOwnerRequestsScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/owner"
+            element={
+              <RequireAuth allowedRoles={["owner"]}>
+                <OwnerDashboardScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/owner/employees"
+            element={
+              <RequireAuth allowedRoles={["owner"]}>
+                <OwnerEmployeesScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/owner/employees/:id"
+            element={
+              <RequireAuth allowedRoles={["owner"]}>
+                <OwnerEmployeeDetailScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/owner/requests"
+            element={
+              <RequireAuth allowedRoles={["owner"]}>
+                <OwnerRequestsScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/owner/requests/:requestId"
+            element={
+              <RequireAuth allowedRoles={["owner"]}>
+                <OwnerRequestDetailScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/owner/absences"
+            element={
+              <RequireAuth allowedRoles={["owner"]}>
+                <OwnerAbsencesScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/owner/reports"
+            element={
+              <RequireAuth allowedRoles={["owner"]}>
+                <OwnerReportsScreen />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/owner/rh-requests"
+            element={
+              <RequireAuth allowedRoles={["owner"]}>
+                <OwnerRhRequestsScreen />
               </RequireAuth>
             }
           />
