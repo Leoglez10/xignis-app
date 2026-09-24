@@ -10,6 +10,7 @@ import {
   Inbox,
   MessageSquare,
   SlidersHorizontal,
+  UserCheck,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -71,10 +72,33 @@ export const tabsByRole: Record<UserRole, NavTab[]> = {
   admin: adminTabs,
 };
 
+export type NavOptions = {
+  /** El usuario es jefe directo de alguien (`manager_id = yo`). */
+  hasDirectReports?: boolean;
+};
+
+/** Acceso del dueño a las solicitudes de su equipo directo. Reusa las
+ *  pantallas de jefe: "jefe" es una relación, no un rol. */
+export const ownerTeamTab: NavTab = {
+  to: "/manager/requests",
+  label: "Mi equipo",
+  icon: UserCheck,
+  group: "Principal",
+};
+
+/** Tabs del rol más las condicionales (p. ej. "Mi equipo" del dueño con reportes directos). */
+export function tabsFor(role: UserRole, options: NavOptions = {}): NavTab[] {
+  const tabs = tabsByRole[role];
+  if (role !== "owner" || !options.hasDirectReports) return tabs;
+  const profileIndex = tabs.findIndex((t) => t.to === "/profile");
+  const at = profileIndex === -1 ? tabs.length : profileIndex;
+  return [...tabs.slice(0, at), ownerTeamTab, ...tabs.slice(at)];
+}
+
 /** Tabs agrupadas en el orden en que aparece cada grupo por primera vez. */
-export function navGroups(role: UserRole): { name: string; items: NavTab[] }[] {
+export function navGroups(role: UserRole, options: NavOptions = {}): { name: string; items: NavTab[] }[] {
   const groups: { name: string; items: NavTab[] }[] = [];
-  for (const tab of tabsByRole[role]) {
+  for (const tab of tabsFor(role, options)) {
     const found = groups.find((g) => g.name === tab.group);
     if (found) found.items.push(tab);
     else groups.push({ name: tab.group, items: [tab] });
@@ -83,8 +107,8 @@ export function navGroups(role: UserRole): { name: string; items: NavTab[] }[] {
 }
 
 /** Título grande del header según la tab activa para la ruta dada. */
-export function titleForPath(role: UserRole, pathname: string): string {
-  const tabs = tabsByRole[role];
+export function titleForPath(role: UserRole, pathname: string, options: NavOptions = {}): string {
+  const tabs = tabsFor(role, options);
   const match = tabs.find((t) => (t.end ? pathname === t.to : pathname.startsWith(t.to)));
   return match?.label ?? "Inicio";
 }

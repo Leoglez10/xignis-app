@@ -10,6 +10,7 @@ import { listMyTeam } from "../../profiles/services/profileService";
 import type { Profile } from "../../../lib/database.types";
 import { subscribeToLeaveRequests } from "../../leave-requests/services/leaveRequestProgressService";
 import { useAuth } from "../../session/AuthContext";
+import { scopeToDirectReports } from "../teamScope";
 
 /**
  * Shared source for the manager pending-requests workload. Both the dashboard
@@ -35,7 +36,12 @@ export function useManagerPendingRequests() {
         listTeamUpcomingAbsences(),
         listMyTeam().catch(() => [] as Profile[]),
       ]);
-      return { absences: upcoming, pending, team: members };
+      const teamIds = members.map((m) => m.id);
+      return {
+        absences: scopeToDirectReports(upcoming, profile?.role, teamIds),
+        pending: scopeToDirectReports(pending, profile?.role, teamIds),
+        team: members,
+      };
     },
   });
 

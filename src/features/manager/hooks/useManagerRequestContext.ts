@@ -10,6 +10,9 @@ import {
   type TimeBankBalance,
   type VacationBalance,
 } from "../../leave-requests/services/leaveRequestService";
+import { listMyTeam } from "../../profiles/services/profileService";
+import { useAuth } from "../../session/AuthContext";
+import { scopeToDirectReports } from "../teamScope";
 
 export type ManagerRequestContext = {
   balance: VacationBalance | null;
@@ -30,6 +33,7 @@ export function useManagerRequestContext(
   startDate: string | undefined,
   endDate: string | undefined,
 ): ManagerRequestContext {
+  const role = useAuth().profile?.role;
   const balanceQuery = useQuery({
     enabled: Boolean(employeeId),
     queryFn: async () => (employeeId ? getVacationBalanceFor(employeeId) : null),
@@ -50,9 +54,14 @@ export function useManagerRequestContext(
 
   const overlapsQuery = useQuery({
     enabled: Boolean(startDate && endDate),
-    queryFn: async () =>
-      startDate && endDate ? listTeamAbsencesInRange(startDate, endDate) : [],
-    queryKey: ["manager", "team-absences", startDate, endDate],
+    queryFn: async () => {
+      if (!startDate || !endDate) return [];
+      const absences = await listTeamAbsencesInRange(startDate, endDate);
+      if (role !== "owner") return absences;
+      const team = await listMyTeam();
+      return scopeToDirectReports(absences, role, team.map((m) => m.id));
+    },
+    queryKey: ["manager", "team-absences", role, startDate, endDate],
   });
 
   return useMemo(

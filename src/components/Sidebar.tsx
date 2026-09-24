@@ -2,6 +2,7 @@ import { Grid2x2, LifeBuoy, Settings } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { navGroups } from "../app/navConfig";
+import { useHasDirectReports } from "../features/owner/hooks/useHasDirectReports";
 import { useAuth } from "../features/session/AuthContext";
 import { ModuleSwitcherSheet } from "./ModuleSwitcherSheet";
 import { initials } from "../lib/avatar";
@@ -16,9 +17,10 @@ export function Sidebar() {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [switcherOpen, setSwitcherOpen] = useState(false);
+  const hasDirectReports = useHasDirectReports({ enabled: profile?.role === "owner" });
 
   if (!profile) return null;
-  const groups = navGroups(profile.role);
+  const groups = navGroups(profile.role, { hasDirectReports });
 
   return (
     <aside className="app-sidebar fixed inset-y-0 left-0 z-50 hidden w-[var(--sidebar-w)] flex-col border-r border-[var(--card-border)] bg-[var(--card-muted)] md:flex">

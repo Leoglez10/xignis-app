@@ -4,7 +4,8 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { NotificationBell } from "../features/notifications/NotificationBell";
 import { useAuth } from "../features/session/AuthContext";
 import { useScrollDirection } from "../lib/useScrollDirection";
-import { tabsByRole, titleForPath } from "../app/navConfig";
+import { tabsFor, titleForPath } from "../app/navConfig";
+import { useHasDirectReports } from "../features/owner/hooks/useHasDirectReports";
 import { ModuleSwitcherSheet } from "./ModuleSwitcherSheet";
 import { initials } from "../lib/avatar";
 
@@ -22,8 +23,9 @@ export function TopBar() {
   const [switcherOpen, setSwitcherOpen] = useState(false);
 
   const role = profile?.role;
-  const tabs = role ? tabsByRole[role] : [];
-  const fallbackTitle = role ? titleForPath(role, pathname) : "Inicio";
+  const hasDirectReports = useHasDirectReports({ enabled: role === "owner" });
+  const tabs = role ? tabsFor(role, { hasDirectReports }) : [];
+  const fallbackTitle = role ? titleForPath(role, pathname, { hasDirectReports }) : "Inicio";
   const [pageTitle, setPageTitle] = useState<string | null>(null);
 
   useEffect(() => {
