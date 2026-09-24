@@ -128,13 +128,13 @@ export async function listEmployees() {
   return (data ?? []) as unknown as ProfileWithManager[];
 }
 
-/** Perfiles que pueden ser jefe (manager/admin/hr_admin). */
+/** Perfiles que pueden ser jefe (manager/admin/hr_admin/owner). */
 export async function listManagers() {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("profiles")
     .select("id, full_name, role")
-    .in("role", ["manager", "admin", "hr_admin"])
+    .in("role", ["manager", "admin", "hr_admin", "owner"])
     .order("full_name", { ascending: true });
 
   if (error) throw error;
