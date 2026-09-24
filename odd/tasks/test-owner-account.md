@@ -87,4 +87,13 @@ Supabase envuelve el script en una transaccion explicita.
   semantica vigente de la policy).
 
 ## Evidencia de commits
-- Pendiente de autorizacion explicita del usuario.
+- `9f61313` feat(hr): add owner demo account and mark seeded test data explicitly
+  (9 archivos: semillas, script hosteado, README, 4 docs, este documento)
+- Rama: `feat/test-owner-account`, creada desde `ed83ab7` (== `main`).
+- Sin push ni PR: eso queda a decision del usuario.
+- El commit se armo con `git add` de rutas explicitas para no arrastrar el trabajo
+  sin commitear de la otra sesion (`src/features/admin/**`).
+
+## Pendiente (accion del usuario)
+- Ejecutar `supabase/hosted_test_owner_account.sql` en el proyecto
+  `wtycqdnrulknhzheqflq` para que la cuenta exista en el entorno alojado.
