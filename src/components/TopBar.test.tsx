@@ -8,7 +8,7 @@ vi.mock("../features/session/AuthContext", () => ({ useAuth: () => ({ profile: {
 vi.mock("../features/notifications/NotificationBell", () => ({ NotificationBell: () => <button>Notificaciones</button> }));
 vi.mock("./ModuleSwitcherSheet", () => ({ ModuleSwitcherSheet: () => null }));
 vi.mock("../lib/useScrollDirection", () => ({ useScrollDirection: () => false }));
-vi.mock("../features/owner/hooks/useHasDirectReports", () => ({ useHasDirectReports: () => false }));
+vi.mock("../features/owner/hooks/useHasDirectReports", () => ({ useDirectReportsCount: () => 0, useHasDirectReports: () => false }));
 
 describe("TopBar", () => {
   it("muestra un solo h1 y navegación del rol", () => {

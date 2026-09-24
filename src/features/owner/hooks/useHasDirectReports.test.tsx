@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useHasDirectReports } from "./useHasDirectReports";
+import { useDirectReportsCount, useHasDirectReports } from "./useHasDirectReports";
 
 const countDirectReports = vi.fn();
 vi.mock("../../profiles/services/profileService", () => ({
@@ -30,6 +30,12 @@ describe("useHasDirectReports", () => {
     const { result } = renderHook(() => useHasDirectReports(), { wrapper });
     await waitFor(() => expect(countDirectReports).toHaveBeenCalled());
     expect(result.current).toBe(false);
+  });
+
+  it("expone el número de reportes directos", async () => {
+    countDirectReports.mockResolvedValue(3);
+    const { result } = renderHook(() => useDirectReportsCount(), { wrapper });
+    await waitFor(() => expect(result.current).toBe(3));
   });
 
   it("no consulta cuando está deshabilitado", () => {

@@ -3,11 +3,12 @@ import { countDirectReports } from "../../profiles/services/profileService";
 import { useAuth } from "../../session/AuthContext";
 
 /**
- * ¿El usuario actual es jefe directo de alguien (`profiles.manager_id = yo`)?
- * "Jefe" es una relación, no un rol: el dueño con reportes directos los revisa
- * como jefe. `enabled` permite no consultar para roles donde no aplica.
+ * Cuántos empleados tienen al usuario actual como jefe directo
+ * (`profiles.manager_id = yo`). "Jefe" es una relación, no un rol: el dueño con
+ * reportes directos los revisa como jefe. `enabled` permite no consultar para
+ * roles donde no aplica.
  */
-export function useHasDirectReports({ enabled = true }: { enabled?: boolean } = {}): boolean {
+export function useDirectReportsCount({ enabled = true }: { enabled?: boolean } = {}): number {
   const { profile } = useAuth();
   const profileId = profile?.id;
 
@@ -18,5 +19,10 @@ export function useHasDirectReports({ enabled = true }: { enabled?: boolean } = 
     staleTime: 5 * 60 * 1000,
   });
 
-  return (query.data ?? 0) > 0;
+  return query.data ?? 0;
+}
+
+/** ¿El usuario actual es jefe directo de alguien? */
+export function useHasDirectReports(options: { enabled?: boolean } = {}): boolean {
+  return useDirectReportsCount(options) > 0;
 }

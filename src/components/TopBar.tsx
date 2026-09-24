@@ -1,11 +1,11 @@
-import { Search, Grid2x2, Crown } from "lucide-react";
+import { Search, Grid2x2, Crown, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { NotificationBell } from "../features/notifications/NotificationBell";
 import { useAuth } from "../features/session/AuthContext";
 import { useScrollDirection } from "../lib/useScrollDirection";
 import { tabsFor, titleForPath } from "../app/navConfig";
-import { useHasDirectReports } from "../features/owner/hooks/useHasDirectReports";
+import { useDirectReportsCount } from "../features/owner/hooks/useHasDirectReports";
 import { ModuleSwitcherSheet } from "./ModuleSwitcherSheet";
 import { initials } from "../lib/avatar";
 
@@ -23,7 +23,8 @@ export function TopBar() {
   const [switcherOpen, setSwitcherOpen] = useState(false);
 
   const role = profile?.role;
-  const hasDirectReports = useHasDirectReports({ enabled: role === "owner" });
+  const directReports = useDirectReportsCount({ enabled: role === "owner" });
+  const hasDirectReports = directReports > 0;
   const tabs = role ? tabsFor(role, { hasDirectReports }) : [];
   const fallbackTitle = role ? titleForPath(role, pathname, { hasDirectReports }) : "Inicio";
   const [pageTitle, setPageTitle] = useState<string | null>(null);
@@ -67,6 +68,12 @@ export function TopBar() {
           <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-400 px-2.5 py-1 text-xs font-bold text-amber-900">
             <Crown aria-hidden="true" className="size-4" />
             Dueño
+          </span>
+        ) : null}
+        {role === "owner" && hasDirectReports ? (
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-800">
+            <Users aria-hidden="true" className="size-4" />
+            Jefe · {directReports}
           </span>
         ) : null}
         <div className="flex shrink-0 items-center gap-1">

@@ -1,7 +1,8 @@
 import { Grid2x2, LifeBuoy, Settings } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { navGroups } from "../app/navConfig";
+import { navGroups, ownerTeamTab } from "../app/navConfig";
+import { useManagerPendingRequests } from "../features/manager/hooks/useManagerPendingRequests";
 import { useHasDirectReports } from "../features/owner/hooks/useHasDirectReports";
 import { useAuth } from "../features/session/AuthContext";
 import { ModuleSwitcherSheet } from "./ModuleSwitcherSheet";
@@ -45,6 +46,9 @@ export function Sidebar() {
             >
               xig<span className="text-[var(--color-primary)]">nis</span>
             </span>
+            {profile.role === "owner" && hasDirectReports ? (
+              <span className="block truncate text-xs font-semibold text-[var(--color-muted)]">Dueño · Jefe</span>
+            ) : null}
           </span>
         </button>
         <button
@@ -77,6 +81,7 @@ export function Sidebar() {
                   >
                     <Icon aria-hidden="true" className="size-4.5 shrink-0" />
                     {label}
+                    {profile.role === "owner" && to === ownerTeamTab.to ? <TeamPendingBadge /> : null}
                   </NavLink>
                 </li>
               ))}
@@ -104,5 +109,18 @@ export function Sidebar() {
 
       <ModuleSwitcherSheet isOpen={switcherOpen} role={profile.role} onClose={() => setSwitcherOpen(false)} />
     </aside>
+  );
+}
+
+/** Pendientes del equipo directo del dueño. Comparte la caché de la pantalla de
+ *  aprobaciones (`useManagerPendingRequests`), así que no duplica consultas. */
+function TeamPendingBadge() {
+  const { pending } = useManagerPendingRequests();
+  if (pending.length === 0) return null;
+  return (
+    <span className="ml-auto min-w-5 rounded-full bg-amber-100 px-1.5 py-0.5 text-center text-[10px] leading-none text-amber-800">
+      <span className="sr-only">: </span>
+      {pending.length}
+    </span>
   );
 }

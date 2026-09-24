@@ -81,17 +81,18 @@ export type NavOptions = {
  *  pantallas de jefe: "jefe" es una relación, no un rol. */
 export const ownerTeamTab: NavTab = {
   to: "/manager/requests",
-  label: "Mi equipo",
+  label: "Aprobaciones",
   icon: UserCheck,
-  group: "Principal",
+  group: "Mi equipo",
 };
 
-/** Tabs del rol más las condicionales (p. ej. "Mi equipo" del dueño con reportes directos). */
+/** Tabs del rol más las condicionales (p. ej. "Mi equipo" del dueño con reportes
+ *  directos, entre "Principal" y "Análisis"). */
 export function tabsFor(role: UserRole, options: NavOptions = {}): NavTab[] {
   const tabs = tabsByRole[role];
   if (role !== "owner" || !options.hasDirectReports) return tabs;
-  const profileIndex = tabs.findIndex((t) => t.to === "/profile");
-  const at = profileIndex === -1 ? tabs.length : profileIndex;
+  const analysisIndex = tabs.findIndex((t) => t.group === "Análisis");
+  const at = analysisIndex === -1 ? tabs.length : analysisIndex;
   return [...tabs.slice(0, at), ownerTeamTab, ...tabs.slice(at)];
 }
 
