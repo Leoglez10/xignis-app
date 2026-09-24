@@ -50,6 +50,7 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
   const tabs = profile?.role ? tabsByRole[profile.role] : [];
 
   const x = useMotionValue(0);
+  const opacity = useMotionValue(1);
   // "back" = arrastre desde el borde (volver). "tab" = swipe libre entre pestañas.
   const [drag, setDrag] = useState<null | "back" | "tab">(null);
   // Pestaña vecina renderizada debajo del dedo durante el swipe → se monta y
@@ -75,6 +76,7 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
       firstRef.current = false;
       return;
     }
+    opacity.set(1); // reset in case a desktop crossfade was interrupted
     if (fromDrag.current || reducedMotion) {
       fromDrag.current = false;
       x.set(0);
@@ -89,7 +91,16 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
       const prev = prevRef.current;
       const pi = prev ? tabIndexFor(tabs, prev.pathname) : -1;
       const ci = tabIndexFor(tabs, location.pathname);
-      if (pi !== -1 && ci !== -1 && pi !== ci) from = ci > pi ? w : -w;
+      if (pi !== -1 && ci !== -1 && pi !== ci) {
+        // Desktop sidebar has no horizontal order: crossfade instead of carousel.
+        if (window.matchMedia("(min-width: 768px)").matches) {
+          x.set(0);
+          opacity.set(0);
+          const fade = animate(opacity, 1, { duration: 0.14, ease: "easeOut" });
+          return () => fade.stop();
+        }
+        from = ci > pi ? w : -w;
+      }
     }
     x.set(from);
     const controls = animate(x, 0, { duration: 0.32, ease });
@@ -245,7 +256,7 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
           {children(prevRef.current)}
         </motion.div>
       ) : null}
-      <motion.div className="relative min-h-dvh w-full" style={{ x }}>
+      <motion.div className="relative min-h-dvh w-full" style={{ x, opacity }}>
         {children(location)}
       </motion.div>
       {drag === "tab" && peek ? (
