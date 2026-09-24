@@ -2,7 +2,7 @@ import { Avatar } from "../../../components/ui/Avatar";
 import { ArrowLeft, CalendarDays, LayoutGrid, List, Pencil, Plus, Search, Trash2, UserPlus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { BottomSheet } from "../../../components/ui/BottomSheet";
 import { Select } from "../../../components/ui/Select";
 import { Button } from "../../../components/ui/Button";
@@ -94,12 +94,14 @@ const roleBadge: Record<UserRole, string> = {
   hr_admin: "bg-indigo-100 text-indigo-800",
   manager: "bg-blue-100 text-blue-800",
   employee: "bg-emerald-100 text-emerald-800",
+  owner: "bg-amber-100 text-amber-900",
 };
 
-const roleOptions: UserRole[] = ["employee", "manager", "hr_admin", "admin"];
+const roleOptions: UserRole[] = ["employee", "manager", "owner", "hr_admin", "admin"];
 
 export function EmployeesScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const isDesktop = useIsDesktop();
   const [employees, setEmployees] = useState<ProfileWithManager[]>([]);
   const [managers, setManagers] = useState<Pick<Profile, "id" | "full_name" | "role">[]>([]);
@@ -110,7 +112,10 @@ export function EmployeesScreen() {
   const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [inviteOpen, setInviteOpen] = useState(false);
+  // El boton "Agregar empleado" del Inicio navega aca con state y abre el alta directo.
+  const [inviteOpen, setInviteOpen] = useState(
+    () => Boolean((location.state as { addEmployee?: boolean } | null)?.addEmployee),
+  );
   const [editTarget, setEditTarget] = useState<ProfileWithManager | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ProfileWithManager | null>(null);
 
