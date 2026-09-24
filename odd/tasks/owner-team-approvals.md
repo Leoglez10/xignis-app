@@ -27,7 +27,7 @@ Un owner puede ser `manager_id` de encargados. Hoy esas solicitudes quedan traba
 
 ## Verificación
 - `npm test`: 25 archivos, 97 tests OK. `npm run build` (tsc + vite) OK.
-- T5 pendiente: prueba manual con cuentas de test, requiere aplicar migración `20260924140000` al remoto.
+- T5 pendiente: prueba manual con cuentas de test. Migración `20260924214007` aplicada al remoto (prod wtycqdnrulknhzheqflq); 0 owners con reportes hoy.
 
 ## Pendientes / riesgos
 - `listManagers` excluye `owner`: RH no puede asignar owner como jefe desde la UI.
