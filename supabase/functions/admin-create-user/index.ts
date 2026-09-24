@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
   if (userErr || !userData.user) return json({ error: "Sesión inválida." }, 401);
 
   const { data: callerProfile } = await admin
-    .from("profiles").select("role").eq("id", userData.user.id).single();
+    .from("profiles").select("role, is_test").eq("id", userData.user.id).single();
   if (!callerProfile || !["hr_admin", "admin"].includes(callerProfile.role)) {
     return json({ error: "Solo RH o admin pueden crear usuarios." }, 403);
   }
@@ -133,6 +133,9 @@ Deno.serve(async (req) => {
     manager_id: managerId,
     department_id: departmentId,
     annual_vacation_days: annualVacationDays,
+    // Test accounts may only create test users; real callers create real users.
+    // Set explicitly: the auth trigger inserts the row with the default (false).
+    is_test: Boolean(callerProfile.is_test),
   }, { onConflict: "id" });
   if (profErr) return json({ error: profErr.message }, 400);
 

@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
   if (userErr || !userData.user) return json({ error: "Sesión inválida." }, 401);
 
   const { data: callerProfile } = await admin
-    .from("profiles").select("role").eq("id", userData.user.id).single();
+    .from("profiles").select("role, is_test").eq("id", userData.user.id).single();
   if (!callerProfile || !["hr_admin", "admin"].includes(callerProfile.role)) {
     return json({ error: "Solo RH o admin pueden dar acceso." }, 403);
   }
@@ -67,6 +67,13 @@ Deno.serve(async (req) => {
   if (!userId) return json({ error: "Falta el empleado." }, 400);
   if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: "Correo inválido." }, 400);
   if (email.endsWith("@xignis.local")) return json({ error: "Usa un correo real." }, 400);
+
+  // Test and real accounts are isolated: neither side may act on the other.
+  const { data: targetProfile } = await admin
+    .from("profiles").select("is_test").eq("id", userId).maybeSingle();
+  if (targetProfile && Boolean(targetProfile.is_test) !== Boolean(callerProfile.is_test)) {
+    return json({ error: "No autorizado." }, 403);
+  }
 
   // Setea el correo confirmado (sin doble opt-in) sobre el usuario placeholder y lo
   // deja pendiente de activación: define su password al entrar a la app.

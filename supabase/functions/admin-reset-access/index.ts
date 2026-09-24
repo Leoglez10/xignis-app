@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
   if (userErr || !userData.user) return json({ error: "Sesión inválida." }, 401);
 
   const { data: callerProfile } = await admin
-    .from("profiles").select("role").eq("id", userData.user.id).single();
+    .from("profiles").select("role, is_test").eq("id", userData.user.id).single();
   if (!callerProfile || !["hr_admin", "admin"].includes(callerProfile.role)) {
     return json({ error: "Solo RH o admin pueden restablecer el acceso." }, 403);
   }
@@ -45,6 +45,13 @@ Deno.serve(async (req) => {
 
   const { data: target, error: targetErr } = await admin.auth.admin.getUserById(userId);
   if (targetErr || !target.user) return json({ error: "No se encontró la cuenta." }, 404);
+
+  // Test and real accounts are isolated: neither side may act on the other.
+  const { data: targetProfile } = await admin
+    .from("profiles").select("is_test").eq("id", userId).maybeSingle();
+  if (targetProfile && Boolean(targetProfile.is_test) !== Boolean(callerProfile.is_test)) {
+    return json({ error: "No autorizado." }, 403);
+  }
   if (!target.user.email || target.user.email.endsWith("@xignis.local")) {
     return json({ error: "Este empleado todavía no tiene correo asignado." }, 400);
   }

@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
   if (userErr || !userData.user) return json({ error: "Sesión inválida." }, 401);
 
   const { data: callerProfile } = await admin
-    .from("profiles").select("role").eq("id", userData.user.id).single();
+    .from("profiles").select("role, is_test").eq("id", userData.user.id).single();
   if (!callerProfile || !["hr_admin", "admin"].includes(callerProfile.role)) {
     return json({ error: "Solo RH o admin pueden dar de baja empleados." }, 403);
   }
@@ -92,8 +92,12 @@ Deno.serve(async (req) => {
   }
 
   const { data: targetProfile, error: targetErr } = await admin
-    .from("profiles").select("id, full_name, role").eq("id", targetId).single();
+    .from("profiles").select("id, full_name, role, is_test").eq("id", targetId).single();
   if (targetErr || !targetProfile) return json({ error: "Empleado no encontrado." }, 404);
+  // Test and real accounts are isolated: neither side may act on the other.
+  if (Boolean(targetProfile.is_test) !== Boolean(callerProfile.is_test)) {
+    return json({ error: "No autorizado." }, 403);
+  }
 
   const { data: targetUser } = await withJwtRetry(() => admin.auth.admin.getUserById(targetId));
   const targetEmail = targetUser?.user?.email?.toLowerCase();
