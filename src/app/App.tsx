@@ -66,6 +66,15 @@ function AppChrome() {
   );
 }
 
+/** Inicio de jefe. El dueño con reportes directos no tiene un "Inicio" de jefe
+ *  propio (su inicio es /owner): los regresos a /manager lo llevan a sus
+ *  aprobaciones, dentro de su grupo "Mi equipo", sin cambiar de experiencia. */
+function ManagerHome() {
+  const { profile } = useAuth();
+  if (profile?.role === "owner") return <Navigate replace to="/manager/requests" />;
+  return <ManagerDashboardScreen />;
+}
+
 export function App() {
   return (
     <>
@@ -129,7 +138,7 @@ export function App() {
             path="/manager"
             element={
               <RequireAuth allowedRoles={["manager", "owner"]}>
-                <ManagerDashboardScreen />
+                <ManagerHome />
               </RequireAuth>
             }
           />

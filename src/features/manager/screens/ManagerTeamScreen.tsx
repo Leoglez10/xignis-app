@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { todayIso } from "../../../lib/date";
 import { listTeamAbsencesInRange } from "../../leave-requests/services/leaveRequestService";
 import { listMyTeam } from "../../profiles/services/profileService";
-import { ManagerShell } from "../components/managerNav";
+import { ManagerShell, TeamRoleLabel } from "../components/managerNav";
 
 type StatusFilter = "all" | "absent" | "available";
 type SortKey = "name" | "dept";
@@ -64,7 +64,9 @@ export function ManagerTeamScreen() {
             <ArrowLeft aria-hidden="true" className="size-5" />
           </button>
           <div>
-            <p className="text-sm font-bold text-[var(--color-muted)]">Jefe</p>
+            <p className="text-sm font-bold text-[var(--color-muted)]">
+              <TeamRoleLabel />
+            </p>
             <h2 className="text-2xl font-bold md:text-3xl">Mi equipo</h2>
           </div>
         </header>

@@ -86,6 +86,14 @@ export const ownerTeamTab: NavTab = {
   group: "Mi equipo",
 };
 
+/** Grupo "Mi equipo" del dueño con reportes directos: las mismas pantallas que
+ *  ve un jefe (aprobaciones, equipo y agenda), dentro del shell del dueño. */
+export const ownerTeamTabs: NavTab[] = [
+  ownerTeamTab,
+  { to: "/manager/team", label: "Equipo", icon: Users, group: "Mi equipo" },
+  { to: "/manager/calendar", label: "Agenda", icon: CalendarDays, group: "Mi equipo" },
+];
+
 /** Tabs del rol más las condicionales (p. ej. "Mi equipo" del dueño con reportes
  *  directos, entre "Principal" y "Análisis"). */
 export function tabsFor(role: UserRole, options: NavOptions = {}): NavTab[] {
@@ -93,7 +101,7 @@ export function tabsFor(role: UserRole, options: NavOptions = {}): NavTab[] {
   if (role !== "owner" || !options.hasDirectReports) return tabs;
   const analysisIndex = tabs.findIndex((t) => t.group === "Análisis");
   const at = analysisIndex === -1 ? tabs.length : analysisIndex;
-  return [...tabs.slice(0, at), ownerTeamTab, ...tabs.slice(at)];
+  return [...tabs.slice(0, at), ...ownerTeamTabs, ...tabs.slice(at)];
 }
 
 /** Tabs agrupadas en el orden en que aparece cada grupo por primera vez. */
