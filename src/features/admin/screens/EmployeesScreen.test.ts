@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GROUP_PREVIEW, groupPreview } from "./EmployeesScreen";
+import { GROUP_PREVIEW, groupPreview } from "../components/EmployeeDirectory";
 
 const members = ["a", "b", "c", "d", "e"];
 
