@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { navGroups, ownerTeamTab, ownerTeamTabs, tabsByRole, tabsFor, titleForPath } from "./navConfig";
+import { isOwnerCompanyPath, navGroups, ownerTeamTab, ownerTeamTabs, ownerTeamViewTabs, tabsByRole, tabsFor, titleForPath } from "./navConfig";
 
 describe("tabsFor", () => {
   it("agrega 'Aprobaciones' al dueño con reportes directos, antes de Análisis", () => {
@@ -72,5 +72,35 @@ describe("Cuenta (perfil + ajustes unificados)", () => {
 
   it("no confunde rutas que solo empiezan igual", () => {
     expect(titleForPath("employee", "/cuentas")).toBe("Inicio");
+  });
+});
+
+describe("vista 'solo equipo' del dueño", () => {
+  it("muestra solo el equipo y Cuenta", () => {
+    const tabs = tabsFor("owner", { hasDirectReports: true, teamView: true });
+    expect(tabs).toBe(ownerTeamViewTabs);
+    expect(tabs.map((t) => [t.label, t.to])).toEqual([
+      ["Inicio", "/manager"],
+      ["Aprobaciones", "/manager/requests"],
+      ["Equipo", "/manager/team"],
+      ["Agenda", "/manager/calendar"],
+      ["Perfil", "/cuenta/perfil"],
+    ]);
+    expect(tabs.some((t) => isOwnerCompanyPath(t.to))).toBe(false);
+    expect(navGroups("owner", { hasDirectReports: true, teamView: true }).map((g) => g.name)).toEqual(["Mi equipo", "Cuenta"]);
+    expect(titleForPath("owner", "/manager", { hasDirectReports: true, teamView: true })).toBe("Inicio");
+    expect(titleForPath("owner", "/manager/team", { hasDirectReports: true, teamView: true })).toBe("Equipo");
+  });
+
+  it("se ignora sin reportes directos o para otros roles", () => {
+    expect(tabsFor("owner", { teamView: true })).toEqual(tabsByRole.owner);
+    expect(tabsFor("manager", { hasDirectReports: true, teamView: true })).toEqual(tabsByRole.manager);
+  });
+
+  it("reconoce las rutas de toda la empresa del dueño", () => {
+    expect(isOwnerCompanyPath("/owner")).toBe(true);
+    expect(isOwnerCompanyPath("/owner/requests/1")).toBe(true);
+    expect(isOwnerCompanyPath("/manager/requests")).toBe(false);
+    expect(isOwnerCompanyPath("/owners")).toBe(false);
   });
 });

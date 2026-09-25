@@ -10,7 +10,8 @@ import {
   type LeaveRequestWithEmployee,
 } from "../../leave-requests/services/leaveRequestService";
 import { listHrLeaveRequests } from "../../leave-requests/services/leaveRequestService";
-import { OwnerReadOnlyBanner } from "../components/OwnerReadOnlyBanner";
+import { OwnerReadOnlyNotice } from "../components/OwnerReadOnlyNotice";
+import { useHasDirectReports } from "../hooks/useHasDirectReports";
 
 type FilterKey = "all" | "pending" | "approved" | "rejected";
 
@@ -52,6 +53,17 @@ function exportCsv(rows: LeaveRequestWithEmployee[]) {
   URL.revokeObjectURL(url);
 }
 
+/** Aviso de la lista de toda la empresa; si el dueño tiene equipo, lo lleva a
+ *  donde sí puede aprobar. */
+function RequestsNotice() {
+  const hasDirectReports = useHasDirectReports();
+  return (
+    <OwnerReadOnlyNotice action={hasDirectReports ? { label: "Las de tu equipo se aprueban en Aprobaciones", to: "/manager/requests" } : undefined}>
+      Ves las solicitudes de toda la empresa en modo lectura.
+    </OwnerReadOnlyNotice>
+  );
+}
+
 export function OwnerRequestsScreen() {
   const navigate = useNavigate();
   const { data: requests, error, isLoading } = useQuery({
@@ -79,7 +91,7 @@ export function OwnerRequestsScreen() {
             <h2 className="mt-1 text-2xl font-bold md:text-3xl">Solicitudes</h2>
           </header>
 
-          <OwnerReadOnlyBanner />
+          <RequestsNotice />
 
           {error ? (
             <p className="rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-700" role="alert">

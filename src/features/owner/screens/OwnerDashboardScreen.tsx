@@ -10,7 +10,7 @@ import {
   listHrLeaveRequests,
 } from "../../leave-requests/services/leaveRequestService";
 import { diffDaysInclusive, todayIso } from "../../../lib/date";
-import { OwnerReadOnlyBanner } from "../components/OwnerReadOnlyBanner";
+import { OwnerReadOnlyNotice } from "../components/OwnerReadOnlyNotice";
 
 function useEmployees() {
   return useQuery({
@@ -103,7 +103,7 @@ export function OwnerDashboardScreen() {
         </header>
 
         <div className="mb-5">
-          <OwnerReadOnlyBanner />
+          <OwnerReadOnlyNotice>Resumen de toda la empresa, en modo lectura.</OwnerReadOnlyNotice>
         </div>
 
         <section className="grid gap-4 md:grid-cols-2">

@@ -16,7 +16,7 @@ import {
   getVacationBalanceFor,
 } from "../../leave-requests/services/leaveRequestService";
 import { createOwnerRequest } from "../services/ownerService";
-import { OwnerReadOnlyBanner } from "../components/OwnerReadOnlyBanner";
+import { OwnerReadOnlyNotice } from "../components/OwnerReadOnlyNotice";
 
 export function OwnerEmployeeDetailScreen() {
   const navigate = useNavigate();
@@ -67,7 +67,7 @@ export function OwnerEmployeeDetailScreen() {
         </header>
 
         <div className="mb-5">
-          <OwnerReadOnlyBanner />
+          <OwnerReadOnlyNotice>Ficha de solo lectura. Los cambios los hace RH.</OwnerReadOnlyNotice>
         </div>
 
         {sheetQuery.isError ? (

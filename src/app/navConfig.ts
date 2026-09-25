@@ -79,6 +79,8 @@ export const tabsByRole: Record<UserRole, NavTab[]> = {
 export type NavOptions = {
   /** El usuario es jefe directo de alguien (`manager_id = yo`). */
   hasDirectReports?: boolean;
+  /** Dueño con reportes directos en vista "solo equipo" (toggle de la TopBar). */
+  teamView?: boolean;
 };
 
 /** Acceso del dueño a las solicitudes de su equipo directo. Reusa las
@@ -98,11 +100,25 @@ export const ownerTeamTabs: NavTab[] = [
   { to: "/manager/calendar", label: "Agenda", icon: CalendarDays, group: "Mi equipo" },
 ];
 
+/** Vista "solo equipo" del dueño: inicio de equipo, las pantallas de jefe y
+ *  Cuenta. Las páginas de toda la empresa quedan fuera. */
+export const ownerTeamViewTabs: NavTab[] = [
+  { to: "/manager", label: "Inicio", end: true, icon: Home, group: "Mi equipo" },
+  ...ownerTeamTabs,
+  ...ownerTabs.filter((t) => t.group === "Cuenta"),
+];
+
+/** Rutas de toda la empresa del dueño (ocultas en la vista "solo equipo"). */
+export function isOwnerCompanyPath(pathname: string): boolean {
+  return pathname === "/owner" || pathname.startsWith("/owner/");
+}
+
 /** Tabs del rol más las condicionales (p. ej. "Mi equipo" del dueño con reportes
  *  directos, entre "Principal" y "Análisis"). */
 export function tabsFor(role: UserRole, options: NavOptions = {}): NavTab[] {
   const tabs = tabsByRole[role];
   if (role !== "owner" || !options.hasDirectReports) return tabs;
+  if (options.teamView) return ownerTeamViewTabs;
   const analysisIndex = tabs.findIndex((t) => t.group === "Análisis");
   const at = analysisIndex === -1 ? tabs.length : analysisIndex;
   return [...tabs.slice(0, at), ...ownerTeamTabs, ...tabs.slice(at)];

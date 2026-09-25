@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { navGroups, ownerTeamTab } from "../app/navConfig";
 import { useManagerPendingRequests } from "../features/manager/hooks/useManagerPendingRequests";
-import { useHasDirectReports } from "../features/owner/hooks/useHasDirectReports";
+import { useOwnerNavOptions } from "../features/owner/hooks/useOwnerNavOptions";
 import { useAuth } from "../features/session/AuthContext";
 import { ModuleSwitcherSheet } from "./ModuleSwitcherSheet";
 import { initials } from "../lib/avatar";
@@ -19,10 +19,11 @@ export function Sidebar() {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [switcherOpen, setSwitcherOpen] = useState(false);
-  const hasDirectReports = useHasDirectReports({ enabled: profile?.role === "owner" });
+  const navOptions = useOwnerNavOptions();
+  const { hasDirectReports } = navOptions;
 
   if (!profile) return null;
-  const groups = navGroups(profile.role, { hasDirectReports });
+  const groups = navGroups(profile.role, navOptions);
 
   return (
     <aside className="app-sidebar fixed inset-y-0 left-0 z-50 hidden w-[var(--sidebar-w)] flex-col border-r border-[var(--card-border)] bg-[var(--card-muted)] md:flex">

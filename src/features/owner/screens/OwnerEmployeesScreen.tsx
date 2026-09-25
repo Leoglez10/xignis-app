@@ -5,7 +5,7 @@ import { AdminShell } from "../../admin/components/adminNav";
 import { EmployeeDirectory } from "../../admin/components/EmployeeDirectory";
 import { listActiveDepartments } from "../../admin/services/departmentService";
 import { listEmployees } from "../../profiles/services/profileService";
-import { OwnerReadOnlyBanner } from "../components/OwnerReadOnlyBanner";
+import { OwnerReadOnlyNotice } from "../components/OwnerReadOnlyNotice";
 
 /** Directorio del dueño: el mismo que ve RH, sin acciones (solo lectura). */
 export function OwnerEmployeesScreen() {
@@ -29,7 +29,7 @@ export function OwnerEmployeesScreen() {
         </header>
 
         <div className="mb-5">
-          <OwnerReadOnlyBanner />
+          <OwnerReadOnlyNotice>Directorio de solo lectura. Los cambios los hace RH.</OwnerReadOnlyNotice>
         </div>
 
         <EmployeeDirectory

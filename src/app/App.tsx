@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { RequireAuth } from "./RequireAuth";
@@ -9,6 +9,7 @@ import { TopBar } from "../components/TopBar";
 import { Sidebar } from "../components/Sidebar";
 import { PageSkeleton } from "../components/ui/Skeleton";
 import { useAuth } from "../features/session/AuthContext";
+import { useOwnerNavOptions } from "../features/owner/hooks/useOwnerNavOptions";
 import { ACCOUNT_BASE, accountPath, legacyAccountRedirects } from "../features/account/accountSections";
 
 // Code-splitting por ruta: cada pantalla en su chunk → menor parse en cold start (WKWebView).
@@ -66,13 +67,22 @@ function AppChrome() {
   );
 }
 
-/** Inicio de jefe. El dueño con reportes directos no tiene un "Inicio" de jefe
- *  propio (su inicio es /owner): los regresos a /manager lo llevan a sus
- *  aprobaciones, dentro de su grupo "Mi equipo", sin cambiar de experiencia. */
+/** Inicio de jefe. En la vista "Dueño + Jefe" el dueño no tiene un "Inicio" de
+ *  jefe propio (su inicio es /owner): /manager lo lleva a sus aprobaciones. En
+ *  la vista "solo equipo" /manager es su inicio de equipo. */
 function ManagerHome() {
   const { profile } = useAuth();
-  if (profile?.role === "owner") return <Navigate replace to="/manager/requests" />;
+  const { teamView } = useOwnerNavOptions();
+  if (profile?.role === "owner" && !teamView) return <Navigate replace to="/manager/requests" />;
   return <ManagerDashboardScreen />;
+}
+
+/** Páginas de toda la empresa del dueño. En la vista "solo equipo" quedan
+ *  ocultas: si se abren directo (deep link, login), van a sus aprobaciones. */
+function OwnerCompanyPage({ children }: { children: ReactNode }) {
+  const { teamView } = useOwnerNavOptions();
+  if (teamView) return <Navigate replace to="/manager/requests" />;
+  return <>{children}</>;
 }
 
 export function App() {
@@ -279,7 +289,7 @@ export function App() {
             path="/owner"
             element={
               <RequireAuth allowedRoles={["owner"]}>
-                <OwnerDashboardScreen />
+                <OwnerCompanyPage><OwnerDashboardScreen /></OwnerCompanyPage>
               </RequireAuth>
             }
           />
@@ -287,7 +297,7 @@ export function App() {
             path="/owner/employees"
             element={
               <RequireAuth allowedRoles={["owner"]}>
-                <OwnerEmployeesScreen />
+                <OwnerCompanyPage><OwnerEmployeesScreen /></OwnerCompanyPage>
               </RequireAuth>
             }
           />
@@ -295,7 +305,7 @@ export function App() {
             path="/owner/employees/:id"
             element={
               <RequireAuth allowedRoles={["owner"]}>
-                <OwnerEmployeeDetailScreen />
+                <OwnerCompanyPage><OwnerEmployeeDetailScreen /></OwnerCompanyPage>
               </RequireAuth>
             }
           />
@@ -303,7 +313,7 @@ export function App() {
             path="/owner/requests"
             element={
               <RequireAuth allowedRoles={["owner"]}>
-                <OwnerRequestsScreen />
+                <OwnerCompanyPage><OwnerRequestsScreen /></OwnerCompanyPage>
               </RequireAuth>
             }
           />
@@ -311,7 +321,7 @@ export function App() {
             path="/owner/requests/:requestId"
             element={
               <RequireAuth allowedRoles={["owner"]}>
-                <OwnerRequestDetailScreen />
+                <OwnerCompanyPage><OwnerRequestDetailScreen /></OwnerCompanyPage>
               </RequireAuth>
             }
           />
@@ -319,7 +329,7 @@ export function App() {
             path="/owner/absences"
             element={
               <RequireAuth allowedRoles={["owner"]}>
-                <OwnerAbsencesScreen />
+                <OwnerCompanyPage><OwnerAbsencesScreen /></OwnerCompanyPage>
               </RequireAuth>
             }
           />
@@ -327,7 +337,7 @@ export function App() {
             path="/owner/reports"
             element={
               <RequireAuth allowedRoles={["owner"]}>
-                <OwnerReportsScreen />
+                <OwnerCompanyPage><OwnerReportsScreen /></OwnerCompanyPage>
               </RequireAuth>
             }
           />
@@ -335,7 +345,7 @@ export function App() {
             path="/owner/rh-requests"
             element={
               <RequireAuth allowedRoles={["owner"]}>
-                <OwnerRhRequestsScreen />
+                <OwnerCompanyPage><OwnerRhRequestsScreen /></OwnerCompanyPage>
               </RequireAuth>
             }
           />

@@ -1,11 +1,13 @@
-import { Search, Grid2x2, Crown, Users } from "lucide-react";
+import { Search, Grid2x2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { NotificationBell } from "../features/notifications/NotificationBell";
 import { useAuth } from "../features/session/AuthContext";
 import { useScrollDirection } from "../lib/useScrollDirection";
 import { tabsFor, titleForPath } from "../app/navConfig";
-import { useDirectReportsCount } from "../features/owner/hooks/useHasDirectReports";
+import { useOwnerNavOptions } from "../features/owner/hooks/useOwnerNavOptions";
+import { OwnerChip } from "./RoleChips";
+import { OwnerViewToggle } from "./OwnerViewToggle";
 import { ModuleSwitcherSheet } from "./ModuleSwitcherSheet";
 import { initials } from "../lib/avatar";
 import { accountPath } from "../features/account/accountSections";
@@ -24,10 +26,10 @@ export function TopBar() {
   const [switcherOpen, setSwitcherOpen] = useState(false);
 
   const role = profile?.role;
-  const directReports = useDirectReportsCount({ enabled: role === "owner" });
-  const hasDirectReports = directReports > 0;
-  const tabs = role ? tabsFor(role, { hasDirectReports }) : [];
-  const fallbackTitle = role ? titleForPath(role, pathname, { hasDirectReports }) : "Inicio";
+  const navOptions = useOwnerNavOptions();
+  const { directReports } = navOptions;
+  const tabs = role ? tabsFor(role, navOptions) : [];
+  const fallbackTitle = role ? titleForPath(role, pathname, navOptions) : "Inicio";
   const [pageTitle, setPageTitle] = useState<string | null>(null);
 
   useEffect(() => {
@@ -65,17 +67,11 @@ export function TopBar() {
           )}
         </button>
         <h1 className="min-w-0 flex-1 truncate text-2xl font-bold text-[var(--color-text)]">{title}</h1>
-        {role === "owner" ? (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-400 px-2.5 py-1 text-xs font-bold text-amber-900">
-            <Crown aria-hidden="true" className="size-4" />
-            Dueño
-          </span>
-        ) : null}
-        {role === "owner" && hasDirectReports ? (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-800">
-            <Users aria-hidden="true" className="size-4" />
-            Jefe · {directReports}
-          </span>
+        {/* Dueño con reportes directos: el toggle de vista reemplaza los chips. */}
+        {role === "owner" && navOptions.hasDirectReports ? (
+          <OwnerViewToggle directReports={directReports} />
+        ) : role === "owner" ? (
+          <OwnerChip />
         ) : null}
         <div className="flex shrink-0 items-center gap-1">
           <button

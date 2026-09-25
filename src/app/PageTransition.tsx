@@ -6,7 +6,7 @@ import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 
 import { PageSkeleton } from "../components/ui/Skeleton";
 import { bumpHaptic } from "../lib/haptics";
 import { useAuth } from "../features/session/AuthContext";
-import { useHasDirectReports } from "../features/owner/hooks/useHasDirectReports";
+import { useOwnerNavOptions } from "../features/owner/hooks/useOwnerNavOptions";
 import { tabsFor, type NavTab } from "./navConfig";
 
 const EDGE = 28; // px desde el borde izquierdo donde arranca el gesto
@@ -49,8 +49,8 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
   const navType = useNavigationType();
   const { profile } = useAuth();
   // Mismas tabs que TopBar/Sidebar (incluye "Mi equipo" del dueño con reportes).
-  const hasDirectReports = useHasDirectReports({ enabled: profile?.role === "owner" });
-  const tabs = profile?.role ? tabsFor(profile.role, { hasDirectReports }) : [];
+  const navOptions = useOwnerNavOptions();
+  const tabs = profile?.role ? tabsFor(profile.role, navOptions) : [];
 
   const x = useMotionValue(0);
   const opacity = useMotionValue(1);

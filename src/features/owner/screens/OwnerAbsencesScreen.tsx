@@ -5,7 +5,7 @@ import { DateInput } from "../../../components/ui/DateInput";
 import { AdminShell } from "../../admin/components/adminNav";
 import { listTeamAbsencesInRange } from "../../leave-requests/services/leaveRequestService";
 import { startOfMonthISO, endOfMonthISO, todayIso, formatDateEs } from "../../../lib/date";
-import { OwnerReadOnlyBanner } from "../components/OwnerReadOnlyBanner";
+import { OwnerReadOnlyNotice } from "../components/OwnerReadOnlyNotice";
 import { EmployeeAvatar } from "../../leave-requests/components/EmployeeAvatar";
 
 function overlapsDate(start: string, end: string, date: string): boolean {
@@ -39,7 +39,7 @@ export function OwnerAbsencesScreen() {
           <h2 className="mt-1 text-2xl font-bold md:text-3xl">Ausentes</h2>
         </header>
 
-        <OwnerReadOnlyBanner />
+        <OwnerReadOnlyNotice>Ausencias de toda la empresa, en modo lectura.</OwnerReadOnlyNotice>
 
         <section className="animate-fade-up mt-5 rounded-[20px] bg-white p-4 ring-1 ring-slate-200">
           <DateInput label="Fecha" value={date} onChange={(e) => setDate(e.target.value)} />
