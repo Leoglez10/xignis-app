@@ -1,6 +1,6 @@
 # Xignis - Cuentas de Prueba (LISTAS)
 
-Creadas en Supabase (`wtycqdnrulknhzheqflq`). Confirmadas. Listas para login.
+Las cinco cuentas estan creadas y confirmadas en Supabase (`wtycqdnrulknhzheqflq`) y listas para login. La cuenta owner se creo ejecutando `supabase/hosted_test_owner_account.sql` en el proyecto alojado.
 
 | Email | Password | Rol | Ruta tras login |
 |---|---|---|---|
@@ -8,8 +8,12 @@ Creadas en Supabase (`wtycqdnrulknhzheqflq`). Confirmadas. Listas para login.
 | `carlos.manager@xignis.test` | `Xignis123!` | `manager` | `/manager` |
 | `maria.hr@xignis.test` | `Xignis123!` | `hr_admin` | `/admin` |
 | `admin.tech@xignis.test` | `Xignis123!` | `admin` | `/admin` |
+| `owner.test@xignis.test` | `Xignis123!` | `owner` | `/owner` |
 
 Relación: Ana (employee) → manager Carlos.
+
+Nota: el rol `owner` es de solo lectura por diseño (ve todo, no escribe nada),
+así que no sirve para ejercitar flujos de aprobación.
 
 ## Login
 
