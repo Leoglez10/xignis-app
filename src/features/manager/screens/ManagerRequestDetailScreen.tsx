@@ -9,10 +9,10 @@ import {
   reviewLeaveRequest,
   statusLabel,
 } from "../../leave-requests/services/leaveRequestService";
-import { diffDaysInclusive } from "../../../lib/date";
 import { successHaptic } from "../../../lib/haptics";
 import { usePageTitle } from "../../../lib/usePageTitle";
 import type { LeaveRequest } from "../../../lib/database.types";
+import { getBalanceShortfall } from "../balanceShortfall";
 import { useManagerRequestContext } from "../hooks/useManagerRequestContext";
 
 export function ManagerRequestDetailScreen() {
@@ -98,19 +98,17 @@ function RequestReviewActions({
   setRejecting,
   onReview,
 }: RequestReviewActionsProps) {
-  const { balance, balanceError, history, overlaps, timeBank } = useManagerRequestContext(
+  const { balance, balanceError, history, overlaps, timeBank, timeBankError } = useManagerRequestContext(
     request.employee_id,
     request.start_date,
     request.end_date,
   );
 
-  const requestDays = diffDaysInclusive(request.start_date, request.end_date);
-  const exceedsBalance =
-    !balanceError &&
-    balance !== null &&
-    request.leave_type === "vacation" &&
-    request.paid &&
-    requestDays > balance.available;
+  const shortfall = getBalanceShortfall(
+    request,
+    balanceError ? null : balance,
+    timeBankError ? null : timeBank,
+  );
 
   const recentHistory = history
     .filter((r) => r.id !== request.id)
@@ -132,10 +130,11 @@ function RequestReviewActions({
         </h2>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-2xl bg-[var(--color-surface)] p-4">
+          <div className={`rounded-2xl p-4 ${shortfall?.kind === "vacation" ? "bg-amber-50" : "bg-[var(--color-surface)]"}`}>
             <div className="flex items-center gap-2 text-sm font-bold text-[var(--color-muted)]">
               <History aria-hidden="true" className="size-4" />
               Vacaciones
+              {shortfall?.kind === "vacation" ? <ShortLabel /> : null}
             </div>
             <p className="mt-2 text-2xl font-bold text-[var(--color-text)]">
               {balance ? balance.available : "—"}
@@ -145,10 +144,11 @@ function RequestReviewActions({
             </p>
           </div>
 
-          <div className="rounded-2xl bg-[var(--color-surface)] p-4">
+          <div className={`rounded-2xl p-4 ${shortfall?.kind === "hours" ? "bg-amber-50" : "bg-[var(--color-surface)]"}`}>
             <div className="flex items-center gap-2 text-sm font-bold text-[var(--color-muted)]">
               <Clock aria-hidden="true" className="size-4" />
               Banco de horas
+              {shortfall?.kind === "hours" ? <ShortLabel /> : null}
             </div>
             <p className="mt-2 text-2xl font-bold text-[var(--color-text)]">
               {timeBank ? timeBank.availableHours.toFixed(1) : "—"}
@@ -156,15 +156,6 @@ function RequestReviewActions({
             </p>
           </div>
         </div>
-
-        {exceedsBalance ? (
-          <div className="mt-3 flex items-start gap-2 rounded-2xl bg-amber-50 p-3 text-sm font-semibold text-amber-800">
-            <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-            <span>
-              Esta solicitud excede el saldo disponible ({balance?.available} {balance?.available === 1 ? "día disponible" : "días disponibles"}).
-            </span>
-          </div>
-        ) : null}
 
         <div className="mt-3 rounded-2xl bg-[var(--color-surface)] p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-[var(--color-muted)]">
@@ -214,6 +205,23 @@ function RequestReviewActions({
         </p>
       ) : null}
 
+      {shortfall ? (
+        <div className="mb-3 flex items-start gap-2 rounded-2xl bg-amber-50 p-3 text-sm text-amber-800" role="status">
+          <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+          <div>
+            <p className="font-bold">
+              {shortfall.kind === "hours" ? "Sin horas suficientes en el banco" : "Sin días de vacaciones suficientes"}
+            </p>
+            <p className="mt-0.5 font-semibold">
+              {shortfall.kind === "hours"
+                ? `Pide ${shortfall.requested.toFixed(1)} h y tiene ${shortfall.available.toFixed(1)} h disponibles.`
+                : `Pide ${shortfall.requested} ${shortfall.requested === 1 ? "día" : "días"} y tiene ${shortfall.available} disponibles.`}{" "}
+              Puedes aprobarla igual; la decisión es tuya.
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       {rejecting ? (
         <label className="mb-3 block">
           <span className="text-sm font-bold">Motivo del rechazo (requerido)</span>
@@ -258,5 +266,11 @@ function RequestReviewActions({
         </Button>
       </div>
     </div>
+  );
+}
+
+function ShortLabel() {
+  return (
+    <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">Insuficiente</span>
   );
 }
