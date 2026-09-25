@@ -9,6 +9,8 @@ import { buildAdminRequestRowModel, type AdminRequestRowModel } from "./adminReq
 
 type AdminRequestRowProps = {
   onClick: () => void;
+  /** Read-only lists (owner suite): never show the "Revisar" action pill. */
+  readOnly?: boolean;
   request: LeaveRequestWithEmployee;
 };
 
@@ -70,7 +72,7 @@ export function RequestRowProgress({ model }: { model: AdminRequestRowModel }) {
  * approval stepper and an action pill. The whole row is one button; the pill
  * is purely visual to avoid nested interactive elements.
  */
-export const AdminRequestRow = memo(function AdminRequestRow({ onClick, request }: AdminRequestRowProps) {
+export const AdminRequestRow = memo(function AdminRequestRow({ onClick, readOnly = false, request }: AdminRequestRowProps) {
   const config = leaveTypeConfig[request.leave_type];
   const name = request.employee?.full_name ?? "Empleado";
   const model = useMemo(() => buildAdminRequestRowModel(request), [request]);
@@ -100,7 +102,7 @@ export const AdminRequestRow = memo(function AdminRequestRow({ onClick, request 
           <RequestRowProgress model={model} />
         </span>
 
-        {model.isActionable ? (
+        {model.isActionable && !readOnly ? (
           <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-slate-950 py-1.5 pl-3 pr-2 text-xs font-bold text-white">
             Revisar
             <ChevronRight aria-hidden="true" className="size-3.5" />

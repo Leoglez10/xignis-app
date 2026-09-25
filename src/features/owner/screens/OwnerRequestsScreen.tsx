@@ -2,7 +2,7 @@ import { CheckCircle2, Download, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { AdminRequestCard } from "../../admin/components/AdminRequestCard";
+import { AdminRequestRow } from "../../admin/components/AdminRequestRow";
 import { AdminShell } from "../../admin/components/adminNav";
 import {
   leaveTypeLabel,
@@ -134,25 +134,29 @@ export function OwnerRequestsScreen() {
             </h2>
 
             {isLoading ? (
-              <div className="grid gap-3 xl:grid-cols-2">
+              <div className="divide-y divide-[var(--card-border)] overflow-hidden rounded-[20px] bg-[var(--card-bg)] ring-1 ring-[var(--card-border)]">
                 {[0, 1, 2].map((i) => (
-                  <div className="h-20 rounded-[20px] bg-[var(--skeleton-base)] animate-pulse" key={i} />
+                  <div className="flex items-center gap-3 px-4 py-3.5" key={i}>
+                    <div className="size-10 shrink-0 animate-pulse rounded-full bg-[var(--skeleton-base)]" />
+                    <div className="flex flex-1 flex-col gap-2">
+                      <div className="h-3 w-1/2 animate-pulse rounded-full bg-[var(--skeleton-base)]" />
+                      <div className="h-2.5 w-1/3 animate-pulse rounded-full bg-[var(--skeleton-base)]" />
+                    </div>
+                  </div>
                 ))}
               </div>
+            ) : filtered.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 rounded-[20px] bg-[var(--card-bg)] p-10 text-center ring-1 ring-[var(--card-border)]">
+                <CheckCircle2 aria-hidden="true" className="size-10 text-[var(--color-muted)]" />
+                <p className="text-sm font-semibold text-[var(--color-muted)]">No hay solicitudes para este filtro.</p>
+              </div>
             ) : (
-              <ul className="stagger grid gap-3 xl:grid-cols-2">
-                {filtered.length === 0 ? (
-                  <li className="col-span-full flex flex-col items-center gap-2 rounded-[20px] bg-white p-10 text-center ring-1 ring-slate-200">
-                    <CheckCircle2 aria-hidden="true" className="size-10 text-[var(--color-muted)]" />
-                    <p className="text-sm font-semibold text-[var(--color-muted)]">
-                      No hay solicitudes para este filtro.
-                    </p>
-                  </li>
-                ) : null}
+              <ul className="stagger divide-y divide-[var(--card-border)] overflow-hidden rounded-[20px] bg-[var(--card-bg)] ring-1 ring-[var(--card-border)]">
                 {filtered.map((request) => (
-                  <AdminRequestCard
+                  <AdminRequestRow
                     key={request.id}
                     onClick={() => navigate(`/owner/requests/${request.id}`)}
+                    readOnly
                     request={request}
                   />
                 ))}
