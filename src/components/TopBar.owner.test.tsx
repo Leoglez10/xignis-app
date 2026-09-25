@@ -56,7 +56,7 @@ describe("TopBar del dueño", () => {
     renderAt("/owner/employees");
     fireEvent.click(screen.getByRole("button", { name: "Jefe · 3" }));
     expect(screen.getByRole("button", { name: "Jefe · 3" })).toHaveAttribute("aria-pressed", "true");
-    expect(sectionLinks()).toEqual(["Inicio", "Aprobaciones", "Equipo", "Agenda", "Perfil"]);
+    expect(sectionLinks()).toEqual(["Inicio", "Aprobaciones", "Equipo", "Agenda"]);
     expect(screen.getByText("at:/manager")).toBeInTheDocument();
   });
 

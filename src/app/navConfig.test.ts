@@ -39,7 +39,7 @@ describe("tabsFor", () => {
 describe("navGroups / titleForPath con reportes directos", () => {
   it("agrupa 'Mi equipo' entre Principal y Análisis y titula la ruta de jefe", () => {
     const groups = navGroups("owner", { hasDirectReports: true });
-    expect(groups.map((g) => g.name)).toEqual(["Principal", "Mi equipo", "Análisis", "Cuenta"]);
+    expect(groups.map((g) => g.name)).toEqual(["Principal", "Mi equipo", "Análisis"]);
     expect(groups.find((g) => g.name === "Mi equipo")?.items).toEqual(ownerTeamTabs);
     expect(titleForPath("owner", "/manager/requests", { hasDirectReports: true })).toBe("Aprobaciones");
     expect(titleForPath("owner", "/manager/team", { hasDirectReports: true })).toBe("Equipo");
@@ -54,10 +54,14 @@ describe("navGroups / titleForPath con reportes directos", () => {
 describe("Cuenta (perfil + ajustes unificados)", () => {
   const roles = ["employee", "manager", "hr_admin", "admin", "owner"] as const;
 
-  it("apunta 'Perfil' del grupo Cuenta a /cuenta/perfil en todos los roles", () => {
+  it("no agrega un grupo 'Cuenta' ni tabs a /cuenta (se llega desde el avatar y Ajustes)", () => {
     for (const role of roles) {
-      const account = tabsFor(role).filter((t) => t.group === "Cuenta");
-      expect(account.map((t) => [t.label, t.to])).toEqual([["Perfil", "/cuenta/perfil"]]);
+      for (const options of [{}, { hasDirectReports: true }, { hasDirectReports: true, teamView: true }]) {
+        const tabs = tabsFor(role, options);
+        expect(tabs.some((t) => t.group === "Cuenta")).toBe(false);
+        expect(tabs.some((t) => t.to.startsWith("/cuenta"))).toBe(false);
+        expect(navGroups(role, options).map((g) => g.name)).not.toContain("Cuenta");
+      }
     }
   });
 
@@ -76,7 +80,7 @@ describe("Cuenta (perfil + ajustes unificados)", () => {
 });
 
 describe("vista 'solo equipo' del dueño", () => {
-  it("muestra solo el equipo y Cuenta", () => {
+  it("muestra solo el equipo", () => {
     const tabs = tabsFor("owner", { hasDirectReports: true, teamView: true });
     expect(tabs).toBe(ownerTeamViewTabs);
     expect(tabs.map((t) => [t.label, t.to])).toEqual([
@@ -84,10 +88,9 @@ describe("vista 'solo equipo' del dueño", () => {
       ["Aprobaciones", "/manager/requests"],
       ["Equipo", "/manager/team"],
       ["Agenda", "/manager/calendar"],
-      ["Perfil", "/cuenta/perfil"],
     ]);
     expect(tabs.some((t) => isOwnerCompanyPath(t.to))).toBe(false);
-    expect(navGroups("owner", { hasDirectReports: true, teamView: true }).map((g) => g.name)).toEqual(["Mi equipo", "Cuenta"]);
+    expect(navGroups("owner", { hasDirectReports: true, teamView: true }).map((g) => g.name)).toEqual(["Mi equipo"]);
     expect(titleForPath("owner", "/manager", { hasDirectReports: true, teamView: true })).toBe("Inicio");
     expect(titleForPath("owner", "/manager/team", { hasDirectReports: true, teamView: true })).toBe("Equipo");
   });
