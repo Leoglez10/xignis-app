@@ -59,7 +59,7 @@ export function AccountScreen() {
         <AccountHeader />
 
         <nav aria-label="Secciones de la cuenta" className="mt-5">
-          <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+          <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1">
             {accountSections.map(({ id, label }) => (
               <li className="shrink-0" key={id}>
                 <NavLink className={({ isActive }) => `${pillTabClass(isActive)} whitespace-nowrap`} replace to={accountPath(id)}>
