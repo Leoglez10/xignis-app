@@ -1,10 +1,9 @@
 import { CheckCircle2 } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ManagerShell } from "../components/managerNav";
+import { ManagerShell, TeamRoleLabel } from "../components/managerNav";
 import { isInFlight } from "../../leave-requests/services/leaveRequestProgressService";
 import { InProgressRequestCard } from "../../leave-requests/components/InProgressRequestCard";
-import { AgingBadge } from "../../../components/ui/AgingBadge";
 import { BulkActionsBar } from "../components/BulkActionsBar";
 import { DashboardSkeleton } from "../components/DashboardSkeleton";
 import { PendingRequestCard } from "../components/PendingRequestCard";
@@ -51,9 +50,11 @@ export function ManagerRequestsScreen() {
     <ManagerShell>
       <RefreshBoundary onRefresh={refetch}>
         <section className="page-wrap grid min-h-dvh gap-5 pb-24 pt-4 md:pt-6">
-          <div className="min-w-0 bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] rounded-2xl md:rounded-[20px] md:p-6">
+          <div className="min-w-0">
             <header className="animate-fade-up mb-6">
-              <p className="text-sm font-bold text-[var(--color-muted)]">Jefe</p>
+              <p className="text-sm font-bold text-[var(--color-muted)]">
+                <TeamRoleLabel />
+              </p>
               <h2 className="mt-1 text-2xl font-bold md:text-3xl">Solicitudes</h2>
               <p className="mt-1 text-sm text-[var(--color-muted)]">
                 {isLoading ? "Cargando…" : `${pending.length} pendientes de tu equipo`}
@@ -67,6 +68,7 @@ export function ManagerRequestsScreen() {
                 {inFlightRequest ? (
                   <div className="mb-5">
                     <InProgressRequestCard
+                      perspective="approver"
                       requestId={inFlightRequest.id}
                       showEmployee
                       title="Solicitud en curso de tu equipo"
@@ -101,18 +103,14 @@ export function ManagerRequestsScreen() {
                       </li>
                     ) : null}
                     {pending.map((request) => (
-                      <li className="relative" key={request.id}>
-                        <PendingRequestCard
-                          mount={markMountOnce()}
-                          onClick={() => navigate(`/manager/requests/${request.id}`)}
-                          onToggleSelect={toggleSelect}
-                          request={request}
-                          selected={selected.has(request.id)}
-                        />
-                        <span className="absolute right-16 top-4">
-                          <AgingBadge request={request} />
-                        </span>
-                      </li>
+                      <PendingRequestCard
+                        key={request.id}
+                        mount={markMountOnce()}
+                        onClick={() => navigate(`/manager/requests/${request.id}`)}
+                        onToggleSelect={toggleSelect}
+                        request={request}
+                        selected={selected.has(request.id)}
+                      />
                     ))}
                   </ul>
                 </section>

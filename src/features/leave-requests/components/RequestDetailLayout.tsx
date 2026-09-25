@@ -12,6 +12,7 @@ import { leaveTypeConfig, statusTone } from "../config";
 import {
   buildApprovalSteps,
   statusLabel,
+  type ApprovalPerspective,
   type LeaveRequestApproval,
   type StepState,
 } from "../services/leaveRequestProgressService";
@@ -75,12 +76,15 @@ type RequestDetailLayoutProps = {
   showEmployee?: boolean;
   /** Optional notice rendered under the header, inside the page offset. */
   banner?: ReactNode;
+  /** "approver" when the reviewing manager views it (manager-step wording). */
+  perspective?: ApprovalPerspective;
 };
 
 export function RequestDetailLayout({
   actions,
   banner,
   onBack,
+  perspective = "employee",
   requestId,
   showEmployee = false,
   title,
@@ -92,8 +96,8 @@ export function RequestDetailLayout({
   });
 
   const steps = useMemo(
-    () => (request ? buildApprovalSteps(request, approvals, hasManager) : []),
-    [request, approvals, hasManager],
+    () => (request ? buildApprovalSteps(request, approvals, hasManager, perspective) : []),
+    [request, approvals, hasManager, perspective],
   );
 
   const currentStep = useMemo(() => steps.find((s) => s.state === "active"), [steps]);

@@ -5,6 +5,7 @@ import {
   buildApprovalSteps,
   isInFlight,
   statusLabel,
+  type ApprovalPerspective,
 } from "../services/leaveRequestProgressService";
 import { useLiveLeaveRequest } from "../hooks/useLiveLeaveRequest";
 import { ApprovalTimeline } from "./ApprovalTimeline";
@@ -18,11 +19,14 @@ type InProgressRequestCardProps = {
   title?: string;
   /** true para mostrar el nombre del empleado (manager/admin). */
   showEmployee?: boolean;
+  /** "approver" cuando lo ve el jefe que aprueba (redacción del paso "Jefe"). */
+  perspective?: ApprovalPerspective;
 };
 
 export function InProgressRequestCard({
   requestId,
   onView,
+  perspective = "employee",
   showEmployee = false,
   title = "Solicitud en curso",
 }: InProgressRequestCardProps) {
@@ -38,9 +42,9 @@ export function InProgressRequestCard({
   const steps = useMemo(
     () =>
       request
-        ? buildApprovalSteps(request, approvals, hasManager)
+        ? buildApprovalSteps(request, approvals, hasManager, perspective)
         : [],
-    [request, approvals, hasManager],
+    [request, approvals, hasManager, perspective],
   );
 
   const currentStepIndex = useMemo(() => {

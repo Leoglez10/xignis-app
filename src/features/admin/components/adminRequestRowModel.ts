@@ -2,6 +2,7 @@ import type { LeaveRequestWithEmployee } from "../../leave-requests/services/lea
 import {
   buildApprovalSteps,
   statusLabel,
+  type ApprovalPerspective,
   type StepState,
 } from "../../leave-requests/services/leaveRequestProgressService";
 
@@ -14,12 +15,17 @@ export type AdminRequestRowModel = {
 };
 
 /**
- * Derives the compact stepper and status text for an HR list row from the
- * request status alone (no approvals are fetched per row).
+ * Derives the compact stepper and status text for a request list row from the
+ * request status alone (no approvals are fetched per row). With the "approver"
+ * perspective (a manager's team list) the employee always has a manager: the
+ * viewer.
  */
-export function buildAdminRequestRowModel(request: LeaveRequestWithEmployee): AdminRequestRowModel {
-  const hasManager = Boolean(request.employee?.manager_id);
-  const full = buildApprovalSteps(request, [], hasManager);
+export function buildAdminRequestRowModel(
+  request: LeaveRequestWithEmployee,
+  perspective: ApprovalPerspective = "employee",
+): AdminRequestRowModel {
+  const hasManager = perspective === "approver" || Boolean(request.employee?.manager_id);
+  const full = buildApprovalSteps(request, [], hasManager, perspective);
 
   // Without approval records, a manager step that was already passed (e.g. an
   // approved request) comes back "pending". The flow is sequential, so any

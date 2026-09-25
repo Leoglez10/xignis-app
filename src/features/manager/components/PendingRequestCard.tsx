@@ -1,7 +1,10 @@
 import { initials } from "../../../lib/avatar";
 import { ChevronRight } from "lucide-react";
-import { memo } from "react";
+import { memo, useMemo } from "react";
+import { AgingBadge } from "../../../components/ui/AgingBadge";
 import { formatDateRangeEs } from "../../../lib/date";
+import { RequestRowProgress } from "../../admin/components/AdminRequestRow";
+import { buildAdminRequestRowModel } from "../../admin/components/adminRequestRowModel";
 import { leaveTypeConfig, statusTone } from "../../leave-requests/config";
 import {
   formatDateRange,
@@ -25,6 +28,7 @@ export const PendingRequestCard = memo(function PendingRequestCard({
   selected = false,
 }: PendingRequestCardProps) {
   const config = leaveTypeConfig[request.leave_type];
+  const progress = useMemo(() => buildAdminRequestRowModel(request, "approver"), [request]);
   return (
     <li>
       <div
@@ -57,13 +61,17 @@ export const PendingRequestCard = memo(function PendingRequestCard({
           <span className="min-w-0 flex-1">
             <span className="flex items-center justify-between gap-2">
               <span className="truncate text-sm font-bold">{request.employee?.full_name ?? "Empleado"}</span>
-              <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${statusTone[request.status]}`}>
-                {statusLabel[request.status]}
+              <span className="flex min-w-0 flex-wrap items-center justify-end gap-1.5">
+                <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${statusTone[request.status]}`}>
+                  {statusLabel[request.status]}
+                </span>
+                <AgingBadge request={request} />
               </span>
             </span>
             <span className="mt-1 block truncate text-xs text-[var(--color-muted)]">
               {config.label} · {formatDateRangeEs(request.start_date, request.end_date)}
             </span>
+            <RequestRowProgress model={progress} />
           </span>
           <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-[var(--color-muted)]" />
         </button>

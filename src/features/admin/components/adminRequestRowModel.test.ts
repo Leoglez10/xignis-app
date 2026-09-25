@@ -48,4 +48,16 @@ describe("buildAdminRequestRowModel", () => {
     expect(model.currentStep).toBe(3);
     expect(model.statusText).toBe("Rechazada");
   });
+
+  it("keeps the employee wording for pending manager approval by default", () => {
+    const model = buildAdminRequestRowModel(makeRequest("pending_manager", "mgr-1"));
+    expect(model.statusText).toBe("Esperando aprobación de tu jefe");
+  });
+
+  it("speaks to the approver in the manager's team list, even without manager_id loaded", () => {
+    const model = buildAdminRequestRowModel(makeRequest("pending_manager", null), "approver");
+    expect(model.steps).toEqual(["done", "active", "pending", "pending"]);
+    expect(model.currentStep).toBe(2);
+    expect(model.statusText).toBe("Esperando tu aprobación");
+  });
 });

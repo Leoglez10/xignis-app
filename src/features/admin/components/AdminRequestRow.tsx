@@ -5,7 +5,7 @@ import { formatDateRangeEs } from "../../../lib/date";
 import { leaveTypeConfig } from "../../leave-requests/config";
 import type { StepState } from "../../leave-requests/services/leaveRequestProgressService";
 import { leaveTypeLabel, type LeaveRequestWithEmployee } from "../../leave-requests/services/leaveRequestService";
-import { buildAdminRequestRowModel } from "./adminRequestRowModel";
+import { buildAdminRequestRowModel, type AdminRequestRowModel } from "./adminRequestRowModel";
 
 type AdminRequestRowProps = {
   onClick: () => void;
@@ -45,6 +45,26 @@ function RowStepper({ steps }: { steps: StepState[] }) {
   );
 }
 
+/** Compact stepper plus current-stage text (with its accessible label).
+ *  Shared by the HR list rows and the manager's team pending rows. */
+export function RequestRowProgress({ model }: { model: AdminRequestRowModel }) {
+  const currentState = model.steps[model.currentStep - 1];
+  return (
+    <span className="mt-1.5 flex min-w-0 items-center gap-2.5">
+      <RowStepper steps={model.steps} />
+      <span className="sr-only">
+        Etapa {model.currentStep} de {model.steps.length}: {model.statusText}
+      </span>
+      <span
+        aria-hidden="true"
+        className={`truncate text-xs font-semibold ${TEXT_CLASS[currentState] ?? "text-[var(--color-muted)]"}`}
+      >
+        {model.statusText}
+      </span>
+    </span>
+  );
+}
+
 /**
  * Single row of the HR requests list: avatar, name · type, dates, compact
  * approval stepper and an action pill. The whole row is one button; the pill
@@ -54,7 +74,6 @@ export const AdminRequestRow = memo(function AdminRequestRow({ onClick, request 
   const config = leaveTypeConfig[request.leave_type];
   const name = request.employee?.full_name ?? "Empleado";
   const model = useMemo(() => buildAdminRequestRowModel(request), [request]);
-  const currentState = model.steps[model.currentStep - 1];
 
   return (
     <li data-mount="true">
@@ -78,18 +97,7 @@ export const AdminRequestRow = memo(function AdminRequestRow({ onClick, request 
               {formatDateRangeEs(request.start_date, request.end_date)}
             </span>
           </span>
-          <span className="mt-1.5 flex min-w-0 items-center gap-2.5">
-            <RowStepper steps={model.steps} />
-            <span className="sr-only">
-              Etapa {model.currentStep} de {model.steps.length}: {model.statusText}
-            </span>
-            <span
-              aria-hidden="true"
-              className={`truncate text-xs font-semibold ${TEXT_CLASS[currentState] ?? "text-[var(--color-muted)]"}`}
-            >
-              {model.statusText}
-            </span>
-          </span>
+          <RequestRowProgress model={model} />
         </span>
 
         {model.isActionable ? (

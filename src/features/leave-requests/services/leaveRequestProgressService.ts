@@ -25,6 +25,10 @@ export function isInFlight(status: LeaveStatus): boolean {
 
 export type StepState = "done" | "active" | "pending" | "rejected" | "skipped";
 
+/** Quién mira el flujo: el empleado que pidió (default) o su jefe, que es quien
+ *  aprueba el paso "Jefe". Solo cambia la redacción de ese paso. */
+export type ApprovalPerspective = "employee" | "approver";
+
 export type ApprovalStep = {
   /** Etapa corta mostrada en el timeline, p.ej. "Jefe" / "RH". */
   actor: string;
@@ -56,6 +60,7 @@ export function buildApprovalSteps(
   approvals: LeaveRequestApproval[],
   /** true si el empleado tiene manager asignado (pasa por jefe). */
   hasManager: boolean,
+  perspective: ApprovalPerspective = "employee",
 ): ApprovalStep[] {
   const ordered = [...approvals].sort((a, b) =>
     a.created_at.localeCompare(b.created_at),
@@ -114,13 +119,22 @@ export function buildApprovalSteps(
       decision,
       occurredAt,
       state,
-      subtitle: decision
-        ? decision === "approved"
-          ? "Aprobado por tu jefe"
-          : "Rechazado por tu jefe"
-        : state === "active"
-          ? "Esperando aprobación de tu jefe"
-          : "Aprobación de tu jefe",
+      subtitle:
+        perspective === "approver"
+          ? decision
+            ? decision === "approved"
+              ? "Aprobado por ti"
+              : "Rechazado por ti"
+            : state === "active"
+              ? "Esperando tu aprobación"
+              : "Tu aprobación"
+          : decision
+            ? decision === "approved"
+              ? "Aprobado por tu jefe"
+              : "Rechazado por tu jefe"
+            : state === "active"
+              ? "Esperando aprobación de tu jefe"
+              : "Aprobación de tu jefe",
       title: "Aprobación de jefe",
     });
   }

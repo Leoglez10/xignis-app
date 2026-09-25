@@ -65,6 +65,7 @@ export function ManagerRequestDetailScreen() {
         ) : null
       }
       onBack={() => navigate("/manager")}
+      perspective="approver"
       requestId={id}
       showEmployee
       title="Detalle"
