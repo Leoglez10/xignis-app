@@ -60,4 +60,17 @@ describe("Cuenta (perfil + ajustes unificados)", () => {
       expect(account.map((t) => [t.label, t.to])).toEqual([["Perfil", "/cuenta/perfil"]]);
     }
   });
+
+  it("titula 'Cuenta' todas las secciones, no 'Inicio'", () => {
+    for (const role of roles) {
+      for (const path of ["/cuenta", "/cuenta/perfil", "/cuenta/apariencia", "/cuenta/notificaciones", "/cuenta/privacidad", "/cuenta/acerca"]) {
+        expect(titleForPath(role, path)).toBe("Cuenta");
+      }
+    }
+    expect(titleForPath("owner", "/cuenta/apariencia", { hasDirectReports: true })).toBe("Cuenta");
+  });
+
+  it("no confunde rutas que solo empiezan igual", () => {
+    expect(titleForPath("employee", "/cuentas")).toBe("Inicio");
+  });
 });

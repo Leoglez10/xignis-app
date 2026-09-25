@@ -15,7 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { UserRole } from "../lib/database.types";
-import { accountPath } from "../features/account/accountSections";
+import { accountPath, isAccountPath } from "../features/account/accountSections";
 
 /** Ítem "Cuenta > Perfil" de todos los roles: abre la página Cuenta en Perfil. */
 export const ACCOUNT_PROFILE_PATH = accountPath("perfil");
@@ -121,6 +121,9 @@ export function navGroups(role: UserRole, options: NavOptions = {}): { name: str
 
 /** Título grande del header según la tab activa para la ruta dada. */
 export function titleForPath(role: UserRole, pathname: string, options: NavOptions = {}): string {
+  // Todas las secciones de Cuenta (perfil, apariencia, ...) comparten título:
+  // sin esto, las que no son tab caían en el "Inicio" por defecto.
+  if (isAccountPath(pathname)) return "Cuenta";
   const tabs = tabsFor(role, options);
   const match = tabs.find((t) => (t.end ? pathname === t.to : pathname.startsWith(t.to)));
   return match?.label ?? "Inicio";
