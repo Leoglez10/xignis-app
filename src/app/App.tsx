@@ -9,6 +9,7 @@ import { TopBar } from "../components/TopBar";
 import { Sidebar } from "../components/Sidebar";
 import { PageSkeleton } from "../components/ui/Skeleton";
 import { useAuth } from "../features/session/AuthContext";
+import { ACCOUNT_BASE, accountPath, legacyAccountRedirects } from "../features/account/accountSections";
 
 // Code-splitting por ruta: cada pantalla en su chunk → menor parse en cold start (WKWebView).
 // Named exports → mapear a default para React.lazy.
@@ -45,9 +46,8 @@ const OwnerRequestDetailScreen = lazy(() => import("../features/owner/screens/Ow
 const OwnerAbsencesScreen = lazy(() => import("../features/owner/screens/OwnerAbsencesScreen").then((m) => ({ default: m.OwnerAbsencesScreen })));
 const OwnerReportsScreen = lazy(() => import("../features/owner/screens/OwnerReportsScreen").then((m) => ({ default: m.OwnerReportsScreen })));
 const OwnerRhRequestsScreen = lazy(() => import("../features/owner/screens/OwnerRhRequestsScreen").then((m) => ({ default: m.OwnerRhRequestsScreen })));
-const ProfileScreen = lazy(() => import("../features/profiles/screens/ProfileScreen").then((m) => ({ default: m.ProfileScreen })));
+const AccountScreen = lazy(() => import("../features/account/screens/AccountScreen").then((m) => ({ default: m.AccountScreen })));
 const ComingSoonScreen = lazy(() => import("../features/system/screens/ComingSoonScreen").then((m) => ({ default: m.ComingSoonScreen })));
-const SettingsScreen = lazy(() => import("../features/settings/screens/SettingsScreen").then((m) => ({ default: m.SettingsScreen })));
 const SearchScreen = lazy(() => import("../features/search/screens/SearchScreen").then((m) => ({ default: m.SearchScreen })));
 
 /** Chrome persistente: se monta una sola vez y queda fijo fuera de la transición
@@ -92,15 +92,12 @@ export function App() {
           <Route path="/signup" element={<Navigate to="/login" replace />} />
           <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
           <Route path="/set-password" element={<SetPasswordScreen />} />
-          <Route
-            path="/profile"
-            element={
-              <RequireAuth allowedRoles={[...USER_ROLES]}>
-                <ProfileScreen />
-              </RequireAuth>
-            }
-          />
-          <Route path="/settings" element={<RequireAuth allowedRoles={[...USER_ROLES]}><SettingsScreen /></RequireAuth>} />
+          <Route path={ACCOUNT_BASE} element={<Navigate replace to={accountPath()} />} />
+          <Route path={`${ACCOUNT_BASE}/:section`} element={<RequireAuth allowedRoles={[...USER_ROLES]}><AccountScreen /></RequireAuth>} />
+          {/* Rutas anteriores de perfil/ajustes: redirigen a su sección en Cuenta. */}
+          {Object.entries(legacyAccountRedirects).map(([from, to]) => (
+            <Route key={from} path={from} element={<Navigate replace to={to} />} />
+          ))}
           <Route path="/buscar" element={<RequireAuth allowedRoles={[...USER_ROLES]}><SearchScreen /></RequireAuth>} />
           <Route
             path="/employee"

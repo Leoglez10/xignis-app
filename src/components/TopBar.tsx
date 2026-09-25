@@ -8,6 +8,7 @@ import { tabsFor, titleForPath } from "../app/navConfig";
 import { useDirectReportsCount } from "../features/owner/hooks/useHasDirectReports";
 import { ModuleSwitcherSheet } from "./ModuleSwitcherSheet";
 import { initials } from "../lib/avatar";
+import { accountPath } from "../features/account/accountSections";
 
 /**
  * Header de la plataforma Xignis (estilo referencia): avatar + título + búsqueda
@@ -53,7 +54,7 @@ export function TopBar() {
           aria-label="Mi perfil"
           className="press grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-[var(--color-surface)] text-sm font-bold text-[var(--color-text)] md:hidden"
           type="button"
-          onClick={() => navigate("/profile")}
+          onClick={() => navigate(accountPath("perfil"))}
         >
           {profile?.avatar_url ? (
             <img alt="" className="size-full object-cover" src={profile.avatar_url} />

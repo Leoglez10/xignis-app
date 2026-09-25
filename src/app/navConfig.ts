@@ -15,6 +15,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { UserRole } from "../lib/database.types";
+import { accountPath } from "../features/account/accountSections";
+
+/** Ítem "Cuenta > Perfil" de todos los roles: abre la página Cuenta en Perfil. */
+export const ACCOUNT_PROFILE_PATH = accountPath("perfil");
 
 export type NavTab = {
   to: string;
@@ -41,7 +45,7 @@ const adminTabs: NavTab[] = [
   { to: "/admin/departments", label: "Áreas", icon: Building2, group: "Organización" },
   { to: "/admin/reports", label: "Reportes", icon: BarChart3, group: "Análisis" },
   { to: "/admin/rules", label: "Reglas", icon: SlidersHorizontal, group: "Análisis" },
-  { to: "/profile", label: "Perfil", icon: CircleUser, group: "Cuenta" },
+  { to: ACCOUNT_PROFILE_PATH, label: "Perfil", icon: CircleUser, group: "Cuenta" },
 ];
 
 const ownerTabs: NavTab[] = [
@@ -51,7 +55,7 @@ const ownerTabs: NavTab[] = [
   { to: "/owner/absences", label: "Ausentes", icon: CalendarOff, group: "Principal" },
   { to: "/owner/reports", label: "Reportes", icon: BarChart3, group: "Análisis" },
   { to: "/owner/rh-requests", label: "Pedidos a RH", icon: Crown, group: "Principal" },
-  { to: "/profile", label: "Perfil", icon: CircleUser, group: "Cuenta" },
+  { to: ACCOUNT_PROFILE_PATH, label: "Perfil", icon: CircleUser, group: "Cuenta" },
 ];
 
 export const tabsByRole: Record<UserRole, NavTab[]> = {
@@ -59,14 +63,14 @@ export const tabsByRole: Record<UserRole, NavTab[]> = {
   employee: [
     { to: "/employee", label: "Inicio", end: true, icon: Home, group: "Principal" },
     { to: "/employee/requests", label: "Solicitudes", icon: Inbox, group: "Principal" },
-    { to: "/profile", label: "Perfil", icon: CircleUser, group: "Cuenta" },
+    { to: ACCOUNT_PROFILE_PATH, label: "Perfil", icon: CircleUser, group: "Cuenta" },
   ],
   manager: [
     { to: "/manager", label: "Inicio", end: true, icon: Home, group: "Principal" },
     { to: "/manager/requests", label: "Solicitudes", icon: Inbox, group: "Principal" },
     { to: "/manager/team", label: "Equipo", icon: Users, group: "Equipo" },
     { to: "/manager/calendar", label: "Agenda", icon: CalendarDays, group: "Equipo" },
-    { to: "/profile", label: "Perfil", icon: CircleUser, group: "Cuenta" },
+    { to: ACCOUNT_PROFILE_PATH, label: "Perfil", icon: CircleUser, group: "Cuenta" },
   ],
   hr_admin: adminTabs,
   admin: adminTabs,

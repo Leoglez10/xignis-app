@@ -50,3 +50,14 @@ describe("navGroups / titleForPath con reportes directos", () => {
     expect(navGroups("owner").map((g) => g.name)).not.toContain("Mi equipo");
   });
 });
+
+describe("Cuenta (perfil + ajustes unificados)", () => {
+  const roles = ["employee", "manager", "hr_admin", "admin", "owner"] as const;
+
+  it("apunta 'Perfil' del grupo Cuenta a /cuenta/perfil en todos los roles", () => {
+    for (const role of roles) {
+      const account = tabsFor(role).filter((t) => t.group === "Cuenta");
+      expect(account.map((t) => [t.label, t.to])).toEqual([["Perfil", "/cuenta/perfil"]]);
+    }
+  });
+});

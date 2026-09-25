@@ -1,0 +1,97 @@
+import { Bell, Cake, LayoutDashboard, Moon, PackageOpen, ShieldCheck, Volume2 } from "lucide-react";
+import type { ReactNode } from "react";
+import { Button } from "../../../components/ui/Button";
+import { Card } from "../../../components/ui/Card";
+import { Select } from "../../../components/ui/Select";
+import { useToast } from "../../../components/ui/Toast";
+import { playSuccessCue } from "../../../lib/sound";
+import { checkForUpdate } from "../../../lib/version";
+import { usePreferences, type AppPreferences } from "../PreferencesContext";
+
+const version = __APP_VERSION__;
+const build = __BUILD_TIME__;
+
+/** Tema, idioma, sonido y densidad del tablero. */
+export function AppearanceSection() {
+  const { preferences, updatePreferences } = usePreferences();
+  const toggleSound = () => {
+    const enabled = !preferences.soundEffects;
+    updatePreferences({ soundEffects: enabled });
+    if (enabled) playSuccessCue();
+  };
+  return (
+    <Card className="p-5">
+      <SettingHeading icon={<Moon />} title="Apariencia" />
+      <Select label="Tema" value={preferences.theme} onChange={(event) => updatePreferences({ theme: event.target.value as AppPreferences["theme"] })}>
+        <option value="system">Usar el sistema</option>
+        <option value="light">Claro</option>
+        <option value="dark">Oscuro</option>
+      </Select>
+      <div className="mt-4">
+        <Select label="Idioma" value={preferences.language} onChange={(event) => updatePreferences({ language: event.target.value as AppPreferences["language"] })}>
+          <option value="es">Español</option>
+          <option value="en">English (preview)</option>
+        </Select>
+      </div>
+      <div className="mt-2 divide-y divide-[var(--color-border)] border-t border-[var(--color-border)]">
+        <Toggle icon={<Volume2 />} label="Sonido al enviar una solicitud" checked={preferences.soundEffects} onChange={toggleSound} />
+        <Toggle icon={<LayoutDashboard />} label="Vista compacta del tablero" checked={preferences.dashboardCompact} onChange={() => updatePreferences({ dashboardCompact: !preferences.dashboardCompact })} />
+      </div>
+    </Card>
+  );
+}
+
+export function NotificationsSection() {
+  const { preferences, updatePreferences } = usePreferences();
+  const toggle = (key: keyof AppPreferences) => updatePreferences({ [key]: !preferences[key] });
+  return (
+    <Card className="p-5">
+      <SettingHeading icon={<Bell />} title="Notificaciones" />
+      <div className="divide-y divide-[var(--color-border)]">
+        <Toggle label="Actualizaciones de solicitudes" checked={preferences.notifyRequests} onChange={() => toggle("notifyRequests")} />
+        <Toggle label="Aprobaciones y rechazos" checked={preferences.notifyApprovals} onChange={() => toggle("notifyApprovals")} />
+        <Toggle label="Cumpleaños y aniversarios" checked={preferences.notifyBirthdays} onChange={() => toggle("notifyBirthdays")} />
+      </div>
+    </Card>
+  );
+}
+
+export function PrivacySection() {
+  const { preferences, updatePreferences } = usePreferences();
+  return (
+    <Card className="p-5">
+      <SettingHeading icon={<ShieldCheck />} title="Privacidad" />
+      <Toggle icon={<Cake />} label="Mostrar cumpleaños del equipo" checked={preferences.birthdayVisibility} onChange={() => updatePreferences({ birthdayVisibility: !preferences.birthdayVisibility })} />
+    </Card>
+  );
+}
+
+export function AboutSection() {
+  const toast = useToast();
+  const checkUpdate = async () => {
+    try {
+      const update = await checkForUpdate();
+      toast(update ? { message: `La versión ${update.version} está disponible. Recarga para aplicarla.`, title: "Nueva versión", tone: "info" } : { message: "Estás usando la versión más reciente disponible.", tone: "success" });
+    } catch (error) {
+      toast({ message: error instanceof Error ? error.message : "No se pudo buscar actualizaciones.", tone: "error" });
+    }
+  };
+  return (
+    <Card className="p-5">
+      <SettingHeading icon={<PackageOpen />} title="Versión" />
+      <dl className="grid grid-cols-2 gap-3 text-sm">
+        <div><dt className="text-[var(--color-muted)]">Aplicación</dt><dd className="mt-1 font-bold">v{version}</dd></div>
+        <div><dt className="text-[var(--color-muted)]">Build</dt><dd className="mt-1 font-bold">{new Date(build).toLocaleDateString("es-MX")}</dd></div>
+      </dl>
+      <Button className="mt-5 w-full" variant="secondary" onClick={() => void checkUpdate()}>Buscar actualizaciones</Button>
+    </Card>
+  );
+}
+
+function SettingHeading({ icon, title }: { icon: ReactNode; title: string }) {
+  return <div className="mb-4 flex items-center gap-2"><span aria-hidden="true" className="[&>svg]:size-5">{icon}</span><h3 className="text-lg font-bold">{title}</h3></div>;
+}
+
+function Toggle({ checked, icon, label, onChange }: { checked: boolean; icon?: ReactNode; label: string; onChange: () => void }) {
+  return <label className="flex min-h-14 cursor-pointer items-center justify-between gap-4 py-2"><span className="flex items-center gap-2 text-sm font-bold">{icon ? <span aria-hidden="true" className="[&>svg]:size-5">{icon}</span> : null}{label}</span><input checked={checked} className="peer sr-only" type="checkbox" onChange={onChange} /><span aria-hidden="true" className="relative h-7 w-12 shrink-0 rounded-full bg-slate-300 transition peer-checked:bg-[var(--color-primary-strong)] peer-focus-visible:outline peer-focus-visible:outline-3 peer-focus-visible:outline-offset-3 peer-focus-visible:outline-[var(--color-focus)] after:absolute after:left-1 after:top-1 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-5" /></label>;
+}

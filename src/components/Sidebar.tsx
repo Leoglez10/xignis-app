@@ -7,6 +7,7 @@ import { useHasDirectReports } from "../features/owner/hooks/useHasDirectReports
 import { useAuth } from "../features/session/AuthContext";
 import { ModuleSwitcherSheet } from "./ModuleSwitcherSheet";
 import { initials } from "../lib/avatar";
+import { accountPath } from "../features/account/accountSections";
 
 /**
  * Navegación lateral de escritorio. Lee las mismas tabs que la TopBar móvil
@@ -29,7 +30,7 @@ export function Sidebar() {
         <button
           className="press flex min-w-0 flex-1 items-center gap-2.5 rounded-xl p-1 text-left"
           type="button"
-          onClick={() => navigate("/profile")}
+          onClick={() => navigate(accountPath("perfil"))}
         >
           <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full bg-[var(--color-surface)] text-xs font-bold text-[var(--color-text)]">
             {profile.avatar_url ? (
@@ -92,7 +93,7 @@ export function Sidebar() {
 
       <div className="border-t border-[var(--card-border)] px-3 py-3">
         <NavLink
-          to="/settings"
+          to={accountPath("apariencia")}
           className="press flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-bold text-[var(--color-muted)] hover:bg-[var(--card-bg)]"
         >
           <Settings aria-hidden="true" className="size-4.5 shrink-0" />
