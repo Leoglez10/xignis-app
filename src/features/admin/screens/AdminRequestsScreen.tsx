@@ -5,6 +5,7 @@ import { AdminRequestRow } from "../components/AdminRequestRow";
 import { AdminShell } from "../components/adminNav";
 import { leaveTypeLabel, statusLabel, type LeaveRequestWithEmployee } from "../../leave-requests/services/leaveRequestService";
 import { useHrLeaveRequests } from "../hooks/useHrLeaveRequests";
+import { pillTabClass } from "../../../components/ui/pillTab";
 
 type FilterKey = "all" | "pending" | "approved" | "rejected";
 
@@ -92,9 +93,7 @@ export function AdminRequestsScreen() {
               return (
                 <button
                   aria-pressed={selected}
-                  className={`press inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition ${
-                    selected ? "bg-slate-950 text-white" : "bg-white text-[var(--color-muted)] ring-1 ring-slate-200"
-                  }`}
+                  className={pillTabClass(selected)}
                   key={f.key}
                   type="button"
                   onClick={() => setFilter(f.key)}

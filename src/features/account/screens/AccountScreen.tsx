@@ -3,6 +3,7 @@ import { useState, type ComponentType } from "react";
 import { Navigate, NavLink, useNavigate, useParams } from "react-router-dom";
 import { RoleChips } from "../../../components/RoleChips";
 import { useConfirm } from "../../../components/ui/ConfirmDialog";
+import { pillTabClass } from "../../../components/ui/pillTab";
 import { ZoomableAvatar } from "../../../components/ui/ZoomableAvatar";
 import { logout } from "../../auth/services/authService";
 import { useDirectReportsCount } from "../../owner/hooks/useHasDirectReports";
@@ -24,8 +25,8 @@ const sectionContent: Record<AccountSectionId, ComponentType> = {
 /**
  * Página "Cuenta" (todos los roles): perfil y ajustes con un sub-nav interno.
  * La sección vive en la URL (`/cuenta/:section`) para que los deep links y el
- * botón atrás funcionen. En escritorio el sub-nav es una lista lateral; en
- * móvil, una fila deslizable como las tabs de la TopBar.
+ * botón atrás funcionen. El sub-nav usa las mismas pastillas que los filtros de
+ * la app, en una sola fila (deslizable en móvil).
  */
 export function AccountScreen() {
   const { section } = useParams();
@@ -52,48 +53,36 @@ export function AccountScreen() {
     navigate("/login");
   }
 
-  const logoutButton = (className: string) => (
-    <button className={`press flex items-center gap-2.5 rounded-xl px-3 text-sm font-bold text-red-600 hover:bg-[var(--card-bg)] ${className}`} type="button" onClick={() => void handleLogout()}>
-      <LogOut aria-hidden="true" className="size-4.5 shrink-0" />
-      Cerrar sesión
-    </button>
-  );
-
   return (
     <main className="min-h-dvh bg-[var(--color-background)] text-[var(--color-text)]" id="main-content" tabIndex={-1}>
-      <div className="mx-auto w-full max-w-xl px-4 pb-10 pt-5 md:py-8 lg:max-w-5xl">
+      <div className="mx-auto w-full max-w-xl px-4 pb-10 pt-5 md:py-8 lg:max-w-3xl">
         <AccountHeader />
 
-        <div className="mt-5 md:grid md:grid-cols-[200px_minmax(0,1fr)] md:items-start md:gap-6">
-          <nav aria-label="Secciones de la cuenta" className="md:sticky md:top-8">
-            <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:block md:space-y-0.5 md:overflow-visible md:px-0 md:pb-0">
-              {accountSections.map(({ id, label, icon: Icon }) => (
-                <li className="shrink-0" key={id}>
-                  <NavLink
-                    to={accountPath(id)}
-                    className={({ isActive }) =>
-                      `press flex min-h-10 items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-bold transition-colors ${
-                        isActive
-                          ? "bg-[var(--card-bg)] text-[var(--color-text)] shadow-sm ring-1 ring-[var(--card-border)]"
-                          : "text-[var(--color-muted)] hover:bg-[var(--card-bg)]"
-                      }`
-                    }
-                  >
-                    <Icon aria-hidden="true" className="size-4.5 shrink-0" />
-                    {label}
-                  </NavLink>
-                </li>
-              ))}
-              <li className="hidden md:block">{logoutButton("min-h-10 w-full py-2")}</li>
-            </ul>
-          </nav>
+        <nav aria-label="Secciones de la cuenta" className="mt-5">
+          <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+            {accountSections.map(({ id, label }) => (
+              <li className="shrink-0" key={id}>
+                <NavLink className={({ isActive }) => `${pillTabClass(isActive)} whitespace-nowrap`} to={accountPath(id)}>
+                  {label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-          <section aria-labelledby="account-section-title" className="mt-4 md:mt-0">
-            <h2 className="mb-3 text-xl font-bold" id="account-section-title">{current.label}</h2>
-            <Content />
-            <div className="mt-6 md:hidden">{logoutButton("min-h-12 w-full justify-center rounded-[22px] bg-[var(--card-bg)] ring-1 ring-[var(--card-border)]")}</div>
-          </section>
-        </div>
+        <section aria-labelledby="account-section-title" className="mt-4">
+          <h2 className="mb-3 text-xl font-bold" id="account-section-title">{current.label}</h2>
+          <Content />
+        </section>
+
+        <button
+          className="press mt-8 flex min-h-12 w-full items-center justify-center gap-2.5 rounded-[22px] bg-[var(--card-bg)] px-3 text-sm font-bold text-red-600 ring-1 ring-[var(--card-border)]"
+          type="button"
+          onClick={() => void handleLogout()}
+        >
+          <LogOut aria-hidden="true" className="size-4.5 shrink-0" />
+          Cerrar sesión
+        </button>
       </div>
     </main>
   );

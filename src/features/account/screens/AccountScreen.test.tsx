@@ -45,8 +45,10 @@ describe("AccountScreen", () => {
       expect(nav).toHaveTextContent(label);
     }
     expect(screen.getByRole("link", { name: "Perfil" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Apariencia" })).not.toHaveAttribute("aria-current");
     expect(screen.getByText("Contenido de perfil")).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Cerrar sesión" }).length).toBeGreaterThan(0);
+    const logout = screen.getByRole("button", { name: "Cerrar sesión" });
+    expect(nav).not.toContainElement(logout);
   });
 
   it("muestra 'Dueño' y 'Jefe' al dueño con reportes directos", () => {
