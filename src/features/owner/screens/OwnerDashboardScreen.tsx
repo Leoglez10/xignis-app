@@ -11,6 +11,16 @@ import {
 } from "../../leave-requests/services/leaveRequestService";
 import { diffDaysInclusive, todayIso } from "../../../lib/date";
 import { OwnerReadOnlyNotice } from "../components/OwnerReadOnlyNotice";
+import { useHasDirectReports } from "../hooks/useHasDirectReports";
+import { CoverageHeatmap } from "../../manager/components/CoverageHeatmap";
+import { DashboardSkeleton } from "../../manager/components/DashboardSkeleton";
+import {
+  TeamAlerts,
+  TeamShortcuts,
+  UpcomingAbsencesCard,
+  UrgentRequestsSection,
+  useTeamOverview,
+} from "../../manager/components/TeamOverview";
 
 function useEmployees() {
   return useQuery({
@@ -40,7 +50,86 @@ function createdToday(createdAt: string): boolean {
   return new Date(createdAt).toISOString().slice(0, 10) === today;
 }
 
+/**
+ * Inicio del dueño (/owner). Sin reportes directos: resumen de toda la empresa
+ * en modo lectura. Con reportes directos (vista "Dueño + Jefe"): primero su
+ * equipo (las secciones del inicio de jefe, con acciones) y debajo la empresa.
+ */
 export function OwnerDashboardScreen() {
+  const hasDirectReports = useHasDirectReports();
+
+  return (
+    <AdminShell>
+      <div className="page-wrap pb-24 pt-5 md:pt-6">
+        <header className="animate-fade-up mb-5">
+          <p className="text-sm font-bold text-[var(--color-muted)]">{hasDirectReports ? "Dueño · Jefe" : "Suite del dueño"}</p>
+          <h2 className="mt-1 text-2xl font-bold md:text-3xl">Inicio</h2>
+        </header>
+
+        {hasDirectReports ? (
+          <>
+            <OwnerTeamSection />
+            <section aria-labelledby="owner-company-title" className="mt-8">
+              <h2 className="mb-2 text-lg font-bold md:text-xl" id="owner-company-title">Empresa · solo lectura</h2>
+              <div className="mb-4">
+                <OwnerReadOnlyNotice action={{ label: "Aprobar las de tu equipo", to: "/manager/requests" }}>
+                  Resumen de toda la empresa. Solo apruebas las de tu equipo.
+                </OwnerReadOnlyNotice>
+              </div>
+              <CompanyOverview />
+            </section>
+          </>
+        ) : (
+          <>
+            <div className="mb-5">
+              <OwnerReadOnlyNotice>Resumen de toda la empresa, en modo lectura.</OwnerReadOnlyNotice>
+            </div>
+            <CompanyOverview />
+          </>
+        )}
+      </div>
+    </AdminShell>
+  );
+}
+
+/** "Tu equipo": las mismas secciones del inicio de jefe (/manager). La lista de
+ *  integrantes queda fuera para no repetir el título "Tu equipo". */
+function OwnerTeamSection() {
+  const { absences, absentEmployeeIds, agedCount, error, isLoading, overlapAlert, pending, reviewRequest, team, topUrgent } = useTeamOverview();
+
+  return (
+    <section aria-labelledby="owner-team-title">
+      <h2 className="mb-3 text-lg font-bold md:text-xl" id="owner-team-title">Tu equipo</h2>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_var(--aside-width)]">
+        <div className="min-w-0 rounded-2xl bg-[var(--card-bg)] p-5 ring-1 ring-[var(--card-border)] md:rounded-[20px] md:p-6">
+          {isLoading ? (
+            <DashboardSkeleton />
+          ) : (
+            <>
+              <TeamShortcuts absentToday={absentEmployeeIds.size} pendingCount={pending.length} teamCount={team.length} />
+              <TeamAlerts agedCount={agedCount} overlapAlert={overlapAlert} />
+              {error ? (
+                <p className="mb-3 rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-700" role="alert">
+                  {error}
+                </p>
+              ) : null}
+              <UrgentRequestsSection onReview={reviewRequest} pendingCount={pending.length} topUrgent={topUrgent} />
+            </>
+          )}
+        </div>
+        {isLoading ? null : (
+          <aside className="flex min-w-0 flex-col gap-5">
+            <CoverageHeatmap absences={absences} members={team} />
+            <UpcomingAbsencesCard absences={absences} />
+          </aside>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/** KPIs de toda la empresa (solo lectura). */
+function CompanyOverview() {
   const employeesQuery = useEmployees();
   const departmentsQuery = useDepartments();
   const requestsQuery = useQuery({
@@ -95,47 +184,36 @@ export function OwnerDashboardScreen() {
   }, [requests]);
 
   return (
-    <AdminShell>
-      <div className="page-wrap pb-24 pt-5 md:pt-6">
-        <header className="animate-fade-up mb-5">
-          <p className="text-sm font-bold text-[var(--color-muted)]">Suite del dueño</p>
-          <h2 className="mt-1 text-2xl font-bold md:text-3xl">Inicio</h2>
-        </header>
+    <>
+      <section className="grid gap-4 md:grid-cols-2">
+        <MetricCard
+          icon={CalendarOff}
+          label="Ausentes hoy"
+          loading={employeesQuery.isLoading || absencesQuery.isLoading}
+          value={absences.length}
+        />
+        <MetricCard
+          icon={ClipboardList}
+          label="Solicitudes del día"
+          loading={requestsQuery.isLoading}
+          value={todayRequestsCount}
+        />
+        <PendingByDepartmentCard loading={requestsQuery.isLoading || departmentsQuery.isLoading} rows={pendingByDepartment} />
+        <MetricCard
+          icon={Plane}
+          label="Vacaciones consumidas este mes"
+          loading={requestsQuery.isLoading}
+          suffix=" días"
+          value={vacationDaysThisMonth}
+        />
+      </section>
 
-        <div className="mb-5">
-          <OwnerReadOnlyNotice>Resumen de toda la empresa, en modo lectura.</OwnerReadOnlyNotice>
-        </div>
-
-        <section className="grid gap-4 md:grid-cols-2">
-          <MetricCard
-            icon={CalendarOff}
-            label="Ausentes hoy"
-            loading={employeesQuery.isLoading || absencesQuery.isLoading}
-            value={absences.length}
-          />
-          <MetricCard
-            icon={ClipboardList}
-            label="Solicitudes del día"
-            loading={requestsQuery.isLoading}
-            value={todayRequestsCount}
-          />
-          <PendingByDepartmentCard loading={requestsQuery.isLoading || departmentsQuery.isLoading} rows={pendingByDepartment} />
-          <MetricCard
-            icon={Plane}
-            label="Vacaciones consumidas este mes"
-            loading={requestsQuery.isLoading}
-            suffix=" días"
-            value={vacationDaysThisMonth}
-          />
-        </section>
-
-        {employeesQuery.error || absencesQuery.error || requestsQuery.error || departmentsQuery.error ? (
-          <p className="mt-5 rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-700" role="alert">
-            Algunos indicadores no pudieron cargarse. Los números disponibles se muestran arriba.
-          </p>
-        ) : null}
-      </div>
-    </AdminShell>
+      {employeesQuery.error || absencesQuery.error || requestsQuery.error || departmentsQuery.error ? (
+        <p className="mt-5 rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-700" role="alert">
+          Algunos indicadores no pudieron cargarse. Los números disponibles se muestran arriba.
+        </p>
+      ) : null}
+    </>
   );
 }
 
