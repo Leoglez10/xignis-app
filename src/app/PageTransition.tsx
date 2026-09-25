@@ -8,6 +8,13 @@ import { bumpHaptic } from "../lib/haptics";
 import { useAuth } from "../features/session/AuthContext";
 import { useOwnerNavOptions } from "../features/owner/hooks/useOwnerNavOptions";
 import { tabsFor, type NavTab } from "./navConfig";
+import { isAccountPath } from "../features/account/accountSections";
+
+/** Cambio de sección dentro de Cuenta: son pestañas de la misma página, así
+ *  que cambian al instante (sin deslizar ni resetear scroll), como el resto. */
+function isAccountSectionSwitch(prev: Location | null, cur: Location): boolean {
+  return !!prev && isAccountPath(prev.pathname) && isAccountPath(cur.pathname);
+}
 
 const EDGE = 28; // px desde el borde izquierdo donde arranca el gesto
 const COMMIT = 0.4; // fracción de ancho arrastrada para confirmar "atrás"
@@ -80,7 +87,7 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
       return;
     }
     opacity.set(1); // reset in case a desktop crossfade was interrupted
-    if (fromDrag.current || reducedMotion) {
+    if (fromDrag.current || reducedMotion || isAccountSectionSwitch(prevRef.current, location)) {
       fromDrag.current = false;
       x.set(0);
       return;
@@ -115,7 +122,7 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
   // pantalla nueva abre a media altura y su encabezado queda bajo la TopBar.
   // En POP (atrás) se respeta la posición.
   useLayoutEffect(() => {
-    if (navType !== "POP") window.scrollTo(0, 0);
+    if (navType !== "POP" && !isAccountSectionSwitch(prevRef.current, location)) window.scrollTo(0, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.key]);
 

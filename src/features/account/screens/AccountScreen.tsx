@@ -62,7 +62,7 @@ export function AccountScreen() {
           <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
             {accountSections.map(({ id, label }) => (
               <li className="shrink-0" key={id}>
-                <NavLink className={({ isActive }) => `${pillTabClass(isActive)} whitespace-nowrap`} to={accountPath(id)}>
+                <NavLink className={({ isActive }) => `${pillTabClass(isActive)} whitespace-nowrap`} replace to={accountPath(id)}>
                   {label}
                 </NavLink>
               </li>
