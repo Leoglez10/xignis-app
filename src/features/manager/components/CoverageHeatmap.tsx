@@ -1,85 +1,71 @@
-import { Users } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { useMemo, useState } from "react";
+import { NavLink } from "react-router-dom";
 import { initials } from "../../../lib/avatar";
-import { eachDayIso, todayIso } from "../../../lib/date";
+import { eachDayIso, monthCellsISO, shiftMonth, todayIso } from "../../../lib/date";
 import { leaveTypeConfig } from "../../leave-requests/config";
 import type { LeaveRequestWithEmployee } from "../../leave-requests/services/leaveRequestService";
-import type { LeaveType, Profile } from "../../../lib/database.types";
+import type { Profile } from "../../../lib/database.types";
+import {
+  absentByDate,
+  coverageDay,
+  coverageLevel,
+  mergeAbsences,
+  WEEKDAY_SHORT,
+  type CoverageLevel,
+} from "../coverage";
+import { useTeamAbsencesInRange } from "../hooks/useTeamAbsencesInRange";
 
 type CoverageHeatmapProps = {
   members: Profile[];
+  /** Ausencias aprobadas próximas (del dashboard); el mes visible se completa con la Agenda. */
   absences: LeaveRequestWithEmployee[];
   days?: number;
 };
 
-type AbsentEntry = { id: string; name: string; leaveType: LeaveType };
-type DayInfo = {
-  iso: string;
-  weekday: string;
-  dayNum: number;
-  present: number;
-  absent: AbsentEntry[];
-  ratio: number;
-};
+const monthFmt = new Intl.DateTimeFormat("es", { month: "long", year: "numeric" });
 
-const WEEKDAY = ["L", "M", "X", "J", "V", "S", "D"];
-
-// Present-ratio → visual tone. Green = fully covered, rose = understaffed.
+// Present-ratio → chip tone for the header pill. Green = fully covered, rose = understaffed.
 function tone(ratio: number) {
-  if (ratio >= 1) return { bar: "bg-emerald-400", chip: "bg-emerald-100 text-emerald-800", label: "Completo" };
-  if (ratio >= 0.8) return { bar: "bg-lime-400", chip: "bg-lime-100 text-lime-800", label: "Buena" };
-  if (ratio >= 0.6) return { bar: "bg-amber-400", chip: "bg-amber-100 text-amber-800", label: "Ajustada" };
-  if (ratio >= 0.4) return { bar: "bg-orange-400", chip: "bg-orange-100 text-orange-900", label: "Baja" };
-  return { bar: "bg-rose-400", chip: "bg-rose-100 text-rose-800", label: "Crítica" };
+  if (ratio >= 1) return "bg-emerald-100 text-emerald-800";
+  if (ratio >= 0.8) return "bg-lime-100 text-lime-800";
+  if (ratio >= 0.6) return "bg-amber-100 text-amber-800";
+  if (ratio >= 0.4) return "bg-orange-100 text-orange-900";
+  return "bg-rose-100 text-rose-800";
 }
 
+const LEVEL_DOT: Record<CoverageLevel, string> = {
+  full: "bg-emerald-500",
+  low: "bg-rose-500",
+  partial: "bg-amber-400",
+};
+
+const controlClass =
+  "press grid size-8 place-items-center rounded-full bg-[var(--card-bg)] ring-1 ring-[var(--card-border)]";
+
 export function CoverageHeatmap({ members, absences, days = 14 }: CoverageHeatmapProps) {
-  const start = todayIso();
+  const today = todayIso();
+  const [view, setView] = useState(() => ({ monthIndex: Number(today.slice(5, 7)) - 1, year: Number(today.slice(0, 4)) }));
+  const [selectedIso, setSelectedIso] = useState<string | null>(null);
 
-  const dayInfos = useMemo<DayInfo[]>(() => {
-    const nameById = new Map(members.map((m) => [m.id, m.full_name]));
-    const startDate = new Date(`${start}T00:00:00`);
+  const cells = useMemo(() => monthCellsISO(view.year, view.monthIndex), [view]);
+  const memberIds = useMemo(() => members.map((m) => m.id), [members]);
+  const monthAbsences = useTeamAbsencesInRange(cells[0].iso, cells[cells.length - 1].iso, memberIds);
 
-    // date → list of absent members that day
-    const absentByDate = new Map<string, AbsentEntry[]>();
-    for (const a of absences) {
-      if (!a.employee_id) continue;
-      const name = nameById.get(a.employee_id) ?? a.employee?.full_name ?? "—";
-      for (const iso of eachDayIso(a.start_date, a.end_date)) {
-        if (iso < start) continue;
-        const list = absentByDate.get(iso) ?? [];
-        if (!list.some((e) => e.id === a.employee_id)) {
-          list.push({ id: a.employee_id, name, leaveType: a.leave_type });
-        }
-        absentByDate.set(iso, list);
-      }
-    }
-
-    const total = members.length || 1;
-    return Array.from({ length: days }, (_, i) => {
-      const d = new Date(startDate);
-      d.setDate(d.getDate() + i);
-      const iso = d.toISOString().slice(0, 10);
-      const absent = absentByDate.get(iso) ?? [];
-      const present = Math.max(0, members.length - absent.length);
-      return {
-        iso,
-        weekday: WEEKDAY[(d.getDay() + 6) % 7],
-        dayNum: d.getDate(),
-        present,
-        absent,
-        ratio: present / total,
-      };
-    });
-  }, [members, absences, days, start]);
+  const byDate = useMemo(
+    () => absentByDate(members, mergeAbsences(absences, monthAbsences)),
+    [members, absences, monthAbsences],
+  );
+  const total = members.length;
 
   // Default focus = the most understaffed upcoming day (that's the one worth acting on).
-  const worst = useMemo(
-    () => dayInfos.reduce((w, d) => (d.ratio < w.ratio ? d : w), dayInfos[0]),
-    [dayInfos],
-  );
-  const [selectedIso, setSelectedIso] = useState<string | null>(null);
-  const selected = dayInfos.find((d) => d.iso === selectedIso) ?? worst;
+  const upcoming = useMemo(() => {
+    const end = new Date(`${today}T00:00:00Z`);
+    end.setUTCDate(end.getUTCDate() + days - 1);
+    return eachDayIso(today, end.toISOString().slice(0, 10)).map((iso) => coverageDay(iso, total, byDate));
+  }, [today, days, total, byDate]);
+  const worst = upcoming.reduce((w, d) => (d.ratio < w.ratio ? d : w), upcoming[0]);
+  const selected = selectedIso ? coverageDay(selectedIso, total, byDate) : worst;
 
   if (members.length === 0) {
     return (
@@ -98,9 +84,13 @@ export function CoverageHeatmap({ members, absences, days = 14 }: CoverageHeatma
     );
   }
 
-  const total = members.length;
-  const anyAbsence = dayInfos.some((d) => d.absent.length > 0);
-  const worstTone = tone(worst.ratio);
+  const anyAbsence = upcoming.some((d) => d.absent.length > 0);
+  const monthLabel = monthFmt.format(new Date(view.year, view.monthIndex, 1)).replace(/^./, (c) => c.toUpperCase());
+  const goMonth = (delta: number) => setView((v) => shiftMonth(v.year, v.monthIndex, delta));
+  const goToday = () => {
+    setView({ monthIndex: Number(today.slice(5, 7)) - 1, year: Number(today.slice(0, 4)) });
+    setSelectedIso(today);
+  };
 
   return (
     <section
@@ -111,11 +101,11 @@ export function CoverageHeatmap({ members, absences, days = 14 }: CoverageHeatma
         <div>
           <h2 className="font-bold">Cobertura del equipo</h2>
           <p className="mt-0.5 text-xs text-[var(--color-muted)]">
-            Próximos <span className="md:hidden">7</span><span className="hidden md:inline">{days}</span> días · {total} personas
+            Próximos {days} días · {total} personas
           </p>
         </div>
         {anyAbsence ? (
-          <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${worstTone.chip}`}>
+          <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${tone(worst.ratio)}`}>
             Día más ajustado: {worst.present}/{total}
           </span>
         ) : (
@@ -125,36 +115,58 @@ export function CoverageHeatmap({ members, absences, days = 14 }: CoverageHeatma
         )}
       </div>
 
-      {/* Interactive day strip — tap a day to see who's out. */}
-      <div className="grid grid-cols-7 gap-1.5 md:grid-cols-14">
-        {dayInfos.map((d, i) => {
-          const t = tone(d.ratio);
-          const isSel = d.iso === selected.iso;
-          const isToday = d.iso === start;
+      {/* Month controls, same pattern as the Agenda screen. */}
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p aria-live="polite" className="text-sm font-bold">{monthLabel}</p>
+        <div className="flex items-center gap-1.5">
+          <button aria-label="Mes anterior" className={controlClass} onClick={() => goMonth(-1)} type="button">
+            <ChevronLeft aria-hidden="true" className="size-4" />
+          </button>
+          <button
+            className="press h-8 rounded-full bg-[var(--card-bg)] px-3 text-xs font-bold text-[var(--color-muted)] ring-1 ring-[var(--card-border)]"
+            onClick={goToday}
+            type="button"
+          >
+            Hoy
+          </button>
+          <button aria-label="Mes siguiente" className={controlClass} onClick={() => goMonth(1)} type="button">
+            <ChevronRight aria-hidden="true" className="size-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Mini month calendar — tap a day to see who's out. */}
+      <div className="grid grid-cols-7 gap-0.5" role="group" aria-label={`Cobertura de ${monthLabel}`}>
+        {WEEKDAY_SHORT.map((d) => (
+          <span aria-hidden="true" className="pb-1 text-center text-[10px] font-bold text-[var(--color-muted)]" key={d}>
+            {d}
+          </span>
+        ))}
+        {cells.map(({ iso, isInMonth }) => {
+          const d = coverageDay(iso, total, byDate);
+          const level = coverageLevel(d.ratio);
+          const isSel = iso === selected.iso;
+          const isToday = iso === today;
           return (
             <button
               aria-label={`${d.weekday} ${d.dayNum}: ${d.present} de ${total} disponibles`}
               aria-pressed={isSel}
-              className={`press flex flex-col items-center gap-1 rounded-xl py-1.5 transition ${
-                i >= 7 ? "hidden md:flex" : ""
-              } ${isSel ? "bg-[var(--card-muted)] ring-2 ring-emerald-500" : "hover:bg-[var(--card-muted)]"}`}
-              key={d.iso}
-              onClick={() => setSelectedIso(d.iso)}
+              className={`press flex h-9 min-w-8 flex-col items-center justify-center gap-0.5 rounded-lg text-xs font-bold transition ${
+                isInMonth ? "" : "opacity-40"
+              } ${
+                isSel
+                  ? "bg-[var(--card-muted)] ring-2 ring-emerald-500"
+                  : isToday
+                    ? "ring-2 ring-[var(--color-primary)]"
+                    : "hover:bg-[var(--card-muted)]"
+              } ${isToday ? "text-[var(--color-primary)]" : ""}`}
+              data-coverage={isInMonth ? level : undefined}
+              key={iso}
+              onClick={() => setSelectedIso(iso)}
               type="button"
             >
-              <span className={`text-[10px] font-bold ${isToday ? "text-emerald-600" : "text-[var(--color-muted)]"}`}>
-                {d.weekday}
-              </span>
-              <span className="text-xs font-bold">{d.dayNum}</span>
-              <span className="flex h-10 w-2.5 items-end overflow-hidden rounded-full bg-[var(--card-muted)]">
-                <span
-                  className={`w-full rounded-full ${t.bar}`}
-                  style={{ height: `${Math.max(8, d.ratio * 100)}%` }}
-                />
-              </span>
-              <span className={`min-h-4 text-[10px] font-bold ${d.absent.length ? "text-rose-500" : "text-transparent"}`}>
-                {d.absent.length ? `−${d.absent.length}` : "·"}
-              </span>
+              <span className="leading-none">{d.dayNum}</span>
+              <span className={`size-1.5 rounded-full ${isInMonth ? LEVEL_DOT[level] : "bg-transparent"}`} />
             </button>
           );
         })}
@@ -193,6 +205,14 @@ export function CoverageHeatmap({ members, absences, days = 14 }: CoverageHeatma
           </ul>
         )}
       </div>
+
+      <NavLink
+        className="press mt-3 flex items-center justify-end gap-1 text-xs font-bold text-[var(--color-muted)]"
+        to="/manager/calendar"
+      >
+        Ver agenda
+        <ArrowRight aria-hidden="true" className="size-4" />
+      </NavLink>
     </section>
   );
 }

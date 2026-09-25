@@ -38,6 +38,7 @@ vi.mock("../../admin/services/departmentService", () => ({ listActiveDepartments
 vi.mock("../../leave-requests/services/leaveRequestService", () => ({
   listAbsencesForEmployeesToday: vi.fn(async () => []),
   listHrLeaveRequests: vi.fn(async () => []),
+  listTeamAbsencesInRange: vi.fn(async () => []),
 }));
 
 function renderScreen() {

@@ -11,6 +11,7 @@ import type { Profile } from "../../../lib/database.types";
 import { subscribeToLeaveRequests } from "../../leave-requests/services/leaveRequestProgressService";
 import { useAuth } from "../../session/AuthContext";
 import { scopeToDirectReports } from "../teamScope";
+import { TEAM_ABSENCES_RANGE_KEY } from "./useTeamAbsencesInRange";
 
 /**
  * Shared source for the manager pending-requests workload. Both the dashboard
@@ -48,6 +49,7 @@ export function useManagerPendingRequests() {
   useEffect(() => {
     const unsubscribe = subscribeToLeaveRequests({}, () => {
       void queryClient.invalidateQueries({ queryKey: dashboardKey });
+      void queryClient.invalidateQueries({ queryKey: TEAM_ABSENCES_RANGE_KEY });
     });
     return unsubscribe;
   }, [dashboardKey, queryClient]);
@@ -60,7 +62,11 @@ export function useManagerPendingRequests() {
   const reviewMutation = useMutation({
     mutationFn: (input: { id: string; decision: "approved" | "rejected"; comment?: string }) =>
       reviewLeaveRequest({ ...input, reviewerRole: "manager" }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: dashboardKey }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: dashboardKey }),
+        queryClient.invalidateQueries({ queryKey: TEAM_ABSENCES_RANGE_KEY }),
+      ]),
   });
 
   return {
