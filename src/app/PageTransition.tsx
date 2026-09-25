@@ -111,6 +111,14 @@ export function PageTransition({ children }: { children: (loc: Location) => Reac
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.key]);
 
+  // La página scrollea en window, que sobrevive al cambio de ruta: sin esto la
+  // pantalla nueva abre a media altura y su encabezado queda bajo la TopBar.
+  // En POP (atrás) se respeta la posición.
+  useLayoutEffect(() => {
+    if (navType !== "POP") window.scrollTo(0, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.key]);
+
   useLayoutEffect(() => {
     const frame = requestAnimationFrame(() => {
       document.getElementById("main-content")?.focus({ preventScroll: true });
