@@ -6,7 +6,6 @@ import { axe } from "vitest-axe";
 
 vi.mock("../features/session/AuthContext", () => ({ useAuth: () => ({ profile: { full_name: "María de la Fuente", id: "1", role: "employee" } }) }));
 vi.mock("../features/notifications/NotificationBell", () => ({ NotificationBell: () => <button>Notificaciones</button> }));
-vi.mock("./ModuleSwitcherSheet", () => ({ ModuleSwitcherSheet: () => null }));
 vi.mock("../lib/useScrollDirection", () => ({ useScrollDirection: () => false }));
 vi.mock("../features/owner/hooks/useHasDirectReports", () => ({ useDirectReportsCount: () => 0, useHasDirectReports: () => false }));
 

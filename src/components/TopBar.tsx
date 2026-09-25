@@ -1,4 +1,4 @@
-import { Search, Grid2x2 } from "lucide-react";
+import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { NotificationBell } from "../features/notifications/NotificationBell";
@@ -8,13 +8,12 @@ import { tabsFor, titleForPath } from "../app/navConfig";
 import { useOwnerNavOptions } from "../features/owner/hooks/useOwnerNavOptions";
 import { OwnerChip } from "./RoleChips";
 import { OwnerViewToggle } from "./OwnerViewToggle";
-import { ModuleSwitcherSheet } from "./ModuleSwitcherSheet";
 import { initials } from "../lib/avatar";
 import { accountPath } from "../features/account/accountSections";
 
 /**
  * Header de la plataforma Xignis (estilo referencia): avatar + título + búsqueda
- * + notificaciones + switcher de módulos, pills de contexto y barra de tabs.
+ * + notificaciones, pills de contexto y barra de tabs.
  * Fijo en pantallas autenticadas; se oculta al bajar. El offset del contenido
  * lo maneja `--topbar-content-h` más el safe area en globals.css.
  */
@@ -23,7 +22,6 @@ export function TopBar() {
   const { pathname } = useLocation();
   const { profile } = useAuth();
   const hidden = useScrollDirection();
-  const [switcherOpen, setSwitcherOpen] = useState(false);
 
   const role = profile?.role;
   const navOptions = useOwnerNavOptions();
@@ -83,14 +81,6 @@ export function TopBar() {
             <Search aria-hidden="true" className="size-5" />
           </button>
           <NotificationBell />
-          <button
-            aria-label="Módulos de Xignis"
-            className="press grid size-10 place-items-center rounded-full text-[var(--color-text)] md:hidden"
-            type="button"
-            onClick={() => setSwitcherOpen(true)}
-          >
-            <Grid2x2 aria-hidden="true" className="size-5" />
-          </button>
         </div>
       </div>
 
@@ -121,10 +111,6 @@ export function TopBar() {
             </NavLink>
           ))}
         </nav>
-      ) : null}
-
-      {role ? (
-        <ModuleSwitcherSheet isOpen={switcherOpen} role={role} onClose={() => setSwitcherOpen(false)} />
       ) : null}
     </header>
   );

@@ -7,7 +7,6 @@ import { TopBar } from "./TopBar";
 const directReports = vi.fn(() => 0);
 vi.mock("../features/session/AuthContext", () => ({ useAuth: () => ({ profile: { full_name: "Owner Test", id: "1", role: "owner" } }) }));
 vi.mock("../features/notifications/NotificationBell", () => ({ NotificationBell: () => <button>Notificaciones</button> }));
-vi.mock("./ModuleSwitcherSheet", () => ({ ModuleSwitcherSheet: () => null }));
 vi.mock("../lib/useScrollDirection", () => ({ useScrollDirection: () => false }));
 vi.mock("../features/owner/hooks/useHasDirectReports", () => ({ useDirectReportsCount: () => directReports(), useHasDirectReports: () => directReports() > 0 }));
 

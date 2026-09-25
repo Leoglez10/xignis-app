@@ -1,11 +1,9 @@
-import { Grid2x2, LifeBuoy, Settings } from "lucide-react";
+import { LifeBuoy, Settings } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useState } from "react";
 import { navGroups, ownerTeamTab } from "../app/navConfig";
 import { useManagerPendingRequests } from "../features/manager/hooks/useManagerPendingRequests";
 import { useOwnerNavOptions } from "../features/owner/hooks/useOwnerNavOptions";
 import { useAuth } from "../features/session/AuthContext";
-import { ModuleSwitcherSheet } from "./ModuleSwitcherSheet";
 import { initials } from "../lib/avatar";
 import { accountPath } from "../features/account/accountSections";
 
@@ -18,7 +16,6 @@ import { accountPath } from "../features/account/accountSections";
 export function Sidebar() {
   const navigate = useNavigate();
   const { profile } = useAuth();
-  const [switcherOpen, setSwitcherOpen] = useState(false);
   const navOptions = useOwnerNavOptions();
   const { hasDirectReports } = navOptions;
 
@@ -52,14 +49,6 @@ export function Sidebar() {
               <span className="block truncate text-xs font-semibold text-[var(--color-muted)]">Dueño · Jefe</span>
             ) : null}
           </span>
-        </button>
-        <button
-          aria-label="Módulos de Xignis"
-          className="press grid size-9 shrink-0 place-items-center rounded-xl text-[var(--color-muted)]"
-          type="button"
-          onClick={() => setSwitcherOpen(true)}
-        >
-          <Grid2x2 aria-hidden="true" className="size-5" />
         </button>
       </div>
 
@@ -108,8 +97,6 @@ export function Sidebar() {
           Ayuda y soporte
         </a>
       </div>
-
-      <ModuleSwitcherSheet isOpen={switcherOpen} role={profile.role} onClose={() => setSwitcherOpen(false)} />
     </aside>
   );
 }

@@ -9,7 +9,11 @@ type Props = {
   onClose: () => void;
 };
 
-/** Grid de módulos de Xignis. Los `live` navegan; los `soon` muestran "Próximamente". */
+/**
+ * Grid de módulos de Xignis. Los `live` navegan; los `soon` muestran "Próximamente".
+ * Desmontado de la UI (TopBar/Sidebar) por decisión de producto; se conserva para
+ * reactivarlo cuando existan más módulos. Ver docs/roadmap.md.
+ */
 export function ModuleSwitcherSheet({ isOpen, role, onClose }: Props) {
   const navigate = useNavigate();
   const modules = getModules(role);
