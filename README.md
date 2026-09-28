@@ -212,13 +212,14 @@ Declaradas en [`.env.example`](.env.example). El archivo `.env` está en
 
 ## 🧪 Cuentas de prueba
 
-El repositorio documenta cuatro cuentas de **demostración**, una por rol, sobre
+El repositorio documenta cinco cuentas de **demostración**, una por rol, sobre
 el dominio ficticio `@xignis.test` y contra un conjunto de datos marcado como de
 prueba:
 
 - Lista y estado actual: [`docs/cuentas-prueba-listas.md`](docs/cuentas-prueba-listas.md)
 - Cómo crearlas desde cero en Supabase: [`docs/supabase-test-setup.md`](docs/supabase-test-setup.md) y [`docs/test-accounts.md`](docs/test-accounts.md)
 - Semillas SQL: [`supabase/seed_test_accounts.sql`](supabase/seed_test_accounts.sql) y [`supabase/seed_auth_users.sql`](supabase/seed_auth_users.sql)
+- Cuenta owner en el proyecto alojado: [`supabase/hosted_test_owner_account.sql`](supabase/hosted_test_owner_account.sql)
 
 > ⚠️ Son credenciales **exclusivamente de demostración**, con contraseña
 > compartida y visible en la documentación. No las reutilices para cuentas

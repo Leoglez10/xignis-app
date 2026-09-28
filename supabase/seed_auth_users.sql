@@ -5,7 +5,7 @@
 -- @xignis.test address and a shared, publicly known password, so this file must
 -- never be pointed at a hosted project.
 --
--- Password for all four accounts: Xignis123!
+-- Password for all five accounts: Xignis123!
 -- (same one documented in docs/supabase-test-setup.md for the hosted project,
 -- so there is a single test password across environments)
 --
@@ -51,7 +51,8 @@ from (
     ('carlos.manager@xignis.test', 'Carlos Manager'),
     ('maria.hr@xignis.test', 'Maria HR'),
     ('admin.tech@xignis.test', 'Admin Tecnico'),
-    ('ana.employee@xignis.test', 'Ana Employee')
+    ('ana.employee@xignis.test', 'Ana Employee'),
+    ('owner.test@xignis.test', 'Owner Test')
 ) as data(email, full_name)
 where not exists (select 1 from auth.users u where u.email = data.email);
 

@@ -100,10 +100,10 @@ migraciones que dependen de un estado que no existe en una base nueva.
 
 ## Datos de prueba
 
-`db reset` siembra 4 cuentas, en este orden:
+`db reset` siembra 5 cuentas, en este orden:
 
 1. `supabase/seed_auth_users.sql` — crea los usuarios de autenticacion.
-2. `supabase/seed_test_accounts.sql` — les asigna rol y jefe.
+2. `supabase/seed_test_accounts.sql` — les asigna rol, nombre, puesto y jefe, y marca `is_test = true` para ocultarlas de los usuarios reales.
 
 El orden importa: el segundo hace `join auth.users` por correo, asi que sin el
 primero no encuentra a nadie y no hace nada.
@@ -114,11 +114,16 @@ primero no encuentra a nadie y no hace nada.
 | `carlos.manager@xignis.test` | jefe |
 | `ana.employee@xignis.test` | empleada (su jefe es Carlos) |
 | `admin.tech@xignis.test` | admin |
+| `owner.test@xignis.test` | owner |
+
+Todas las cuentas sembradas quedan con `is_test = true`, por lo que un usuario real no las ve en ningun listado.
 
 Contraseña para todas: `Xignis123!`
 
 Los seeds solo corren en `db reset`, que solo existe en local. `db push` no los
-ejecuta, asi que no hay forma de que estas cuentas lleguen a produccion.
+ejecuta, asi que no hay forma de que estas cuentas lleguen a produccion desde
+las semillas. El script `supabase/hosted_test_owner_account.sql` es un
+procedimiento manual supervisado; ni las migraciones ni `db push` lo ejecutan.
 
 ## Consultar la base local
 
