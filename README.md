@@ -16,6 +16,8 @@
 
 </div>
 
+> 🇬🇧 **In English:** HR app for employee leave and absence requests: two-level approval, four roles, Android/iOS builds. React + TypeScript + Capacitor + Supabase, tested with Vitest and Playwright in CI.
+
 > Este README es el punto de entrada del repositorio. Explica **qué es la app,
 > cómo levantarla y cómo está organizada**. El detalle profundo (requisitos,
 > pantallas, flujos, esquema de base de datos, decisiones técnicas) vive en
