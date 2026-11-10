@@ -98,20 +98,20 @@ Reglas de negocio completas: [`docs/rules.md`](docs/rules.md).
 
 Funcionalidades presentes en el código:
 
-- ✅ **Inicio de sesión** con Supabase Auth y rutas protegidas por rol.
-- ✅ **Alta de personas por invitación**: RH crea la cuenta, la persona define su contraseña en `/set-password`. El registro público está deshabilitado ([`docs/auth-password-flow.md`](docs/auth-password-flow.md)).
-- ✅ **Recuperación de contraseña** por correo, con el flujo nativo de Supabase.
-- ✅ **Solicitud de permiso** con validación de fechas y horario (jornada completa o rango de horas).
-- ✅ **Aprobación en dos niveles**: jefe y después RH, con motivo obligatorio al rechazar y registro de auditoría.
-- ✅ **Panel de jefe**: pendientes, urgencias, mapa de cobertura del equipo, calendario y acciones en lote.
-- ✅ **Panel de RH/admin**: indicadores, distribución por departamento, altas y bajas recientes, gráficas de tendencia.
-- ✅ **Directorio de empleados** con detalle por persona, departamentos y campos de perfil configurables.
-- ✅ **Reportes** con exportación a PDF (`jspdf`).
-- ✅ **Búsqueda** global en `/buscar`.
-- ✅ **Notificaciones** y actualización en vivo de solicitudes mediante canales de Supabase Realtime.
-- ✅ **Modo sin conexión detectado**: se muestra un aviso cuando el dispositivo pierde la red.
-- ✅ **Interfaz en español e inglés** (i18next, idioma por defecto español).
-- ✅ **Accesibilidad**: enlace de salto al contenido, foco visible, hojas inferiores navegables por teclado, y pruebas con `vitest-axe`.
+- **Inicio de sesión** con Supabase Auth y rutas protegidas por rol.
+- **Alta de personas por invitación**: RH crea la cuenta, la persona define su contraseña en `/set-password`. El registro público está deshabilitado ([`docs/auth-password-flow.md`](docs/auth-password-flow.md)).
+- **Recuperación de contraseña** por correo, con el flujo nativo de Supabase.
+- **Solicitud de permiso** con validación de fechas y horario (jornada completa o rango de horas).
+- **Aprobación en dos niveles**: jefe y después RH, con motivo obligatorio al rechazar y registro de auditoría.
+- **Panel de jefe**: pendientes, urgencias, mapa de cobertura del equipo, calendario y acciones en lote.
+- **Panel de RH/admin**: indicadores, distribución por departamento, altas y bajas recientes, gráficas de tendencia.
+- **Directorio de empleados** con detalle por persona, departamentos y campos de perfil configurables.
+- **Reportes** con exportación a PDF (`jspdf`).
+- **Búsqueda** global en `/buscar`.
+- **Notificaciones** y actualización en vivo de solicitudes mediante canales de Supabase Realtime.
+- **Modo sin conexión detectado**: se muestra un aviso cuando el dispositivo pierde la red.
+- **Interfaz en español e inglés** (i18next, idioma por defecto español).
+- **Accesibilidad**: enlace de salto al contenido, foco visible, hojas inferiores navegables por teclado, y pruebas con `vitest-axe`.
 
 🧪 En preparación — las siguientes rutas existen pero muestran una pantalla de
 *próximamente*: `/gastos`, `/reportes`, `/nomina`, `/documentos`, `/organizacion`.
